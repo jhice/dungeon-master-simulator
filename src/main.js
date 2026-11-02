@@ -40,16 +40,12 @@ const RENDERERS = {
   // Out of the R rotation (docs/012-simulation.md): kept for the command-line tool.
   ascii: { label: 'ASCII', hidden: true, create: (container, dungeon, opts) => createAsciiRenderer(container, dungeon, { ...opts, wide: true }) },
 };
-const BASE_HINT = 'Début/Fin · R renderer · clic : sélection (Échap) · clic droit : menu · I inventaire · J textes · P jeu · F y aller · Espace / clic dans la vue : actionner';
-// ↑/↓ change the level outside the game, and move the party in the game.
-const LEVEL_HINT = { viewer: '↑/↓ ou Maj + molette : niveau', game: 'jeu : ZQSD + A/E (AZERTY), flèches, pavé num. · PgPréc/PgSuiv ou Maj + molette : niveau' };
 const MIN_CELL = 6;
 const MAX_CELL = 48;
 
 const viewWrap = document.getElementById('view-wrap'); // holds the view and the control panel
 const view = document.getElementById('view');
 const label = document.getElementById('level-label');
-const hint = document.getElementById('hint');
 const status = document.getElementById('status');
 const legend = document.getElementById('legend');
 
@@ -183,15 +179,8 @@ async function mountRenderer() {
   });
   renderLegend(legend, id === 'ascii' ? 'ascii' : 'dom', { showStates: prefs.showStates });
   renderer.setParty?.(game ? sim.party : null);
-  updateHint();
   showLevel(game ? sim.party.level : level);
   if (!renderer.zoom) setCell(prefs.cell);
-}
-
-function updateHint() {
-  if (!renderer) return; // being mounted: mountRenderer() writes the hint once it is ready
-  const own = renderer.keyHint ?? 'G repère · +/− zoom · 0 ajuster';
-  hint.textContent = `${LEVEL_HINT[game ? 'game' : 'viewer']} · ${BASE_HINT} · ${own}`;
 }
 
 function showLevel(level) {
@@ -458,8 +447,8 @@ function panelSchema() {
     {
       type: 'buttons',
       items: [
-        { label: '▲ Haut', title: 'Niveau précédent (↑)', action: () => go(-1), disabled: () => renderer.currentLevel === 0 },
-        { label: '▼ Bas', title: 'Niveau suivant (↓)', action: () => go(+1), disabled: () => renderer.currentLevel === dungeon.levelCount - 1 },
+        { label: '▲ Haut', title: 'Niveau précédent (PgPréc)', action: () => go(-1), disabled: () => renderer.currentLevel === 0 },
+        { label: '▼ Bas', title: 'Niveau suivant (PgSuiv)', action: () => go(+1), disabled: () => renderer.currentLevel === dungeon.levelCount - 1 },
         { label: '▶ Jeu', title: 'Ouvrir / fermer la simulation (P)', action: () => (game ? closeGame() : openGame()) },
         {
           type: 'select',
@@ -571,9 +560,7 @@ function settingShortcut(key) {
 }
 
 const GLOBAL_KEYS = {
-  ArrowDown: () => go(+1),
   PageDown: () => go(+1),
-  ArrowUp: () => go(-1),
   PageUp: () => go(-1),
   Home: () => showLevel(0),
   End: () => showLevel(dungeon.levelCount - 1),
@@ -603,10 +590,9 @@ bindKeys((key, event) => {
   if (shortcuts.isOpen()) return key.toLowerCase() === 'h' ? shortcuts.toggle : undefined;
   if (key.toLowerCase() === 'h') return shortcuts.toggle;
   if (mounting || !renderer) return undefined;
-  // In the game, movement keys (by physical key) come first; Space clicks in front of the party.
+  // In the game, movement keys (by physical key) come first.
   const move = game && moveKey(event);
   if (move) return move;
-  if (game && event.code === 'Space') return clickFront;
   const k = key.length === 1 ? key.toLowerCase() : key;
   return renderer.keys?.[k] ?? settingShortcut(k) ?? GLOBAL_KEYS[k];
 });
@@ -685,7 +671,6 @@ async function openGame() {
   }
   prefs.playing = true;
   savePreferences(prefs);
-  updateHint();
   showParty(sim.party);
 }
 
@@ -700,7 +685,6 @@ function closeGame() {
   prefs.playing = false;
   savePreferences(prefs);
   renderer?.setParty?.(null);
-  updateHint();
 }
 
 // F: the party jumps to the selected tile (to test a place directly), facing unchanged.

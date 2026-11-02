@@ -19,8 +19,13 @@
 
 - **Liste écrite à la main.** Les touches sont liées dans `main.js` et `src/sim/controls.js`, et les réglages de la 3D dans `three-renderer.js`.
   Un nouveau raccourci doit aussi être ajouté dans `SECTIONS` (`shortcuts-modal.js`).
-- **Touches de déplacement.** Elles sont lues par `KeyboardEvent.code`, donc par position physique. La modale les nomme en AZERTY, comme la ligne d'aide, avec une note pour le QWERTY.
-- **Ligne d'aide.** `#hint` reste en place, bien qu'elle répète une partie de la modale.
+- **Touches de déplacement.** Elles sont lues par `KeyboardEvent.code`, donc par position physique. La modale les nomme en QWERTY, avec une note pour l'AZERTY.
+
+## Ajustements
+
+- **Ligne d'aide retirée.** La modale remplace `#hint`, `updateHint()` et `keyHint`. Les indications à la souris qu'elle donnait ne sont plus affichées.
+- **Flèches retirées.** Elles ne déplacent plus le groupe et ne changent plus de niveau. Restent `W A S D Q E` et le pavé numérique en jeu, `PgPréc` et `PgSuiv` pour les niveaux. Cela remplace la colonne « Main droite » de la doc 012, § 5.
+- **Espace retiré.** On actionne à la souris : le jeu ne cherche pas à se jouer entièrement au clavier.
 
 ## Sources
 

@@ -107,12 +107,12 @@ export function createControlPanel(container, schema, values, onChange, { open =
         input.checked = Boolean(value);
       };
     }
-    // After a mouse adjustment, give the keyboard back to the viewer (arrows = levels).
+    // After a mouse adjustment, give the keyboard back to the viewer.
     input.addEventListener('pointerup', () => input.blur());
     panel.append(row);
   }
 
-  // Arrows on a focused slider or list move it instead of changing level.
+  // Keys on a focused slider or list (PgUp/PgDn too) move it instead of changing level.
   panel.addEventListener('keydown', (event) => {
     if (event.target.matches('input[type=range], select')) event.stopPropagation();
   });

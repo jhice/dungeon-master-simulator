@@ -1,6 +1,6 @@
 // Keyboard -> simulation commands, by KeyboardEvent.code (physical key), so the
-// same keys work in QWERTY and AZERTY. Left hand (WASD + QE), right hand
-// (arrows) and numeric keypad (docs/012-simulation.md § 5).
+// same keys work in QWERTY and AZERTY. Left hand (WASD + QE) and numeric keypad
+// (docs/012-simulation.md § 5); no arrows (docs/055).
 // Phase A: instant movement. Held keys repeat at most every REPEAT_MS.
 
 export const KEY_COMMANDS = {
@@ -10,10 +10,6 @@ export const KEY_COMMANDS = {
   KeyD: 'right',
   KeyQ: 'turnLeft',
   KeyE: 'turnRight',
-  ArrowUp: 'forward',
-  ArrowDown: 'back',
-  ArrowLeft: 'turnLeft',
-  ArrowRight: 'turnRight',
   Numpad5: 'forward',
   Numpad2: 'back',
   Numpad1: 'left',

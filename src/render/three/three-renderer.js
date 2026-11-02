@@ -1,6 +1,6 @@
 // 3D renderer: the 14 levels stacked at their global offsets, orbit camera.
 // Same contract as the other renderers (src/render/renderer.js), plus optional
-// zoom(step), resetView(), per-renderer key actions (`keys`, `keyHint`) and
+// zoom(step), resetView(), per-renderer key actions (`keys`) and
 // settings (`settingsSchema`, `settings`, `applySettings()`).
 
 import * as THREE from 'three';
@@ -503,7 +503,6 @@ export function createThreeRenderer(
       camera.position.copy(controls.target).add(offset.setLength(length));
     },
     resetView,
-    keyHint: 'souris : orbite / zoom / clic droit glissé déplacer · M mode',
     keys: {
       // M (not F: F teleports the party to the selected tile, see main.js).
       m: () => {
