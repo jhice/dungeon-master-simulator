@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { shownOrnament, shownFloorOrnament, isAlcove, doorLook } from '../../core/ornaments.js';
 import { WALL_ART, FLOOR_ART, DOOR_TYPES, DOOR_ART, doorButton, brokenDoor } from './ornament-art.js';
 import { doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
+import { createModels } from './fp-models.js';
 
 // Plane position and rotation per face (N, E, S, W): offset from the tile centre, rotation around y.
 const FACE_PLANES = [
@@ -24,6 +25,7 @@ const FACE_PLANES = [
   { dx: -0.5, dz: 0, rotation: -Math.PI / 2 },
 ];
 const ORNAMENT_GAP = 0.004; // in front of the face, against z-fighting
+const MODEL_GAP = 0.001; // the back of a 3D model, against the face
 const INSCRIPTION_GAP = 0.006; // over an ornament of the same face
 const FLOOR_GAP = 0.003;
 // Alcove: niche bottom / top, as fractions of the wall height (items on a wall stand
@@ -42,9 +44,11 @@ const TEXTURE_SIZE = 256;
  * @param {import('../../core/dungeon.js').Dungeon} dungeon
  * @param {object} state simulation state (tileAt, actuatorsAt, textVisible)
  * @param {number} wallHeight
+ * @param {boolean} useModels show the ornaments that have one as a 3D model (fp-models.js, docs/053)
  */
-export function createDecor(dungeon, state, wallHeight) {
+export function createDecor(dungeon, state, wallHeight, useModels = false) {
   const textures = new Map(); // key -> CanvasTexture
+  const models = createModels();
 
   function texture(key, width, height, draw) {
     if (!textures.has(key)) {
@@ -79,11 +83,24 @@ export function createDecor(dungeon, state, wallHeight) {
       if (!art) continue; // nothing, an alcove (the niche), or an unknown name (none in DM)
       if (name === 'Full Torch Holder') holders.push({ x, y, face });
       const height = art.h * wallHeight;
+      const model = useModels && models.build(name, art.w, height, art.y * wallHeight + height / 2);
+      if (model) {
+        meshes.push(placeModel(model, x, y, face, art.y * wallHeight + height / 2));
+        continue;
+      }
       const canvasHeight = Math.round((TEXTURE_SIZE * height) / art.w);
       const map = texture(`wall:${name}`, TEXTURE_SIZE, canvasHeight, art.draw);
       meshes.push(facePlane(x, y, face, map, art.w, height, art.y * wallHeight, ORNAMENT_GAP));
     }
     return meshes;
+  }
+
+  function placeModel(model, x, y, face, centreY) {
+    const { dx, dz, rotation } = FACE_PLANES[face];
+    const out = 1 + MODEL_GAP / 0.5;
+    model.position.set(x + 0.5 + dx * out, centreY, y + 0.5 + dz * out);
+    model.rotation.y = rotation;
+    return model;
   }
 
   function niche(x, y, face) {
@@ -160,7 +177,7 @@ export function createDecor(dungeon, state, wallHeight) {
     const part = (map, width, height, depth, along, up, alphaTest = 0.5) => {
       const material = Array.isArray(map)
         ? map.map((m) => new THREE.MeshLambertMaterial({ map: m }))
-        : new THREE.MeshLambertMaterial({ map, alphaTest, side: THREE.DoubleSide });
+        : new THREE.MeshLambertMaterial({ map, alphaTest, alphaToCoverage: true, side: THREE.DoubleSide });
       const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(width, height, depth), material, 1);
       const offset = new THREE.Vector3(along, 0, 0).applyQuaternion(rotation);
       mesh.setMatrixAt(0, new THREE.Matrix4().compose(new THREE.Vector3(x + 0.5 + offset.x, up, y + 0.5 + offset.z), rotation, new THREE.Vector3(1, 1, 1)));
@@ -224,9 +241,16 @@ export function createDecor(dungeon, state, wallHeight) {
       }
       return { meshes, doors, torchHolders };
     },
+    /** The 3D models on or off: takes effect at the next build. */
+    setModels(enabled) {
+      useModels = enabled;
+    },
+    /** The shaders changed: also for the shared materials of the models. */
+    updateMaterials: models.updateMaterials,
     dispose() {
       for (const t of textures.values()) t.dispose();
       textures.clear();
+      models.dispose();
     },
   };
 }

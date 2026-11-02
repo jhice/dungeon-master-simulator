@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-10-31, après la doc 052.
+> Mis à jour le 2026-11-02, après la doc 053.
 
 ### Données et visualiseur
 
@@ -101,6 +101,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Eau (doc 050) :** gourdes à 4 états (`src/sim/water.js`), fontaines qui remplissent gourde et flasque vide, comme DM ; bouche sous l'objet tenu (remplace le clic sur le cadre de Zed) ; jauge d'eau de Zed sans effet (faim et soif en attente).
 - **Portes et chutes (doc 051) :** une porte cède à une attaque au moins égale à sa défense (F232), sans compteur de coups ; un objet tenu, cliqué sur une porte, est lancé, l'attaque et tombe devant le battant ; une chute coûte 34 à 44 PV à Zed (F324), la corde épargne la première trappe contre de l'endurance.
 - **Coût des reconstructions (doc 052) :** dans la vue à la 1re personne, l'ancien niveau n'est libéré qu'après le premier rendu du nouveau, pour garder ses shaders compilés : une reconstruction (cran de porte, objet, levier) coûte 2 à 7 ms au lieu d'environ 100.
+- **Décors en objets 3D (doc 053) :** `src/render/first-person/fp-models.js` compose levier, porte-torche, miroir, serrures, interrupteurs, fontaine, Vi Altar, Amalgam et tête de goule à partir de pièces simples ; option du panneau, qui commande aussi les trappes creuses au sol et au plafond. Les portes à ouvertures et les herses laissent voir et passer la lumière.
 - **Durée d'un tick (doc 047) :** 220 ms (`TICK_MS`, `main.js`), soit 11 synchronisations verticales à 50 Hz, comme la boucle de jeu de DM en PAL.
 - **Tests Node :** `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`.
 

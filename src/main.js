@@ -428,6 +428,8 @@ const LIGHTING_SCHEMA = [
   { type: 'checkbox', key: 'permanentLight', label: 'Lumière permanente (tout à 100 %)' },
   { type: 'checkbox', key: 'torchHolders', label: 'Torches murales lumineuses' },
   { type: 'checkbox', key: 'occlusion', label: 'Lumière arrêtée par les murs' },
+  { type: 'heading', label: 'Décors (vue du jeu)' },
+  { type: 'checkbox', key: 'ornamentModels', label: 'Décors en objets 3D et trappes creuses' },
 ];
 // Sounds (docs/041): kept in the preferences as the light.
 const knownAudio = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_AUDIO));

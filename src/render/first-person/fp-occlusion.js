@@ -7,7 +7,8 @@
 // - the bits go to a texture of the level (one texel per tile), read by the lit materials of the
 //   view: patchMaterial() multiplies the contribution of point light i by its bit at the tile of
 //   the fragment. A fragment on a wall face is pushed a little along its normal, into the tile the
-//   face looks at.
+//   face looks at. A 3D object on a wall (fp-models.js, define OCC_AT_POSITION) stands in that tile:
+//   no push, its normals go any way and would send it into the wall.
 // Bit i is the i-th point light of the scene in the order of Three.js (scene order, sorted by
 // shadow and map: none have one here, so it stays the order of fp-lights.js).
 
@@ -81,7 +82,11 @@ export function createOcclusion() {
       #endif
       occWorld = modelMatrix * occWorld;
       occNormal = normalize( mat3( modelMatrix ) * occNormal );
-      vOccTile = occWorld.xz + occNormal.xz * ${NUDGE.toFixed(2)};`,
+      #ifdef OCC_AT_POSITION
+        vOccTile = occWorld.xz;
+      #else
+        vOccTile = occWorld.xz + occNormal.xz * ${NUDGE.toFixed(2)};
+      #endif`,
     );
     shader.fragmentShader = shader.fragmentShader
       .replace(

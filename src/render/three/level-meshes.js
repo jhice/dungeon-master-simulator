@@ -24,6 +24,8 @@ import { tileState, doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
 export const DEFAULT_WALL_HEIGHT = 0.7;
 const FLOOR_THICKNESS = 0.05;
 const STEPS = 4;
+const PIT_SIZE = 0.76; // side of the hole of a pit
+export const PIT_DEPTH = 0.6; // of its shaft, in the first-person view
 const dimensions = (wallHeight) => ({ wall: wallHeight, door: wallHeight, teleporter: wallHeight * 0.9 });
 // Part of the leaf still visible when an open door is raised into the lintel.
 const RAISED_DOOR_VISIBLE = 0.15;
@@ -32,6 +34,38 @@ const TELEPORTER_GAME_OPACITY = 0.3;
 
 // Rotation (around y) that turns the "+z" stairs model so it rises away from its access side.
 const STAIRS_ROTATION = { N: 0, S: Math.PI, W: Math.PI / 2, E: -Math.PI / 2 };
+
+/**
+ * A tile with a square hole in it, flat at y = 0, facing up (or down), with the UVs of a floor
+ * face or a ceiling panel: its texture continues the one of the tile next to it.
+ */
+export function pitRimGeometry(facingUp = true) {
+  const shape = new THREE.Shape([[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([x, y]) => new THREE.Vector2(x, y)));
+  const half = PIT_SIZE / 2;
+  shape.holes.push(new THREE.Path([[-half, -half], [-half, half], [half, half], [half, -half]].map(([x, y]) => new THREE.Vector2(x, y))));
+  const geometry = new THREE.ShapeGeometry(shape);
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) + 0.5, uv.getY(i) + 0.5);
+  return geometry.rotateX(facingUp ? -Math.PI / 2 : Math.PI / 2);
+}
+
+/**
+ * The inside of a pit: four walls and a bottom seen from within, open at y = 0, going down
+ * by `depth`. Texture: v = 1 at the top of the walls, the bottom takes the colour of v = 0.
+ */
+export function pitShaftGeometry(depth) {
+  const box = new THREE.BoxGeometry(PIT_SIZE, depth, PIT_SIZE).scale(-1, 1, 1).translate(0, -depth / 2, 0); // inside out
+  const normal = box.attributes.normal;
+  for (let i = 0; i < normal.count; i++) normal.setXYZ(i, -normal.getX(i), -normal.getY(i), -normal.getZ(i)); // towards the inside
+  const uv = box.attributes.uv;
+  const bottom = box.groups[3]; // +x, -x, +y, -y, +z, -z
+  const index = box.index.array;
+  for (let i = bottom.start; i < bottom.start + bottom.count; i++) uv.setY(index[i], 0);
+  const top = box.groups[2];
+  box.setIndex([...index.slice(0, top.start), ...index.slice(top.start + top.count)]);
+  box.clearGroups();
+  return box;
+}
 
 /**
  * Part definitions: geometry, colour key in the theme, and a function that
@@ -60,6 +94,9 @@ function partDefinitions(theme, h) {
     // so that its faces do not fight with the walls, floor and ceiling), translucent, and
     // seen from inside too (both sides): a party standing on a teleporter that does not
     // carry it (items only, creatures only) is in a coloured volume.
+    // A hollow pit (first-person view): no floor, the rim around the hole and the shaft under it.
+    pitRim: { geometry: pitRimGeometry(), color: theme.floor },
+    pitShaft: { geometry: pitShaftGeometry(PIT_DEPTH), color: '#ffffff' },
     teleporterGame: {
       geometry: new THREE.BoxGeometry(0.996, h.wall - 0.004, 0.996),
       color: theme.teleporter,
@@ -79,11 +116,12 @@ function partDefinitions(theme, h) {
  * @param {number} [options.wallHeight]
  * @param {(level, x, y) => object} [options.tileAt] tile source (default: the dungeon; the simulation passes its state)
  * @param {boolean} [options.game=false] first-person look, see above
+ * @param {boolean} [options.hollowPits=false] with `game`: an open visible pit is a real hole
  * @returns {{ group: THREE.Group, meshes: Array<THREE.InstancedMesh|THREE.LineSegments> }}
  * Each mesh has userData.part, userData.variant, userData.baseOpacity and, for
  * instanced meshes, userData.tiles[instanceId] = tile info (for hovering).
  */
-export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false } = {}) {
+export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false, hollowPits = false } = {}) {
   const map = dungeon.level(levelIndex);
   const h = dimensions(wallHeight);
   const parts = partDefinitions(theme, h);
@@ -126,6 +164,11 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
       }
       if (tile.type === 'stairs') {
         addStairs(add, info, px, pz, dungeon.accessSide(levelIndex, x, y), h);
+        continue;
+      }
+      if (tile.type === 'pit' && game && hollowPits && tile.detail.open && !tile.detail.invisible) {
+        add('pitRim', info, [px, 0, pz]);
+        add('pitShaft', info, [px, 0, pz]);
         continue;
       }
       add('floor', info, [px, -FLOOR_THICKNESS / 2, pz]);

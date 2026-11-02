@@ -10,14 +10,14 @@
 //   DOOR_ART[name](g, W, H)                      ornament drawn over the leaf
 // The drawings use the whole canvas (W × H pixels) and leave it transparent elsewhere.
 
-const IRON = '#5c5852';
-const IRON_DARK = '#2b2926';
-const IRON_LIGHT = '#8d877c';
-const STONE = '#8a8172';
-const STONE_DARK = '#4d463c';
-const WOOD = '#7a5532';
-const WOOD_DARK = '#4a321c';
-const BRASS = '#b8913f';
+export const IRON = '#5c5852';
+export const IRON_DARK = '#2b2926';
+export const IRON_LIGHT = '#8d877c';
+export const STONE = '#8a8172';
+export const STONE_DARK = '#4d463c';
+export const WOOD = '#7a5532';
+export const WOOD_DARK = '#4a321c';
+export const BRASS = '#b8913f';
 const SHADOW = 'rgb(0 0 0 / 0.55)';
 
 // --- Small drawing helpers -------------------------------------------------------------
@@ -91,7 +91,7 @@ function random(seed) {
 
 // --- Wall ornaments ------------------------------------------------------------------------
 
-const SWITCH_COLORS = { Green: '#3f9a45', Red: '#b8392d', Blue: '#3a68b8', Big: '#8d877c', Small: '#8d877c', Tiny: '#8d877c', Crack: '#6f6a60', Eye: '#c9b98a' };
+export const SWITCH_COLORS = { Green: '#3f9a45', Red: '#b8392d', Blue: '#3a68b8', Big: '#8d877c', Small: '#8d877c', Tiny: '#8d877c', Crack: '#6f6a60', Eye: '#c9b98a' };
 
 // Push button on a plate: "In" = pressed (flat, dark rim), "Out" = raised.
 function switchArt(color, pressed, scale = 1) {
@@ -142,7 +142,7 @@ function lever(up) {
   };
 }
 
-const LOCK_COLORS = {
+export const LOCK_COLORS = {
   Gold: '#c9a23e', Iron: '#6f6a62', Stone: '#8a8172', Skeleton: '#d8d0b8', Tourquoise: '#3fb3a8', Ra: '#b07a2a',
   Onyx: '#2a2a32', Cross: '#8a6f9a', Master: '#a8a8b0', Square: '#7f7a70', Ruby: '#b0283a', Emerald: '#2f9a5a',
   Topaz: '#d89a30', Winged: '#c0c8d0',
@@ -395,7 +395,7 @@ for (const color of ['Green', 'Red', 'Blue']) {
   WALL_ART[`${color} Switch In`] = small(switchArt(SWITCH_COLORS[color], true));
   WALL_ART[`${color} Switch Out`] = small(switchArt(SWITCH_COLORS[color], false));
 }
-const LOCK_HOLES = { Cross: 'cross', Square: 'square', Winged: 'wing', Skeleton: 'skull', Ra: 'ankh' };
+export const LOCK_HOLES = { Cross: 'cross', Square: 'square', Winged: 'wing', Skeleton: 'skull', Ra: 'ankh' };
 for (const [name, color] of Object.entries(LOCK_COLORS)) WALL_ART[`${name} Lock`] = small(lock(color, LOCK_HOLES[name]));
 
 // Ornaments drawn as geometry (the alcove niche), not as a plane.
@@ -485,35 +485,57 @@ export const DOOR_TYPES = {
   },
 };
 
+// An opening through the leaf: DM cuts it the same way (the ornament leaves pixels of the
+// transparent colour in the door bitmap, ReDMCSB DUNVIEW.C, F109 and F102). `outline` traces it.
+function opening(g, outline, frame, line) {
+  g.save();
+  g.globalCompositeOperation = 'destination-out';
+  outline();
+  g.fill();
+  g.restore();
+  outline();
+  g.strokeStyle = frame;
+  g.lineWidth = line;
+  g.stroke();
+}
+
 // The ornaments drawn over a door leaf. The canvas keeps the proportions of the leaf
 // (W × H, H = W × wall height): sizes that must stay round (arches) follow the smaller
 // side, and windows sit a little under the middle, below the eye (docs/028).
 export const DOOR_ART = {
   'Arched Grid'(g, W, H) {
     const r = Math.min(W * 0.2, H * 0.22);
+    const outline = () => {
+      g.beginPath();
+      g.moveTo(W / 2 - r, H * 0.72);
+      g.lineTo(W / 2 - r, H * 0.42);
+      g.arc(W / 2, H * 0.42, r, Math.PI, 0);
+      g.lineTo(W / 2 + r, H * 0.72);
+      g.closePath();
+    };
+    opening(g, outline, IRON_DARK, 9);
     g.save();
-    g.beginPath();
-    g.moveTo(W / 2 - r, H * 0.72);
-    g.lineTo(W / 2 - r, H * 0.42);
-    g.arc(W / 2, H * 0.42, r, Math.PI, 0);
-    g.lineTo(W / 2 + r, H * 0.72);
-    g.closePath();
-    g.fillStyle = '#0d0b09';
-    g.fill();
+    outline();
     g.clip();
-    for (let i = 0; i < 4; i++) rect(g, W / 2 - r + ((i + 0.6) * 2 * r) / 4.2, 0, 5, H, IRON);
+    for (let i = 1; i < 4; i++) rect(g, W / 2 - r + (i * 2 * r) / 4 - 4, 0, 8, H, IRON, IRON_DARK, 1);
+    rect(g, 0, H * 0.5 - 4, W, 8, IRON, IRON_DARK, 1);
     g.restore();
   },
   'Square Grid'(g, W, H) {
-    rect(g, W * 0.3, H * 0.32, W * 0.4, H * 0.3, '#0d0b09', IRON, 5);
-    for (let i = 1; i < 4; i++) rect(g, W * (0.3 + i * 0.1) - 2, H * 0.32, 5, H * 0.3, IRON);
-    rect(g, W * 0.3, H * 0.47 - 2, W * 0.4, 5, IRON);
+    const [x, y, w, h] = [W * 0.28, H * 0.3, W * 0.44, H * 0.34];
+    opening(g, () => { g.beginPath(); g.rect(x, y, w, h); }, IRON_DARK, 9);
+    for (let i = 1; i < 4; i++) rect(g, x + (w * i) / 4 - 4, y, 8, h, IRON, IRON_DARK, 1);
+    for (let j = 1; j < 3; j++) rect(g, x, y + (h * j) / 3 - 4, w, 8, IRON, IRON_DARK, 1);
   },
   'Wooden Bars'(g, W, H) {
-    for (const y of [0.38, 0.53, 0.68]) rect(g, W * 0.05, H * y, W * 0.9, H * 0.06, WOOD_DARK, '#2a1a0a', 2);
+    const [x, y, w, h] = [W * 0.14, H * 0.28, W * 0.72, H * 0.42];
+    opening(g, () => { g.beginPath(); g.rect(x, y, w, h); }, WOOD_DARK, 10);
+    for (const f of [0.17, 0.5, 0.83]) rect(g, x - 4, y + h * f - H * 0.025, w + 8, H * 0.05, WOOD, WOOD_DARK, 2);
   },
   'Iron Bars'(g, W, H) {
-    for (let i = 0; i < 5; i++) rect(g, W * (0.2 + i * 0.15), H * 0.08, W * 0.04, H * 0.84, IRON_DARK);
+    const [x, y, w, h] = [W * 0.2, H * 0.26, W * 0.6, H * 0.4];
+    opening(g, () => { g.beginPath(); g.rect(x, y, w, h); }, IRON_DARK, 10);
+    for (let i = 1; i < 5; i++) rect(g, x + (w * i) / 5 - 5, y - 4, 10, h + 8, IRON, IRON_DARK, 1);
   },
   'Red Triangle Lock'(g, W, H) {
     path(g, [[W / 2, H * 0.38], [W * 0.62, H * 0.6], [W * 0.38, H * 0.6]], '#2a0a08', 4, true, '#b8392d');
@@ -541,6 +563,10 @@ export const DOOR_ART = {
     scratches(g, W, H);
   },
 };
+
+// The party (and the light) sees through a portcullis and through the openings above.
+const DOOR_OPENINGS = new Set(['Arched Grid', 'Square Grid', 'Wooden Bars', 'Iron Bars']);
+export const doorSeesThrough = (look) => look?.type === 'Porticullis' || DOOR_OPENINGS.has(look?.ornament);
 
 // Button of a door with one, on its own plate (fixed on the right of the doorway, it does
 // not move with the leaf): the whole canvas.

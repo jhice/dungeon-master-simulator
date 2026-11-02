@@ -21,13 +21,14 @@
 // coordinates, invisible or not: DM draws its "ceiling pit" graphic the same way).
 
 import * as THREE from 'three';
-import { buildLevelMeshes, disposeLevelMeshes } from '../three/level-meshes.js';
+import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry, PIT_DEPTH } from '../three/level-meshes.js';
 import { buildLevelContents, buildLevelCreatures } from '../three/level-contents.js';
 import { createDecor } from './fp-decor.js';
 import { createLights } from './fp-lights.js';
 import { createOcclusion, lightMasks, opaqueTile } from './fp-occlusion.js';
 import { DEFAULT_LIGHTING } from './lighting-settings.js';
-import { isAlcove } from '../../core/ornaments.js';
+import { isAlcove, doorLook } from '../../core/ornaments.js';
+import { doorSeesThrough } from './ornament-art.js';
 import { tileContents } from '../../core/contents.js';
 import { readTheme } from '../three/theme.js';
 import { FACINGS, SIDE_DELTAS } from '../../core/dungeon.js';
@@ -42,7 +43,7 @@ export const VIEW = {
 const ASPECT = 4 / 3;
 const WALL_HEIGHT = 0.7;
 const CEILING_COLOR = '#696660';
-const MIRRORED_PARTS = ['wall', 'floor'];
+const MIRRORED_PARTS = ['wall', 'floor', 'pitRim'];
 
 /**
  * @param {HTMLElement} container element sized by the caller (4/3), the canvas fills it
@@ -85,9 +86,12 @@ export function createFirstPersonRenderer(
   occlusion.enabled = lighting.occlusion ?? DEFAULT_LIGHTING.occlusion;
   let masksStale = true;
 
-  const textures = { wall: stoneTexture(), floor: flagstoneTexture() };
+  const floorTexture = flagstoneTexture();
+  const textures = { wall: stoneTexture(), floor: floorTexture, pitRim: floorTexture, pitShaft: pitShaftTexture() };
   const ceilingTextures = { ceiling: ceilingTexture(false), ceilingPit: ceilingTexture(true) };
-  const decor = createDecor(dungeon, state, WALL_HEIGHT);
+  // Ornaments as 3D objects, hollow pits (fp-models.js, docs/053).
+  let useModels = lighting.ornamentModels ?? DEFAULT_LIGHTING.ornamentModels;
+  const decor = createDecor(dungeon, state, WALL_HEIGHT, useModels);
 
   let level = null; // level index currently built
   let built = null; // { group, meshes, ceiling }
@@ -110,6 +114,7 @@ export function createFirstPersonRenderer(
       wallHeight: WALL_HEIGHT,
       tileAt: state.tileAt,
       game: true,
+      hollowPits: useModels,
     });
     // Items and creatures (still), as markers of the 3D renderer. Mechanisms and texts
     // are not markers here: the party sees the ornaments, inscriptions and doors drawn
@@ -143,7 +148,7 @@ export function createFirstPersonRenderer(
   }
 
   // Ceiling: one tile-sized panel over every tile but walls, with a hole under the open
-  // pits of the level above.
+  // pits of the level above: painted, or real, with the shaft of the pit going up.
   function buildCeiling(levelIndex) {
     const map = dungeon.level(levelIndex);
     const above = levelIndex > 0 ? dungeon.level(levelIndex - 1) : null;
@@ -159,20 +164,30 @@ export function createFirstPersonRenderer(
         lists[pitAbove(x, y) ? 'ceilingPit' : 'ceiling'].push({ x, y });
       }
     }
-    const geometry = new THREE.PlaneGeometry(1, 1).rotateX(Math.PI / 2); // facing down
+    const geometries = { ceiling: new THREE.PlaneGeometry(1, 1).rotateX(Math.PI / 2) }; // facing down
+    geometries.ceilingPit = useModels ? pitRimGeometry(false) : geometries.ceiling;
     const m4 = new THREE.Matrix4();
+    const instanced = (geometry, material, tiles) => {
+      const mesh = new THREE.InstancedMesh(geometry.clone(), material, tiles.length);
+      tiles.forEach(({ x, y }, i) => mesh.setMatrixAt(i, m4.makeTranslation(x + 0.5, WALL_HEIGHT, y + 0.5)));
+      mesh.computeBoundingSphere();
+      return mesh;
+    };
     const meshes = Object.entries(lists)
       .filter(([, tiles]) => tiles.length)
       .map(([part, tiles]) => {
-        const material = new THREE.MeshLambertMaterial({ color: CEILING_COLOR, map: ceilingTextures[part] });
-        const mesh = new THREE.InstancedMesh(geometry.clone(), material, tiles.length);
-        tiles.forEach(({ x, y }, i) => mesh.setMatrixAt(i, m4.makeTranslation(x + 0.5, WALL_HEIGHT, y + 0.5)));
-        mesh.computeBoundingSphere();
+        const map = useModels ? ceilingTextures.ceiling : ceilingTextures[part];
+        const mesh = instanced(geometries[part], new THREE.MeshLambertMaterial({ color: CEILING_COLOR, map }), tiles);
         mesh.userData = { part };
         mirrorOddTiles(mesh, tiles);
         return mesh;
       });
-    geometry.dispose();
+    if (useModels && lists.ceilingPit.length) {
+      const shaft = pitShaftGeometry(PIT_DEPTH).rotateX(Math.PI); // going up
+      meshes.push(instanced(shaft, new THREE.MeshLambertMaterial({ map: textures.pitShaft }), lists.ceilingPit));
+      shaft.dispose();
+    }
+    for (const geometry of new Set(Object.values(geometries))) geometry.dispose();
     return meshes;
   }
 
@@ -210,7 +225,10 @@ export function createFirstPersonRenderer(
   function updateMasks() {
     masksStale = false;
     const map = dungeon.level(level);
-    const opaque = (x, y) => opaqueTile(state.tileAt(level, x, y));
+    const opaque = (x, y) => {
+      const tile = state.tileAt(level, x, y);
+      return opaqueTile(tile) && !(tile?.type === 'door' && doorSeesThrough(doorLook(dungeon, level, x, y)));
+    };
     occlusion.setMasks(lightMasks(map.width, map.height, opaque, lights.sources()), map.width, map.height);
   }
 
@@ -231,6 +249,7 @@ export function createFirstPersonRenderer(
       disposeLevelMeshes(old.ceiling);
       // Decor textures stay in the decor's cache.
       for (const mesh of old.decorMeshes) {
+        if (mesh.userData.model) continue; // shared, kept by fp-models.js
         mesh.geometry.dispose();
         mesh.material.dispose();
       }
@@ -301,6 +320,8 @@ export function createFirstPersonRenderer(
   // --- Mouse: picking the tile in front of the party ------------------------------
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
+  const FLOOR_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const floorPoint = new THREE.Vector3();
   // What the pointer designates: the wall or door in front (an item in the front
   // alcove counts as the wall: its actuators must act too), the creature in front, a
   // floor spot { level, x, y, position (sub-tile), item? }, or null. The floor of the
@@ -328,8 +349,10 @@ export function createFirstPersonRenderer(
     }
     if (info.type === 'wall' || isLeaf(hit)) return front ? { kind: 'front' } : null;
     // Sub-tile under the pointer (items: their own), 0..3 = NW, NE, SE, SW.
-    const u = hit.point.x - info.x;
-    const v = hit.point.z - info.y;
+    // In a hollow pit, where the pointer crosses the level of the floor, not the far wall of the shaft.
+    const at = hit.object.userData.part === 'pitShaft' ? raycaster.ray.intersectPlane(FLOOR_PLANE, floorPoint) ?? hit.point : hit.point;
+    const u = at.x - info.x;
+    const v = at.z - info.y;
     const position = info.item?.position ?? (v < 0.5 ? (u < 0.5 ? 0 : 1) : u < 0.5 ? 3 : 2);
     const spot = { level: info.level, x: info.x, y: info.y, position, item: info.item };
     // The doorway in front: a floor spot if there is something to do there, else the door.
@@ -412,6 +435,12 @@ export function createFirstPersonRenderer(
         built?.group.traverse((object) => {
           if (object.isMesh) for (const material of [object.material].flat()) material.needsUpdate = true;
         });
+        decor.updateMaterials();
+      }
+      if ('ornamentModels' in changes) {
+        useModels = changes.ornamentModels;
+        decor.setModels(useModels);
+        if (built) build(level);
       }
       render();
     },
@@ -542,6 +571,33 @@ function flagstoneTexture() {
       g.fillRect(x + 2, y + 2, w - 4, h - 4);
     }
     speckle(g, size, rand, 500);
+  });
+}
+
+// The inside of a pit: stone blocks sinking into the dark (black at the bottom, v = 0), under a
+// pale lip at the top (v = 1). Its walls are in shadow: the blocks are not lit by much.
+function pitShaftTexture() {
+  return canvasTexture(128, (g, size) => {
+    const rand = random(31);
+    const rows = 4;
+    const rh = size / rows;
+    g.fillStyle = '#39362f';
+    g.fillRect(0, 0, size, size);
+    for (let r = 0; r < rows; r++) {
+      const shift = (r % 2) * 22;
+      for (let c = -1; c < 3; c++) {
+        const shade = 120 + Math.floor(rand() * 45);
+        g.fillStyle = `rgb(${shade} ${shade - 4} ${shade - 12})`;
+        g.fillRect(c * 44 + shift + 2, r * rh + 2, 40, rh - 4);
+      }
+    }
+    const dark = g.createLinearGradient(0, 0, 0, size);
+    dark.addColorStop(0, 'rgb(0 0 0 / 0.1)');
+    dark.addColorStop(0.75, 'rgb(0 0 0 / 1)');
+    g.fillStyle = dark;
+    g.fillRect(0, 0, size, size);
+    g.fillStyle = '#a8a298';
+    g.fillRect(0, 0, size, 3);
   });
 }
 
