@@ -12,9 +12,10 @@
 //
 // `game: true` builds what the party sees instead (first-person view): only
 // the with-states look, and hidden things stay hidden (closed or imaginary
-// fake walls look like walls, invisible pits and teleporters are not drawn; a visible
-// teleporter fills its whole tile, wall high, translucent). Outside the map is solid
-// rock, as in DM: a ring of walls surrounds the level (info `outside: true`).
+// fake walls look like walls, invisible pits and teleporters are not drawn, a closed
+// pit is a plain floor, as in DM (ReDMCSB, F172); a visible teleporter fills its whole
+// tile, wall high, translucent). Outside the map is solid rock, as in DM: a ring of
+// walls surrounds the level (info `outside: true`).
 
 import * as THREE from 'three';
 import { tileState, doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
@@ -26,6 +27,9 @@ const FLOOR_THICKNESS = 0.05;
 const STEPS = 4;
 const PIT_SIZE = 0.76; // side of the hole of a pit
 export const PIT_DEPTH = 0.6; // of its shaft, in the first-person view
+// Alcove: width, bottom and top (shares of the wall height), depth into the wall (tiles).
+export const NICHE = { width: 0.5, bottom: 0.33, top: 0.75, depth: 0.2 };
+const NICHE_ARCH = { rise: 0.15, segments: 12 }; // height of the arch of an arched alcove
 const dimensions = (wallHeight) => ({ wall: wallHeight, door: wallHeight, teleporter: wallHeight * 0.9 });
 // Part of the leaf still visible when an open door is raised into the lintel.
 const RAISED_DOOR_VISIBLE = 0.15;
@@ -67,6 +71,68 @@ export function pitShaftGeometry(depth) {
   return box;
 }
 
+// The opening of an alcove on the face of a wall (x across, y from the middle of the wall), counterclockwise.
+function nicheOutline(wallHeight, arched) {
+  const x = NICHE.width / 2;
+  const bottom = (NICHE.bottom - 0.5) * wallHeight;
+  const top = (NICHE.top - 0.5) * wallHeight;
+  if (!arched) return [[-x, bottom], [x, bottom], [x, top], [-x, top]].map(([u, v]) => new THREE.Vector2(u, v));
+  const points = [new THREE.Vector2(-x, bottom), new THREE.Vector2(x, bottom)];
+  for (let i = 0; i <= NICHE_ARCH.segments; i++) {
+    const a = (Math.PI * i) / NICHE_ARCH.segments;
+    points.push(new THREE.Vector2(x * Math.cos(a), top - NICHE_ARCH.rise + NICHE_ARCH.rise * Math.sin(a)));
+  }
+  return points;
+}
+
+// The face of a wall tile with the opening of an alcove (facing +z, at the edge of the tile), with the UVs of a box face.
+function nicheFaceGeometry(wallHeight, arched) {
+  const [x, y] = [0.5, wallHeight / 2];
+  const shape = new THREE.Shape([[-x, -y], [x, -y], [x, y], [-x, y]].map(([u, v]) => new THREE.Vector2(u, v)));
+  shape.holes.push(new THREE.Path(nicheOutline(wallHeight, arched)));
+  const geometry = new THREE.ShapeGeometry(shape);
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) + 0.5, uv.getY(i) / wallHeight + 0.5);
+  return geometry.translate(0, 0, 0.5);
+}
+
+// The inside of an alcove, seen from the room: its sides and its back. Texture: the sides take
+// the upper half (v = 1 at the opening, v = 0.5 at the back), the back takes the lower half.
+function nicheInsideGeometry(wallHeight, arched) {
+  const outline = nicheOutline(wallHeight, arched);
+  const [mouth, back] = [0.5, 0.5 - NICHE.depth];
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const vertex = (x, y, z, n, u, v) => {
+    positions.push(x, y, z);
+    normals.push(...n);
+    uvs.push(u, v);
+  };
+  outline.forEach((a, i) => {
+    const b = outline[(i + 1) % outline.length];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const n = [-(b.y - a.y) / length, (b.x - a.x) / length, 0]; // on the left of a counterclockwise outline: inside
+    const [ua, ub] = [i / outline.length, (i + 1) / outline.length];
+    vertex(a.x, a.y, mouth, n, ua, 1);
+    vertex(b.x, b.y, back, n, ub, 0.5);
+    vertex(a.x, a.y, back, n, ua, 0.5);
+    vertex(a.x, a.y, mouth, n, ua, 1);
+    vertex(b.x, b.y, mouth, n, ub, 1);
+    vertex(b.x, b.y, back, n, ub, 0.5);
+  });
+  for (const [i, j, k] of THREE.ShapeUtils.triangulateShape(outline, [])) {
+    for (const { x, y } of [outline[i], outline[j], outline[k]]) {
+      vertex(x, y, back, [0, 0, 1], x / NICHE.width + 0.5, ((y / wallHeight + 0.5 - NICHE.bottom) / (NICHE.top - NICHE.bottom)) * 0.5);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  return geometry;
+}
+
 /**
  * Part definitions: geometry, colour key in the theme, and a function that
  * pushes instance matrices for a tile.
@@ -97,6 +163,12 @@ function partDefinitions(theme, h) {
     // A hollow pit (first-person view): no floor, the rim around the hole and the shaft under it.
     pitRim: { geometry: pitRimGeometry(), color: theme.floor },
     pitShaft: { geometry: pitShaftGeometry(PIT_DEPTH), color: '#ffffff' },
+    // A wall tile with an alcove (first-person view): its faces one by one, as no box can have a hole.
+    wallFace: { geometry: new THREE.PlaneGeometry(1, h.wall).translate(0, 0, 0.5), color: theme.wall },
+    nicheFaceSquare: { geometry: nicheFaceGeometry(h.wall, false), color: theme.wall },
+    nicheFaceArched: { geometry: nicheFaceGeometry(h.wall, true), color: theme.wall },
+    nicheInsideSquare: { geometry: nicheInsideGeometry(h.wall, false), color: '#ffffff' },
+    nicheInsideArched: { geometry: nicheInsideGeometry(h.wall, true), color: '#ffffff' },
     teleporterGame: {
       geometry: new THREE.BoxGeometry(0.996, h.wall - 0.004, 0.996),
       color: theme.teleporter,
@@ -117,11 +189,13 @@ function partDefinitions(theme, h) {
  * @param {(level, x, y) => object} [options.tileAt] tile source (default: the dungeon; the simulation passes its state)
  * @param {boolean} [options.game=false] first-person look, see above
  * @param {boolean} [options.hollowPits=false] with `game`: an open visible pit is a real hole
+ * @param {(x, y) => Array<{ face: number, arched: boolean }>} [options.niches] with `game`: the alcoves
+ *   of a wall tile (faces N, E, S, W), real recesses in the wall
  * @returns {{ group: THREE.Group, meshes: Array<THREE.InstancedMesh|THREE.LineSegments> }}
  * Each mesh has userData.part, userData.variant, userData.baseOpacity and, for
  * instanced meshes, userData.tiles[instanceId] = tile info (for hovering).
  */
-export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false, hollowPits = false } = {}) {
+export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false, hollowPits = false, niches } = {}) {
   const map = dungeon.level(levelIndex);
   const h = dimensions(wallHeight);
   const parts = partDefinitions(theme, h);
@@ -154,7 +228,9 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
       const pz = gy + 0.5 - center.z;
 
       if (tile.type === 'wall') {
-        add('wall', info, [px, h.wall / 2, pz]);
+        const recesses = niches?.(x, y) ?? [];
+        if (recesses.length) addNicheWall(add, info, px, pz, h, recesses);
+        else add('wall', info, [px, h.wall / 2, pz]);
         continue;
       }
       if (tile.type === 'fakewall') {
@@ -173,7 +249,7 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
       }
       add('floor', info, [px, -FLOOR_THICKNESS / 2, pz]);
       if (tile.type === 'pit' && game) {
-        if (!tile.detail.invisible) add(pitPart(tile.detail), info, [px, 0.011, pz]);
+        if (tile.detail.open && !tile.detail.invisible) add(pitPart(tile.detail), info, [px, 0.011, pz]);
       } else if (tile.type === 'pit') addVariants('pit', pitPart(tile.detail), info, [px, 0.011, pz]);
       if (tile.type === 'teleporter' && !game) add('teleporter', info, [px, h.teleporter / 2, pz]);
       if (tile.type === 'teleporter' && game && tile.detail.visible && tile.detail.open) add('teleporterGame', info, [px, h.wall / 2, pz]);
@@ -223,6 +299,16 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
   }
   for (const def of Object.values(parts)) def.geometry.dispose();
   return { group, meshes };
+}
+
+// A wall tile with alcoves: one part per face, turned from +z to its side (N, E, S, W).
+function addNicheWall(add, info, px, pz, h, recesses) {
+  [Math.PI, Math.PI / 2, 0, -Math.PI / 2].forEach((rotation, face) => {
+    const niche = recesses.find((r) => r.face === face);
+    const kind = niche?.arched ? 'Arched' : 'Square';
+    add(niche ? `nicheFace${kind}` : 'wallFace', info, [px, h.wall / 2, pz], [1, 1, 1], rotation);
+    if (niche) add(`nicheInside${kind}`, info, [px, h.wall / 2, pz], [1, 1, 1], rotation);
+  });
 }
 
 // Pit look with states: open hole or closed lid, faded when invisible.

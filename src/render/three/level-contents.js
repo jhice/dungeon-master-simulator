@@ -15,6 +15,7 @@ const CHAMPION_SHEET = /\n[MF]\n[A-P]{12}\n/;
 const ITEM_SIZE = 0.16;
 const ITEM_HEIGHT = 0.1;
 const CREATURE_RADIUS = 0.13;
+const ALCOVE_ROW = [0, -0.17, 0.17]; // places of the items along the width of a recess
 const NOSE_SIZE = [0.07, 0.07, 0.1]; // facing marker, in front of the cylinder
 const NOSE_COLOR = '#1a1a1a';
 // Offset of a wall item from the wall centre, towards the face it lies on.
@@ -28,12 +29,13 @@ const FACE_DIRECTION = [
 /**
  * @param {object} options
  * @param {number} options.wallHeight
+ * @param {number} [options.alcoveDepth] the alcoves are real recesses of this depth: their items stand inside
  * @param {(level, x, y) => object|null} [options.contentsAt] contents of a tile (default: dungeon.json;
  *   the simulation passes the items lying there now)
  * @returns {Array<THREE.InstancedMesh>} meshes with userData { part, layer, variant: 'all', tiles, baseOpacity };
  *   for items, tiles[i].item is the item ({ kind, index, position }); creatures: see buildLevelCreatures()
  */
-export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, contentsAt = (l, x, y) => tileContents(dungeon, l, x, y) }) {
+export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, contentsAt = (l, x, y) => tileContents(dungeon, l, x, y), alcoveDepth = 0 }) {
   const map = dungeon.level(levelIndex);
   const items = []; // { position: [x, y, z], color, info }
   const rings = []; // { position, info }
@@ -94,12 +96,21 @@ export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, co
       let base;
       if (onWall) {
         const [dx, dz] = FACE_DIRECTION[item.position];
-        base = [ox + 0.5 + dx * (0.5 + ITEM_SIZE / 2), wallHeight * 0.35, oz + 0.5 + dz * (0.5 + ITEM_SIZE / 2)];
+        const out = alcoveDepth ? 0.5 - alcoveDepth / 2 : 0.5 + ITEM_SIZE / 2; // in the recess, or against the face
+        base = [ox + 0.5 + dx * out, wallHeight * 0.35, oz + 0.5 + dz * out];
       } else {
         const [u, v] = subcellOffset(item.position);
         base = [ox + u, 0, oz + v];
       }
       const position = [base[0], base[1] + ITEM_HEIGHT / 2 + stack.length * ITEM_HEIGHT * 1.05, base[2]];
+      if (onWall && alcoveDepth) {
+        // A recess is low: side by side along its width, then a row above.
+        const [dx, dz] = FACE_DIRECTION[item.position];
+        const along = ALCOVE_ROW[stack.length % ALCOVE_ROW.length];
+        position[0] -= dz * along;
+        position[1] = base[1] + ITEM_HEIGHT / 2 + Math.floor(stack.length / ALCOVE_ROW.length) * ITEM_HEIGHT * 1.05;
+        position[2] += dx * along;
+      }
       items.push({ position, color: CATEGORY_COLORS[item.category], info: { ...info, item } });
       if (item.contents?.length) rings.push({ position: [position[0], position[1] + ITEM_HEIGHT, position[2]], info });
       stack.push(item);

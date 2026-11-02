@@ -1,7 +1,7 @@
 // What the party sees on the walls, the floors and the doors of a level, drawn
 // for real in the first-person view (ornament-art.js gives the drawings):
 // - wall ornaments: the one each face shows (ornaments.js), as a plane on the face;
-// - alcoves: a dark niche with a sill;
+// - alcoves: a dark niche with a sill (with the 3D models, level-meshes.js digs the niche: only the sill);
 // - inscriptions and messages shown: engraved letters;
 // - floor ornaments: a decal on the floor (pressure pads, moss…);
 // - doors: one leaf per door, with the texture of its type and its ornament (a broken
@@ -16,6 +16,7 @@ import { shownOrnament, shownFloorOrnament, isAlcove, doorLook } from '../../cor
 import { WALL_ART, FLOOR_ART, DOOR_TYPES, DOOR_ART, doorButton, brokenDoor } from './ornament-art.js';
 import { doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
 import { createModels } from './fp-models.js';
+import { NICHE } from '../three/level-meshes.js';
 
 // Plane position and rotation per face (N, E, S, W): offset from the tile centre, rotation around y.
 const FACE_PLANES = [
@@ -28,9 +29,6 @@ const ORNAMENT_GAP = 0.004; // in front of the face, against z-fighting
 const MODEL_GAP = 0.001; // the back of a 3D model, against the face
 const INSCRIPTION_GAP = 0.006; // over an ornament of the same face
 const FLOOR_GAP = 0.003;
-// Alcove: niche bottom / top, as fractions of the wall height (items on a wall stand
-// at 35 % of its height, see level-contents.js).
-const NICHE = { width: 0.5, bottom: 0.33, top: 0.75 };
 const DOOR_THICKNESS = 0.03;
 const RAISED_DOOR_VISIBLE = 0.15; // part of an open door still in the doorway, as in level-meshes.js
 const PARTED_DOOR_VISIBLE = 0.1; // part of each half of an open horizontal door still in the doorway (tiles; the button posts cover 0.1)
@@ -107,12 +105,13 @@ export function createDecor(dungeon, state, wallHeight, useModels = false) {
     const { dx, dz, rotation } = FACE_PLANES[face];
     const out = 1 + ORNAMENT_GAP / 0.5;
     const height = (NICHE.top - NICHE.bottom) * wallHeight;
-    const hole = new THREE.Mesh(new THREE.PlaneGeometry(NICHE.width, height), new THREE.MeshLambertMaterial({ color: 0x0c0a08 }));
-    hole.position.set(x + 0.5 + dx * out, NICHE.bottom * wallHeight + height / 2, y + 0.5 + dz * out);
-    hole.rotation.y = rotation;
     const sill = new THREE.Mesh(new THREE.BoxGeometry(NICHE.width + 0.06, 0.025, 0.05), new THREE.MeshLambertMaterial({ color: 0x8a8070 }));
     sill.position.set(x + 0.5 + dx * (1 + 0.05), NICHE.bottom * wallHeight, y + 0.5 + dz * (1 + 0.05));
     sill.rotation.y = rotation;
+    if (useModels) return [sill];
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(NICHE.width, height), new THREE.MeshLambertMaterial({ color: 0x0c0a08 }));
+    hole.position.set(x + 0.5 + dx * out, NICHE.bottom * wallHeight + height / 2, y + 0.5 + dz * out);
+    hole.rotation.y = rotation;
     return [hole, sill];
   }
 
@@ -234,12 +233,22 @@ export function createDecor(dungeon, state, wallHeight, useModels = false) {
             if (tile.detail) meshes.push(...inscriptions(tile.detail, x, y));
           } else if (tile.type === 'door') {
             doors.push(...door(level, x, y, tile, map));
-          } else if (tile.type !== 'pit' && tile.type !== 'stairs') {
-            meshes.push(...floorOrnament(level, x, y));
+          } else if (tile.type !== 'stairs' && !(tile.type === 'pit' && tile.detail.open && !tile.detail.invisible)) {
+            meshes.push(...floorOrnament(level, x, y)); // a closed or invisible pit looks like a floor
           }
         }
       }
       return { meshes, doors, torchHolders };
+    },
+    /** The alcoves of a wall tile, to dig them when the 3D models are on: [{ face, arched }]. */
+    niches(level, x, y) {
+      const tile = dungeon.tileAt(level, x, y);
+      if (!tile?.detail) return [];
+      const list = [];
+      for (let face = 0; face < 4; face++) {
+        if (isAlcove(dungeon, level, x, y, face, state.actuatorsAt)) list.push({ face, arched: shownOrnament(dungeon, level, x, y, face, state.actuatorsAt, state.textVisible) === 'Arched Alcove' });
+      }
+      return list;
     },
     /** The 3D models on or off: takes effect at the next build. */
     setModels(enabled) {

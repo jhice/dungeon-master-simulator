@@ -21,7 +21,7 @@
 // coordinates, invisible or not: DM draws its "ceiling pit" graphic the same way).
 
 import * as THREE from 'three';
-import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry, PIT_DEPTH } from '../three/level-meshes.js';
+import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry, PIT_DEPTH, NICHE } from '../three/level-meshes.js';
 import { buildLevelContents, buildLevelCreatures } from '../three/level-contents.js';
 import { createDecor } from './fp-decor.js';
 import { createLights } from './fp-lights.js';
@@ -43,7 +43,7 @@ export const VIEW = {
 const ASPECT = 4 / 3;
 const WALL_HEIGHT = 0.7;
 const CEILING_COLOR = '#696660';
-const MIRRORED_PARTS = ['wall', 'floor', 'pitRim'];
+const MIRRORED_PARTS = ['wall', 'floor', 'pitRim', 'wallFace', 'nicheFaceSquare', 'nicheFaceArched'];
 
 /**
  * @param {HTMLElement} container element sized by the caller (4/3), the canvas fills it
@@ -87,7 +87,19 @@ export function createFirstPersonRenderer(
   let masksStale = true;
 
   const floorTexture = flagstoneTexture();
-  const textures = { wall: stoneTexture(), floor: floorTexture, pitRim: floorTexture, pitShaft: pitShaftTexture() };
+  const wallTexture = stoneTexture();
+  const nicheTexture = nicheInsideTexture();
+  const textures = {
+    wall: wallTexture,
+    wallFace: wallTexture,
+    nicheFaceSquare: wallTexture,
+    nicheFaceArched: wallTexture,
+    nicheInsideSquare: nicheTexture,
+    nicheInsideArched: nicheTexture,
+    floor: floorTexture,
+    pitRim: floorTexture,
+    pitShaft: pitShaftTexture(),
+  };
   const ceilingTextures = { ceiling: ceilingTexture(false), ceilingPit: ceilingTexture(true) };
   // Ornaments as 3D objects, hollow pits (fp-models.js, docs/053).
   let useModels = lighting.ornamentModels ?? DEFAULT_LIGHTING.ornamentModels;
@@ -115,11 +127,12 @@ export function createFirstPersonRenderer(
       tileAt: state.tileAt,
       game: true,
       hollowPits: useModels,
+      niches: useModels ? (x, y) => decor.niches(levelIndex, x, y) : undefined,
     });
     // Items and creatures (still), as markers of the 3D renderer. Mechanisms and texts
     // are not markers here: the party sees the ornaments, inscriptions and doors drawn
     // by fp-decor.js (a plate or a button without graphic stays invisible, as in DM).
-    for (const mesh of seenMeshes(buildLevelContents(dungeon, levelIndex, center, { wallHeight: WALL_HEIGHT, contentsAt: seenContents }))) {
+    for (const mesh of seenMeshes(buildLevelContents(dungeon, levelIndex, center, { wallHeight: WALL_HEIGHT, contentsAt: seenContents, alcoveDepth: useModels ? NICHE.depth : 0 }))) {
       group.add(mesh);
       meshes.push(mesh);
     }
@@ -598,6 +611,32 @@ function pitShaftTexture() {
     g.fillRect(0, 0, size, size);
     g.fillStyle = '#a8a298';
     g.fillRect(0, 0, size, 3);
+  });
+}
+
+// The inside of an alcove: the sides (upper half) darken towards the back, the back (lower half)
+// is stone in the shade. No shadow here: the texture gives the depth.
+function nicheInsideTexture() {
+  return canvasTexture(128, (g, size) => {
+    const rand = random(41);
+    const half = size / 2;
+    const rows = 3;
+    const rh = half / rows;
+    g.fillStyle = '#2c2a26';
+    g.fillRect(0, half, size, half);
+    for (let r = 0; r < rows; r++) {
+      const shift = (r % 2) * 22;
+      for (let c = -1; c < 3; c++) {
+        const shade = 74 + Math.floor(rand() * 22);
+        g.fillStyle = `rgb(${shade} ${shade - 3} ${shade - 9})`;
+        g.fillRect(c * 44 + shift + 2, half + r * rh + 2, 40, rh - 4);
+      }
+    }
+    const side = g.createLinearGradient(0, 0, 0, half);
+    side.addColorStop(0, '#6e6a62');
+    side.addColorStop(1, '#26241f');
+    g.fillStyle = side;
+    g.fillRect(0, 0, size, half);
   });
 }
 
