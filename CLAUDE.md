@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-02, après la doc 054.
+> Mis à jour le 2026-11-02, après la doc 055.
 
 ### Données et visualiseur
 
@@ -47,6 +47,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Renderers :** leur contrat est dans `src/render/renderer.js`. Il y en a trois : ASCII (outil en ligne de commande), 2D (DOM/CSS), 3D (Three.js).
   - La 2D affiche les coordonnées locales, et globales en repère global, sur les bords (doc 027), en option dans le panneau (doc 048).
   - Clic droit sur une case des cartes 2D et 3D : menu de test (se téléporter, ramasser les objets, activer les actuators) ; bouton « Valeurs par défaut » et option « Invincibilité » dans le panneau (doc 049).
+  - Modale des raccourcis clavier, touche `H` ou bouton de la barre du haut (`src/ui/shortcuts-modal.js`, doc 055).
 - **Logique du donjon :** le graphe des actuators, `buildLogic()` dans `src/core/logic.js`, est décrit dans la doc 009.
 - **Docs :** toutes les docs sont dans `docs/`. À lire en priorité : 009 (logique) et 002 (format JSON) ; les sources sont dans 000.
 

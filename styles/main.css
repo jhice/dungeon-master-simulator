@@ -39,6 +39,123 @@ body {
   font-weight: 600;
 }
 
+.shortcuts-button {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #222;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.shortcuts-button:hover {
+  border-color: var(--accent);
+}
+
+.shortcuts-button kbd,
+.shortcuts-modal kbd {
+  padding: 0 4px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  font: 11px ui-monospace, monospace;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.shortcuts-modal {
+  width: min(52rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: rgb(14 14 14 / 0.97);
+  color: var(--fg);
+  font-size: 0.85rem;
+}
+
+.shortcuts-modal:focus {
+  outline: none;
+}
+
+.shortcuts-modal::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+
+.shortcuts-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.shortcuts-modal h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.shortcuts-modal header button {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shortcuts-modal header button:hover {
+  color: var(--accent);
+}
+
+.shortcuts-body {
+  padding: 0.75rem 1rem 1rem;
+  columns: 2 20rem;
+  column-gap: 2rem;
+}
+
+.shortcuts-body section {
+  break-inside: avoid;
+  margin-bottom: 0.9rem;
+}
+
+.shortcuts-body h3 {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.shortcuts-body ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcuts-body li {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.1rem 0;
+}
+
+.shortcut-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.shortcuts-body p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .hint,
 .legend {
   color: var(--muted);

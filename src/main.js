@@ -14,6 +14,7 @@ import { createInventoryPanel } from './ui/inventory-panel.js';
 import { createTooltip } from './ui/tooltip.js';
 import { createContextMenu } from './ui/context-menu.js';
 import { createTextsPanel } from './ui/texts-panel.js';
+import { createShortcutsModal } from './ui/shortcuts-modal.js';
 import { loadPreferences, savePreferences } from './ui/preferences.js';
 import { createGameWindow } from './ui/game-window.js';
 import { createChampionPanel } from './ui/champion-panel.js';
@@ -595,7 +596,12 @@ const GLOBAL_KEYS = {
   f: teleportToSelection,
 };
 
+const shortcuts = createShortcutsModal(document.body, document.getElementById('shortcuts-button'));
+
 bindKeys((key, event) => {
+  // The modal keeps the keyboard: nothing moves behind it. Escape is closed natively by <dialog>.
+  if (shortcuts.isOpen()) return key.toLowerCase() === 'h' ? shortcuts.toggle : undefined;
+  if (key.toLowerCase() === 'h') return shortcuts.toggle;
   if (mounting || !renderer) return undefined;
   // In the game, movement keys (by physical key) come first; Space clicks in front of the party.
   const move = game && moveKey(event);
