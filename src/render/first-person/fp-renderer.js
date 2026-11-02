@@ -136,7 +136,7 @@ export function createFirstPersonRenderer(
       group.add(mesh);
       meshes.push(mesh);
     }
-    const { meshes: decorMeshes, doors, torchHolders } = decor.build(levelIndex);
+    const { meshes: decorMeshes, doors, torchHolders, pads } = decor.build(levelIndex);
     for (const mesh of [...decorMeshes, ...doors]) group.add(mesh);
     lights.setHolders(torchHolders);
     meshes.push(...doors); // pickable, disposed with the level meshes
@@ -156,7 +156,7 @@ export function createFirstPersonRenderer(
     scene.add(group);
     group.traverse(patchMaterials);
     masksStale = true;
-    built = { group, meshes, ceiling, decorMeshes };
+    built = { group, meshes, ceiling, decorMeshes, pads };
     lights.setGlowing(meshes.filter((m) => m.userData.part === 'teleporterGame').map((m) => m.material));
   }
 
@@ -315,6 +315,7 @@ export function createFirstPersonRenderer(
   // On demand, at once (something changed).
   function render() {
     if (occlusion.enabled && masksStale && built) updateMasks();
+    if (built) decor.pressPads(built.pads, level, party);
     renderer.render(scene, camera);
     if (retired.length) disposeRetired(); // the new level holds the shader programs now
   }

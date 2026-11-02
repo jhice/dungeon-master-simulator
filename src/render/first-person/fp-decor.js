@@ -3,7 +3,7 @@
 // - wall ornaments: the one each face shows (ornaments.js), as a plane on the face;
 // - alcoves: a dark niche with a sill (with the 3D models, level-meshes.js digs the niche: only the sill);
 // - inscriptions and messages shown: engraved letters;
-// - floor ornaments: a decal on the floor (pressure pads, moss…);
+// - floor ornaments: a decal on the floor (moss…), or a 3D model (a pressure pad, pressed by what stands on it);
 // - doors: one leaf per door, with the texture of its type and its ornament (a broken
 //   door: the leaf with a jagged hole, in place), at its step (docs/028): a vertical door
 //   rises, a horizontal one parts in two halves that slide into the walls; the button of
@@ -17,6 +17,7 @@ import { WALL_ART, FLOOR_ART, DOOR_TYPES, DOOR_ART, doorButton, brokenDoor } fro
 import { doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
 import { createModels } from './fp-models.js';
 import { NICHE } from '../three/level-meshes.js';
+import { creatureInfo } from '../../core/creature-info.js';
 
 // Plane position and rotation per face (N, E, S, W): offset from the tile centre, rotation around y.
 const FACE_PLANES = [
@@ -129,10 +130,16 @@ export function createDecor(dungeon, state, wallHeight, useModels = false) {
     return meshes;
   }
 
-  function floorOrnament(level, x, y) {
+  function floorOrnament(level, x, y, pads) {
     const name = shownFloorOrnament(dungeon, level, x, y, state.actuatorsAt);
     const art = name && FLOOR_ART[name];
     if (!art) return [];
+    const model = useModels && models.buildFloor(name, art.size);
+    if (model) {
+      model.position.set(x + 0.5, 0, y + 0.5);
+      if (model.userData.heights) pads.push({ x, y, plate: model.getObjectByName('plate'), heights: model.userData.heights });
+      return [model];
+    }
     const map = texture(`floor:${name}`, TEXTURE_SIZE, TEXTURE_SIZE, art.draw);
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(art.size, art.size), new THREE.MeshLambertMaterial({ map, transparent: true, depthWrite: false }));
     mesh.rotation.x = -Math.PI / 2; // facing up
@@ -218,13 +225,15 @@ export function createDecor(dungeon, state, wallHeight, useModels = false) {
      * Decor of a level: { meshes, doors, torchHolders }. `meshes` are plain meshes (ornaments,
      * niches, inscriptions, floor decals); `doors` are pickable instanced meshes. Their textures
      * stay in the cache: dispose geometries and materials only. `torchHolders`: the wall faces
-     * showing a full torch holder, [{ x, y, face }] (lights of the view, docs/035).
+     * showing a full torch holder, [{ x, y, face }] (lights of the view, docs/035). `pads`: the pressure
+     * pads, for pressPads().
      */
     build(level) {
       const map = dungeon.level(level);
       const meshes = [];
       const doors = [];
       const torchHolders = [];
+      const pads = [];
       for (let y = 0; y < map.height; y++) {
         for (let x = 0; x < map.width; x++) {
           const tile = state.tileAt(level, x, y);
@@ -234,11 +243,19 @@ export function createDecor(dungeon, state, wallHeight, useModels = false) {
           } else if (tile.type === 'door') {
             doors.push(...door(level, x, y, tile, map));
           } else if (tile.type !== 'stairs' && !(tile.type === 'pit' && tile.detail.open && !tile.detail.invisible)) {
-            meshes.push(...floorOrnament(level, x, y)); // a closed or invisible pit looks like a floor
+            meshes.push(...floorOrnament(level, x, y, pads)); // a closed or invisible pit looks like a floor
           }
         }
       }
-      return { meshes, doors, torchHolders };
+      return { meshes, doors, torchHolders, pads };
+    },
+    /** Each pressure pad goes down under the party, an item or a creature that does not levitate (as the plates, sim/logic.js). */
+    pressPads(pads, level, party) {
+      for (const { x, y, plate, heights } of pads) {
+        const group = state.groupAt(level, x, y);
+        const pressed = (party?.level === level && party.x === x && party.y === y) || state.itemsAt(level, x, y).length > 0 || (group && !creatureInfo(group.type).levitation);
+        plate.position.y = pressed ? heights.pressed : heights.up;
+      }
     },
     /** The alcoves of a wall tile, to dig them when the 3D models are on: [{ face, arched }]. */
     niches(level, x, y) {

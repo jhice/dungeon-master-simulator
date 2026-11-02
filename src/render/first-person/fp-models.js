@@ -15,9 +15,13 @@ const CARVED_STONE = '#6a5f52';
 const BONE = '#9a9278';
 const TOOTH = '#e8e0c8';
 const WATER = '#4f8fd0';
+const OOZE = '#5a8c28';
+const LORD_DARK = '#2a2a32';
 const PAINT_GAP = 0.002; // what is painted flat on the wall, against z-fighting
 const LEVER_TILT = THREE.MathUtils.degToRad(35); // from the wall: up, or down
 const TORCH_TILT = THREE.MathUtils.degToRad(12); // top away from the wall
+// A pressure pad: the top of its frame over the floor, the top of its plate up or pressed (tiles).
+const PAD = { frame: 0.012, up: 0.034, pressed: 0.006, thickness: 0.05 };
 
 export function createModels() {
   const geometries = new Set();
@@ -456,6 +460,209 @@ export function createModels() {
     return group;
   }
 
+  // Rivets at the four corners of a plate.
+  function rivets(group, x, y, z, r = 0.005) {
+    for (const sx of [-1, 1]) {
+      for (const sy of [-1, 1]) group.add(part(sphere(r), lit(IRON_LIGHT), [sx * x, sy * y, z]));
+    }
+  }
+
+  // A brass plate with a slot, and a raised lip around the slot.
+  function coinSlot(w, h) {
+    const group = new THREE.Group();
+    const [plateW, plateH] = [w * 0.54, h * 0.66];
+    const [slotW, slotH] = [w * 0.08, h * 0.38];
+    const thickness = 0.01;
+    group.add(part(plate(plateW, plateH, thickness, { holes: [roundedHole(slotW, slotH, 0.003)], radius: 0.01 }), lit(BRASS)));
+    group.add(part(new THREE.PlaneGeometry(slotW + 0.006, slotH + 0.006), lit(HOLE_COLOR), [0, 0, PAINT_GAP]));
+    const lip = plate(slotW + 0.018, slotH + 0.018, 0.005, { holes: [roundedHole(slotW, slotH, 0.003)], radius: 0.006, bevel: 0.001 });
+    group.add(part(lip, lit(BRONZE), [0, 0, thickness]));
+    rivets(group, plateW * 0.38, plateH * 0.41, thickness);
+    return group;
+  }
+
+  // A stone plate pierced by a diamond, set in brass.
+  function gemHole(w, h) {
+    const group = new THREE.Group();
+    const [plateW, plateH] = [w * 0.6, h * 0.72];
+    const [rx, ry] = [w * 0.13, h * 0.2];
+    const thickness = 0.012;
+    const hole = new THREE.Path([[0, -ry], [rx, 0], [0, ry], [-rx, 0]].map(([x, y]) => new THREE.Vector2(x, y)));
+    group.add(part(plate(plateW, plateH, thickness, { holes: [hole], radius: 0.012 }), lit(STONE_DARK)));
+    group.add(part(new THREE.PlaneGeometry(rx * 2, ry * 2), lit(HOLE_COLOR), [0, 0, PAINT_GAP]));
+    group.add(part(new THREE.TorusGeometry(1, 0.05, 6, 4).scale(rx, ry, 1), lit(BRASS), [0, 0, thickness]));
+    rivets(group, plateW * 0.4, plateH * 0.42, thickness);
+    return group;
+  }
+
+  // A hook on its plate: an arm out of the wall, a shank going down, a curve going up to its tip.
+  function hook(w, h) {
+    const group = new THREE.Group();
+    const top = h * 0.22;
+    const [armZ, bottom, r, tube] = [0.03, -h * 0.1, 0.024, 0.0055];
+    group.add(part(plate(w * 0.2, h * 0.2, 0.008, { radius: 0.006 }), lit(IRON_DARK), [0, top, 0]));
+    group.add(part(alongZ(rod(tube, armZ)), lit(IRON_LIGHT), [0, top, armZ / 2]));
+    group.add(part(sphere(tube), lit(IRON_LIGHT), [0, top, armZ]));
+    group.add(part(rod(tube, top - bottom), lit(IRON_LIGHT), [0, (top + bottom) / 2, armZ]));
+    const sweep = Math.PI * 1.15;
+    const curve = new THREE.TorusGeometry(r, tube, 8, 18, sweep).rotateZ(Math.PI).rotateY(-Math.PI / 2);
+    group.add(part(curve, lit(IRON_LIGHT), [0, bottom, armZ + r]));
+    group.add(part(sphere(tube * 1.15), lit(IRON_LIGHT), [0, bottom + r * Math.sin(Math.PI + sweep), armZ + r + r * Math.cos(Math.PI + sweep)]));
+    return group;
+  }
+
+  // A ring hanging from a staple, on its plate.
+  function wallRing(w, h, color, tube) {
+    const group = new THREE.Group();
+    const top = h * 0.28;
+    const R = w * 0.2;
+    group.add(part(plate(w * 0.22, h * 0.18, 0.008, { radius: 0.006 }), lit(IRON_DARK), [0, top, 0]));
+    group.add(part(new THREE.TorusGeometry(0.013, 0.004, 6, 14).rotateY(Math.PI / 2), lit(IRON_LIGHT), [0, top - 0.004, 0.012]));
+    group.add(part(new THREE.TorusGeometry(R, tube, 10, 30), lit(color), [0, top - 0.012 - R, 0.012 + tube / 2], [-0.14, 0, 0]));
+    return group;
+  }
+
+  // Two chains from the wall, a cuff at the end of each.
+  function manacles(w, h) {
+    const group = new THREE.Group();
+    const top = h * 0.36;
+    const link = new THREE.TorusGeometry(0.009, 0.0028, 6, 12).scale(1, 1.5, 1);
+    const LINKS = 5;
+    const step = 0.021;
+    for (const side of [-1, 1]) {
+      const x = side * w * 0.22;
+      group.add(part(plate(w * 0.12, h * 0.11, 0.008, { radius: 0.005 }), lit(IRON_DARK), [x, top, 0]));
+      for (let i = 0; i < LINKS; i++) {
+        group.add(part(link, lit(IRON), [x, top - 0.012 - i * step, 0.012 + (i % 2) * 0.002], [0, i % 2 ? Math.PI / 2 : 0, 0]));
+      }
+      const cuffY = top - 0.012 - LINKS * step - 0.028;
+      group.add(part(new THREE.TorusGeometry(0.03, 0.0065, 8, 22), lit(IRON_LIGHT), [x, cuffY, 0.016], [-0.2, 0, 0]));
+      group.add(part(sphere(0.0085), lit(IRON_DARK), [x, cuffY + 0.03, 0.018]));
+    }
+    return group;
+  }
+
+  // Iron bars in a frame, over a dark hole.
+  function grate(w, h) {
+    const group = new THREE.Group();
+    const [frameW, frameH] = [w * 0.84, h * 0.78];
+    const band = 0.016;
+    const [innerW, innerH] = [frameW - band * 2, frameH - band * 2];
+    group.add(part(plate(frameW, frameH, 0.016, { holes: [roundedHole(innerW, innerH, 0.004)], radius: 0.008, bevel: 0.003 }), lit(IRON)));
+    group.add(part(new THREE.PlaneGeometry(innerW + 0.004, innerH + 0.004), lit(HOLE_COLOR), [0, 0, PAINT_GAP]));
+    const BARS = 6;
+    for (let i = 1; i < BARS; i++) group.add(part(rod(0.0055, innerH + 0.004), lit(IRON_LIGHT), [-innerW / 2 + (innerW * i) / BARS, 0, 0.009]));
+    group.add(part(alongX(rod(0.0045, innerW + 0.004)), lit(IRON), [0, 0, 0.006]));
+    rivets(group, frameW / 2 - band / 2, frameH / 2 - band / 2, 0.016, 0.004);
+    return group;
+  }
+
+  // A round drain with bars, low on the wall; ooze comes over its lip and runs down.
+  function slimeOutlet(w, h) {
+    const group = new THREE.Group();
+    const [rx, ry] = [w * 0.3, h * 0.24];
+    const cy = -h * 0.08;
+    const hole = new THREE.CircleGeometry(1, 28).scale(rx, ry, 1);
+    group.add(part(hole, lit(HOLE_COLOR), [0, cy, PAINT_GAP]));
+    group.add(part(new THREE.TorusGeometry(1, 0.1, 8, 32).scale(rx, ry, 0.12), lit(STONE_DARK), [0, cy, 0.008]));
+    for (let i = -2; i <= 2; i++) {
+      const x = (i * rx * 0.72) / 2;
+      const half = ry * Math.sqrt(1 - (x / rx) ** 2);
+      group.add(part(rod(0.0055, half * 2), lit(IRON), [x, cy, 0.008]));
+    }
+    const lip = cy - ry;
+    group.add(part(ball(rx * 0.58, 0.014, 0.022), lit(OOZE), [0, lip, 0.014]));
+    group.add(part(new THREE.CapsuleGeometry(0.009, 0.05, 4, 8), lit(OOZE), [rx * 0.12, lip - 0.03, 0.009]));
+    group.add(part(ball(0.013, 0.018, 0.01), lit(OOZE), [rx * 0.12, lip - 0.066, 0.009]));
+    group.add(part(new THREE.CapsuleGeometry(0.006, 0.018, 4, 8), lit(OOZE), [-rx * 0.28, lip - 0.018, 0.009]));
+    return group;
+  }
+
+  // A dark round shield with a brass rim, a pale diamond and a boss.
+  function lordOrder(w) {
+    const group = new THREE.Group();
+    const R = w * 0.38;
+    group.add(part(alongZ(rod(R, 0.018)), lit(LORD_DARK), [0, 0, 0.004]));
+    group.add(part(new THREE.TorusGeometry(R, 0.012, 8, 36), lit(BRASS), [0, 0, 0.014]));
+    group.add(part(new THREE.OctahedronGeometry(1).scale(R * 0.42, R * 0.8, 0.012), lit(TOOTH), [0, 0, 0.014]));
+    group.add(part(ball(R * 0.15, R * 0.15, 0.012), lit(BRASS), [0, 0, 0.025]));
+    return group;
+  }
+
+  // The holes of a shooter: a stone plate pierced `count` times, rims tinted by what comes out.
+  function holes(w, h, count, tint) {
+    const group = new THREE.Group();
+    const [plateW, plateH] = [w * 0.84, h * 0.6];
+    const r = w * 0.06;
+    const x = (i) => (count === 1 ? 0 : (-0.3 + (0.6 * i) / (count - 1)) * w);
+    const paths = Array.from({ length: count }, (_, i) => new THREE.Path().absarc(x(i), 0, r, 0, Math.PI * 2, true));
+    group.add(part(plate(plateW, plateH, 0.012, { holes: paths, radius: 0.012 }), lit(STONE_DARK)));
+    group.add(part(new THREE.PlaneGeometry(plateW * 0.92, r * 2.2), lit(HOLE_COLOR), [0, 0, PAINT_GAP]));
+    for (let i = 0; i < count; i++) group.add(part(new THREE.TorusGeometry(r, 0.005, 6, 20), lit(tint), [x(i), 0, 0.012]));
+    return group;
+  }
+
+  // --- On the floor: origin on the floor at the centre of the tile, y up ------------------
+
+  const flat = (geometry) => geometry.rotateX(-Math.PI / 2); // what stands along z, along y
+  const padPlate = (height) => PAD.thickness - height; // how far under the floor the plate's bottom goes
+
+  // The frame of a pad over a dark bed, and its plate, which goes up and down (named `plate`).
+  // Under the floor, the plate is hidden by it. userData: the heights of the plate.
+  function pressurePad(size, round) {
+    const group = new THREE.Group();
+    const inner = size - 0.05;
+    const top = inner - 0.012;
+    const bed = round ? new THREE.CircleGeometry(inner / 2 + 0.002, 32) : new THREE.PlaneGeometry(inner + 0.004, inner + 0.004);
+    group.add(part(flat(bed), lit(HOLE_COLOR), [0, 0.001, 0]));
+    const moving = new THREE.Group();
+    moving.name = 'plate';
+    if (round) {
+      const [R, r] = [size / 2, inner / 2];
+      const ring = [[R, 0], [R - 0.005, PAD.frame], [r, PAD.frame], [r, 0]];
+      group.add(part(new THREE.LatheGeometry(ring.map(([x, y]) => new THREE.Vector2(x, y)), 36), lit(STONE_DARK)));
+      const [T, H] = [top / 2, PAD.thickness];
+      const body = [[T, 0], [T, H - 0.006], [T - 0.006, H], [T * 0.62, H], [T * 0.62 - 0.002, H - 0.003], [T * 0.6 - 0.004, H - 0.003], [T * 0.58 - 0.004, H], [0.0001, H]];
+      moving.add(part(new THREE.LatheGeometry(body.map(([x, y]) => new THREE.Vector2(x, y)), 36), lit(STONE)));
+    } else {
+      group.add(part(flat(plate(size, size, PAD.frame, { holes: [roundedHole(inner, inner, 0.008)], radius: 0.014, bevel: 0.003 })), lit(STONE_DARK)));
+      moving.add(part(flat(plate(top, top, PAD.thickness, { radius: 0.01, bevel: 0.005 })), lit(STONE)));
+      const line = size * 0.012;
+      const groove = top * 0.62;
+      for (const side of [-1, 1]) {
+        moving.add(part(new THREE.BoxGeometry(groove, 0.001, line), lit(STONE_DARK), [0, PAD.thickness + 0.0005, (side * groove) / 2]));
+        moving.add(part(new THREE.BoxGeometry(line, 0.001, groove), lit(STONE_DARK), [(side * groove) / 2, PAD.thickness + 0.0005, 0]));
+      }
+    }
+    moving.position.y = -padPlate(PAD.up);
+    group.add(moving);
+    group.userData.heights = { up: -padPlate(PAD.up), pressed: -padPlate(PAD.pressed) };
+    return group;
+  }
+
+  // Iron bars over a dark hole, in a frame.
+  function floorGrate(size, round) {
+    const group = new THREE.Group();
+    const R = size / 2;
+    const r = R - 0.03;
+    const height = 0.012;
+    const hole = round ? new THREE.CircleGeometry(r + 0.002, 32) : new THREE.PlaneGeometry(r * 2 + 0.004, r * 2 + 0.004);
+    group.add(part(flat(hole), lit(HOLE_COLOR), [0, 0.001, 0]));
+    if (round) {
+      const ring = [[R, 0], [R - 0.005, height], [r, height], [r, 0]];
+      group.add(part(new THREE.LatheGeometry(ring.map(([x, y]) => new THREE.Vector2(x, y)), 36), lit(IRON)));
+    } else {
+      group.add(part(flat(plate(size, size, height, { holes: [roundedHole(r * 2, r * 2, 0.006)], radius: 0.01, bevel: 0.003 })), lit(IRON)));
+    }
+    const BARS = 7;
+    for (let i = 1; i < BARS; i++) {
+      const x = -r + (2 * r * i) / BARS;
+      const length = round ? 2 * Math.sqrt(r ** 2 - x ** 2) : r * 2;
+      group.add(part(alongZ(rod(0.007, length + 0.004)), lit(IRON_LIGHT), [x, height * 0.5, 0]));
+    }
+    return group;
+  }
+
   // The outline of a keyhole (a hole of the plate), and the discs of plate left in it.
   // Sizes as fractions of the ornament, as the drawings of ornament-art.js.
   function keyhole(w, h, kind) {
@@ -524,6 +731,25 @@ export function createModels() {
     'Amalgam (Free Gem)': (w, h, centreY) => amalgam(w, h, centreY, 'free'),
     'Amalgam (Encased Gem)': (w, h, centreY) => amalgam(w, h, centreY, 'encased'),
     "Ghoul's Head": (w, h) => ghoulHead(w, h),
+    'Coin Slot': (w, h) => coinSlot(w, h),
+    'Gem Hole': (w, h) => gemHole(w, h),
+    Hook: (w, h) => hook(w, h),
+    'Wood Ring': (w, h) => wallRing(w, h, WOOD, 0.011),
+    'Iron Ring': (w, h) => wallRing(w, h, IRON_LIGHT, 0.0065),
+    Manacles: (w, h) => manacles(w, h),
+    Grate: (w, h) => grate(w, h),
+    'Slime Outlet': (w, h) => slimeOutlet(w, h),
+    'Lord Order (Outside)': (w) => lordOrder(w),
+    'Fireball Holes': (w, h) => holes(w, h, 3, '#c85a20'),
+    'Poison Holes': (w, h) => holes(w, h, 3, '#5aa040'),
+    'Dagger Holes': (w, h) => holes(w, h, 4, IRON_LIGHT),
+  };
+  const FLOOR_BUILDERS = {
+    'Square Pressure Pad': (size) => pressurePad(size, false),
+    'Tiny Pressure Pad': (size) => pressurePad(size, false),
+    'Round Pressure Plate': (size) => pressurePad(size, true),
+    'Square Grate': (size) => floorGrate(size, false),
+    'Round Grate': (size) => floorGrate(size, true),
   };
   for (const color of ['Green', 'Red', 'Blue']) {
     BUILDERS[`${color} Switch In`] = (w, h) => pushButton(w, h, SWITCH_COLORS[color], true);
@@ -538,6 +764,18 @@ export function createModels() {
       if (!templates.has(name)) templates.set(name, BUILDERS[name](w, h, centreY));
       const copy = templates.get(name).clone();
       copy.userData.model = true; // shared geometries and materials: the level does not dispose them
+      return copy;
+    },
+    /**
+     * A copy of the model of a floor ornament (its size in tiles), or null if it has none. A pressure
+     * pad has `userData.heights` { up, pressed }, the places of its child named `plate`.
+     */
+    buildFloor(name, size) {
+      if (!FLOOR_BUILDERS[name]) return null;
+      const key = `floor:${name}`;
+      if (!templates.has(key)) templates.set(key, FLOOR_BUILDERS[name](size));
+      const copy = templates.get(key).clone();
+      copy.userData.model = true;
       return copy;
     },
     /** The shaders changed (occlusion): also for the materials of the models not in the scene. */
