@@ -18,7 +18,7 @@ const SECTIONS = [
   },
   {
     title: 'Jeu',
-    note: 'ZQSD pour les claviers AZERTY.',
+    note: 'ZQSD et A/E pour les claviers AZERTY.',
     rows: [
       [['W', 'Pavé 5'], 'Avancer'],
       [['S', 'Pavé 2'], 'Reculer'],

@@ -23,7 +23,8 @@ export function createTextsPanel(container, texts, { onLocate, open = false, onT
   panel.open = open;
   panel.addEventListener('toggle', () => onToggle?.(panel.open));
   const summary = document.createElement('summary');
-  summary.textContent = `Textes · ${texts.length}`;
+  // summary.textContent = `Textes · ${texts.length}`;
+  summary.textContent = `Textes`;
 
   const chips = document.createElement('div');
   chips.className = 'inv-chips';

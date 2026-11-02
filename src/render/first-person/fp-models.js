@@ -335,7 +335,7 @@ export function createModels() {
     return group;
   }
 
-  // A lion's head in its mane spits water into a basin on a foot, standing on the floor.
+  // A lion's head in its mane spits water into a basin, standing on the floor.
   function fountain(w, h, centreY) {
     const group = new THREE.Group();
     const R = w * 0.16;
@@ -354,15 +354,11 @@ export function createModels() {
     const spout = R * 1.12;
     group.add(part(ball(R * 0.3, R * 0.11, R * 0.14), lit('#111111'), [0, mouth, R * 1.0]));
 
-    const flat = 0.72; // the basin and its foot, flattened against the wall
+    const flat = 0.72; // the basin, flattened against the wall
     const rim = -h * 0.22;
     const radius = w * 0.38;
     const profile = [[0.02, rim - 0.08], [radius * 0.55, rim - 0.068], [radius * 0.86, rim - 0.036], [radius, rim], [radius, rim + 0.006], [radius - 0.012, rim + 0.006], [radius - 0.012, rim - 0.012]];
     group.add(part(new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), 28).scale(1, 1, flat), lit(STONE)));
-    const floor = -centreY;
-    const footTop = rim - 0.075;
-    group.add(part(new THREE.CylinderGeometry(0.032, 0.05, footTop - floor, 16).scale(1, 1, flat), lit(STONE_DARK), [0, (footTop + floor) / 2, 0]));
-    group.add(part(new THREE.CylinderGeometry(0.075, 0.09, 0.03, 18).scale(1, 1, flat), lit(STONE), [0, floor + 0.015, 0]));
 
     const surface = rim - 0.006;
     group.add(part(new THREE.CircleGeometry(radius - 0.012, 28).rotateX(-Math.PI / 2).scale(1, 1, flat), liquid(WATER, 0.8), [0, surface, 0]));

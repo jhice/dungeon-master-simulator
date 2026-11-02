@@ -62,7 +62,7 @@ const PANEL_DEFAULTS = {
   showCreatures: true,
   showMechanisms: true,
   showTexts: true,
-  allLinks: false,
+  allLinks: true,
   invincible: false, // test option: the champion loses no health
 };
 const prefs = loadPreferences({
@@ -419,7 +419,7 @@ const LIGHTING_SCHEMA = [
   { type: 'checkbox', key: 'torchHolders', label: 'Torches murales lumineuses' },
   { type: 'checkbox', key: 'occlusion', label: 'Lumière arrêtée par les murs' },
   { type: 'heading', label: 'Décors (vue du jeu)' },
-  { type: 'checkbox', key: 'ornamentModels', label: 'Décors en objets 3D, alcôves et trappes creuses' },
+  { type: 'checkbox', key: 'ornamentModels', label: 'Objets 3D' },
 ];
 // Sounds (docs/041): kept in the preferences as the light.
 const knownAudio = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_AUDIO));
@@ -536,12 +536,14 @@ function onPanelChange(allChanges) {
   if (Object.keys(settings).length) changeSettings(settings);
 }
 
-// "Valeurs par défaut": every value of the panel (viewer, every renderer, light, sounds).
+// "Valeurs par défaut": every value of the panel (viewer, every renderer, light, sounds),
+// and the position and size of the game window.
 function resetPanel() {
-  Object.assign(prefs, PANEL_DEFAULTS, { settings: {}, lighting: {}, audio: {} });
+  Object.assign(prefs, PANEL_DEFAULTS, { settings: {}, lighting: {}, audio: {}, gameLayout: null });
   savePreferences(prefs);
   view.classList.toggle('hide-rulers', !prefs.showRulers);
   sim.invincible = prefs.invincible;
+  game?.window.resetLayout();
   game?.view.setLighting(DEFAULT_LIGHTING);
   audio.setSettings(DEFAULT_AUDIO);
   // The renderer is rebuilt with its default settings (and the frame), the panel with it.

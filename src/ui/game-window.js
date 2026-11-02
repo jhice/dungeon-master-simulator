@@ -1,10 +1,11 @@
 // Floating, draggable window holding the first-person view (answer Q1): it
-// stays above the 2D/3D views, which remain visible. Width is resizable
-// (the viewport keeps its 4/3 ratio); position and width are reported to the
-// caller, which remembers them.
+// stays above the 2D/3D views, which remain visible. Width is resizable from
+// the two bottom corners (the viewport keeps its 4/3 ratio); position and width
+// are reported to the caller, which remembers them.
 // Below the viewport, a message area (as in DM) prints the messages of the dungeon.
 
 const MIN_WIDTH = 240;
+const DEFAULT_WIDTH = 480;
 const MESSAGE_LINES = 3; // latest messages kept
 const MESSAGE_MS = 12000; // before a message fades out
 
@@ -17,7 +18,7 @@ const MESSAGE_MS = 12000; // before a message fades out
  * @param {(index: number) => void} [options.onSelectItem] an item of the inventory was clicked: take it in hand
  * @param {() => void} [options.onStow] the "Ranger" button: the item in hand goes into the inventory
  * @param {() => void} [options.onMouth] the mouth of the champion: he drinks what the cursor holds (docs/050)
- * @returns {{ viewport: HTMLElement, setStatus(text), message(text), setInventory(items, hand), flash(), dispose() }}
+ * @returns {{ viewport: HTMLElement, setStatus(text), message(text), setInventory(items, hand), flash(), resetLayout(), dispose() }}
  */
 export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onSelectItem, onStow, onMouth } = {}) {
   const win = document.createElement('section');
@@ -64,8 +65,8 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
   };
   const current = () => ({ left: win.offsetLeft, top: win.offsetTop, width: win.offsetWidth });
   // Default: top right, left of the side panels (17rem), so the map stays visible.
-  const width = 480;
-  place({ left: window.innerWidth - width - 300, top: 96, width, ...layout });
+  const defaultLayout = () => ({ left: window.innerWidth - DEFAULT_WIDTH - 300, top: 96, width: DEFAULT_WIDTH });
+  place({ ...defaultLayout(), ...layout });
 
   // Drag by the title bar (not by its buttons).
   let drag = null;
@@ -83,16 +84,39 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
     onLayoutChange?.(current());
   });
 
-  // CSS `resize: horizontal` on the window: report the new width once it settles.
-  let lastWidth = win.offsetWidth;
-  let resizeTimer = 0;
-  const resizeObserver = new ResizeObserver(() => {
-    if (win.offsetWidth === lastWidth) return;
-    lastWidth = win.offsetWidth;
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => onLayoutChange?.(current()), 300);
-  });
-  resizeObserver.observe(win);
+  // Resize by the bottom corners; the height follows the width. The left corner keeps
+  // the right edge in place, the right corner the left edge.
+  const resizeHandle = (side) => {
+    const handle = document.createElement('div');
+    handle.className = `game-resize game-resize-${side}`;
+    let start = null;
+    handle.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      start = { x: event.clientX, ...current() };
+      handle.setPointerCapture(event.pointerId);
+    });
+    handle.addEventListener('pointermove', (event) => {
+      if (!start) return;
+      const dx = event.clientX - start.x;
+      if (side === 'right') {
+        const width = Math.min(start.width + dx, window.innerWidth - start.left);
+        place({ left: start.left, top: start.top, width });
+      } else {
+        const right = start.left + start.width;
+        const width = Math.max(MIN_WIDTH, Math.min(start.width - dx, right));
+        place({ left: right - width, top: start.top, width });
+      }
+    });
+    handle.addEventListener('pointerup', () => {
+      if (!start) return;
+      start = null;
+      onLayoutChange?.(current());
+    });
+    return handle;
+  };
+  win.append(resizeHandle('left'), resizeHandle('right'));
+
   const onWindowResize = () => place(current());
   window.addEventListener('resize', onWindowResize);
 
@@ -133,9 +157,11 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
       void win.offsetWidth; // restart the animation
       win.classList.add('is-bumped');
     },
+    /** Back to the default position and size ("Valeurs par défaut"). */
+    resetLayout() {
+      place(defaultLayout());
+    },
     dispose() {
-      resizeObserver.disconnect();
-      clearTimeout(resizeTimer);
       window.removeEventListener('resize', onWindowResize);
       win.remove();
     },
