@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-03, après la doc 057.
+> Mis à jour le 2026-11-03, après la doc 058.
 
 ### Données et visualiseur
 
@@ -110,6 +110,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ### En attente
 
+- **Traduction anglais, français, allemand** : planifiée dans la doc 058, questions à trancher (§ 6), rien de codé.
 - **C3b** (projectiles muraux, sorts des créatures) et **C3c** (fidélité du combat : vraies formules, expérience, armures, défense des actions, actions restantes des combos) : mises de côté **en attendant le système de sorts du groupe**.
 - **Valeurs provisoires**, à confirmer dans ReDMCSB :
   - formules de dégâts et de toucher ;
