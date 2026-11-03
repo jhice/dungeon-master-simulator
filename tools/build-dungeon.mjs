@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Builds data/dungeon.json from Dungeon.xml.
+// Builds data/dungeon.json from data/Dungeon.xml.
 // Usage: node tools/build-dungeon.mjs [input.xml] [output.json]
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -10,7 +10,7 @@ import { convertDungeon } from './dungeon-converter.mjs';
 import { validateDungeon } from './dungeon-validator.mjs';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const input = resolve(projectRoot, process.argv[2] ?? 'Dungeon.xml');
+const input = resolve(projectRoot, process.argv[2] ?? 'data/Dungeon.xml');
 const output = resolve(projectRoot, process.argv[3] ?? 'data/dungeon.json');
 
 const t0 = performance.now();

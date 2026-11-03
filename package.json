@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:data": "node tools/build-dungeon.mjs"
+    "build:data": "node tools/build-dungeon.mjs",
+    "build:i18n": "node tools/build-i18n.mjs"
   }
 }
