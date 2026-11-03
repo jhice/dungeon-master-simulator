@@ -1,6 +1,6 @@
 # 058 — Plan : textes du jeu et de l'interface en anglais, français et allemand
 
-Plan seulement : aucun code du jeu n'a changé à cette étape.
+Plan seulement : aucun code du jeu n'a changé à cette étape. **Réalisé dans la doc 059**, qui tranche les questions du § 6.
 
 ## 1. Demande
 

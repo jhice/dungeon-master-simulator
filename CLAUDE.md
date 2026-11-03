@@ -7,7 +7,7 @@
 
 ## Données
 
-- le fichier `Dungeon.xml` contient toutes les données du jeu (pas le moteur).
+- le fichier `data/Dungeon.xml` contient toutes les données du jeu (pas le moteur).
 
 ## Premières étapes possibles
 
@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-03, après la doc 058.
+> Mis à jour le 2026-11-03, après la doc 059.
 
 ### Données et visualiseur
 
@@ -49,6 +49,7 @@ Analyser le fichier XML en se concentrant d'abord sur
   - Clic droit sur une case des cartes 2D et 3D : menu de test (se téléporter, ramasser les objets, activer les actuators) ; bouton « Valeurs par défaut » et option « Invincibilité » dans le panneau (doc 049).
   - Modale des raccourcis clavier, touche `H` ou bouton de la barre du haut (`src/ui/shortcuts-modal.js`, doc 055).
   - Fenêtre de jeu redimensionnable par ses deux coins inférieurs ; « Valeurs par défaut » la remet en place (doc 056).
+- **Langues (doc 059) :** anglais par défaut, français, allemand, liste à côté du bouton des raccourcis (rechargement après confirmation). `src/i18n/` : `t()` pour l'interface (`ui-*.js`, à la main), `gameText` pour les textes de DM (`game-*.js`, générés par `npm run build:i18n` depuis `data/engine-texts/` et les XML de `data/`). Les noms anglais du code restent des identifiants.
 - **Logique du donjon :** le graphe des actuators, `buildLogic()` dans `src/core/logic.js`, est décrit dans la doc 009.
 - **Docs :** toutes les docs sont dans `docs/`. À lire en priorité : 009 (logique) et 002 (format JSON) ; les sources sont dans 000.
 
@@ -106,11 +107,10 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Décors en objets 3D (doc 053) :** `src/render/first-person/fp-models.js` compose levier, porte-torche, miroir, serrures, interrupteurs, fontaine, Vi Altar, Amalgam et tête de goule à partir de pièces simples ; option du panneau, qui commande aussi les trappes creuses au sol et au plafond. Les portes à ouvertures et les herses laissent voir et passer la lumière.
 - **Alcôves, plaques, derniers décors (doc 054) :** alcôves creusées dans le mur (carrée, voûtée, Vi Altar), objets dans le creux ; trappe fermée identique au sol, comme DM ; plaques de pression à dalle mobile, appuyée sous ce qui pèse (`pressPads`) ; grilles de sol et décors muraux restants en objets 3D. **Problème connu, non résolu :** objets 3D noirs par intermittence dans les captures de Chrome sans interface (doc 054, § 6).
 - **Durée d'un tick (doc 047) :** 220 ms (`TICK_MS`, `main.js`), soit 11 synchronisations verticales à 50 Hz, comme la boucle de jeu de DM en PAL.
-- **Tests Node :** `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`.
+- **Tests Node :** `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
 
 ### En attente
 
-- **Traduction anglais, français, allemand** : planifiée dans la doc 058, questions à trancher (§ 6), rien de codé.
 - **C3b** (projectiles muraux, sorts des créatures) et **C3c** (fidélité du combat : vraies formules, expérience, armures, défense des actions, actions restantes des combos) : mises de côté **en attendant le système de sorts du groupe**.
 - **Valeurs provisoires**, à confirmer dans ReDMCSB :
   - formules de dégâts et de toucher ;
