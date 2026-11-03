@@ -57,6 +57,7 @@ Elles sont classées selon leur traçabilité : ce qui a été **consulté** pen
 | `DungeonF.DAT.xml`, `DungeonG.DAT.xml`, fournis par l'utilisateur | `data/`, exportés avec le même outil que `Dungeon.xml` | Donjons français et allemand de DM Amiga 3.6 | Étape 059 : textes du donjon |
 | Textes de DM Amiga 3.6 sur greatstone (voir étape 058) | http://greatstone.free.fr/dm/db_data/dm_amiga_36_caps/graphics.dat/graphics.dat.html | Noms des objets, actions, textes divers | Étape 059 : **téléchargés** et rangés tels quels dans `data/engine-texts/`, à la demande de l'utilisateur ; droits des ayants droit de FTL |
 | Dungeon Master Encyclopaedia, *Dungeon Files* | http://dmweb.free.fr/community/documentation/file-formats/dungeon-files/ | Code d'échappement à l'origine du `2` dans deux textes français, signalé comme coquille | Étape 059 : coquille conservée |
+| ReDMCSB Release 2, fichiers `SOURCE/ENGINE/COMMAND.C`, `CHAMPION.C`, `MAIN.C` | https://github.com/gondur/ReDMCSB_Release2 | Délai entre deux pas (`G310_i_DisabledMovementTicks`, `F310`), selon la charge, les pieds blessés et les Boots of Speed ; file de 5 commandes ; rotations hors délai | Étape 061 : plan des transitions. Fichiers téléchargés dans le dossier temporaire de la session et lus, sans rien en reprendre dans le projet |
 
 Avant l'étape 021, aucune autre page web n'avait été consultée. Aucun fichier n'a été téléchargé (les pages de l'étape 021
 ont été lues comme du texte, sans rien en reprendre que les valeurs de la table).

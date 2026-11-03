@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-03, après la doc 060.
+> Mis à jour le 2026-11-03, après la doc 061.
 
 ### Données et visualiseur
 
@@ -120,7 +120,7 @@ Analyser le fichier XML en se concentrant d'abord sur
   - délai d'errance.
   
   Chaque doc les signale.
-- **Phase F de la simulation** (doc 012) : transitions animées, 16/9, sauvegarde de partie.
+- **Phase F de la simulation** (doc 012) : transitions animées (plan : doc 061, questions à trancher), 16/9, sauvegarde de partie.
 - **Sons (docs 039 à 042) :**
   - inventaire : 33 sons d'Amiga 3.6, avec leurs déclencheurs pris dans ReDMCSB (doc 040) ;
   - plan (doc 041) ;
