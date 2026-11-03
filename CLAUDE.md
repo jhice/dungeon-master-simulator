@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-02, après la doc 056.
+> Mis à jour le 2026-11-03, après la doc 057.
 
 ### Données et visualiseur
 
@@ -78,7 +78,7 @@ Analyser le fichier XML en se concentrant d'abord sur
     - les deux mains de Zed et un panneau d'actions par objet, avec délai de fatigue ;
     - lancer de tout objet et moteur de projectiles (`projectiles.js`) ;
     - caractéristiques des objets dans `src/core/item-info.js`.
-  - Actions des objets (doc 044) : les combos de DM remplacent « Frapper » (`src/core/action-info.js`, combos dans `item-info.js`), filtrés par niveau de compétence (`skillLevel`, F303) et charges ; frappes (et portes), tir, sorts d'objets, peur, lumière, soin, pile ou face, corde ; les autres « pas encore implémentés ».
+  - Actions des objets (doc 044) : les combos de DM remplacent « Frapper » (`src/core/action-info.js`, combos dans `item-info.js`), filtrés par niveau de compétence (`skillLevel`, F303) et charges ; frappes (et portes), tir, sorts d'objets, peur, lumière, soin, pile ou face, corde ; les autres « pas encore implémentés ». L'action effectuée s'éclaire dans le panneau ; seuls les dégâts et les mots comme « Raté » restent en jaune (doc 057).
 - **Données du moteur reconstituées** depuis la *Dungeon Master Encyclopaedia* :
   - `creature-info.js` (espèces) ;
   - `item-info.js` (objets) ;

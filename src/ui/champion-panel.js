@@ -2,9 +2,9 @@
 // name, his two hands and three bars (health, stamina, mana). A click on a hand swaps
 // the item held by the cursor with the item of the hand. Below, the action panel of the
 // action hand (right): one button per action of its combo (docs/044), disabled while the
-// champion recovers from his last action (its fatigue, as in DM); after an action, the
-// damage done or the action's name shows for a moment above them, as the action area of
-// DM does. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
+// champion recovers from his last action (its fatigue, as in DM); the action done is lit
+// for a moment (docs/057), and the damage done or a word shows above them, as the action
+// area of DM does. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
 // "Recommencer" button. The mouth, to drink, is under the item in hand of the game window (docs/050).
 
 const RESULT_MS = 900;
@@ -70,8 +70,13 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
 
   let woundTimer = 0;
   let resultTimer = 0;
+  let doneTimer = 0;
   let ready = true;
   let shownActions = '';
+
+  const lightAction = (id) => {
+    for (const button of actions.querySelectorAll('button')) button.classList.toggle('is-done', button.dataset.action === id);
+  };
 
   // `scale`: stored / shown (stamina is stored ×10).
   const setBar = ({ outer, fill, label }, value, max, scale = 1) => {
@@ -104,6 +109,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
             const button = element('button', 'champion-action');
             button.type = 'button';
             button.disabled = !ready;
+            button.dataset.action = id;
             button.textContent = label;
             button.addEventListener('click', () => {
               onAction(id);
@@ -128,6 +134,12 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
       ready = value;
       for (const button of actions.querySelectorAll('button')) button.disabled = !ready;
     },
+    /** The action done (its index): its button is lit for a moment. */
+    showAction(id) {
+      clearTimeout(doneTimer);
+      lightAction(String(id));
+      doneTimer = setTimeout(() => lightAction(null), RESULT_MS);
+    },
     /** Result of an action, in the action area: the damage done, or a word. */
     showResult(text) {
       clearTimeout(resultTimer);
@@ -145,6 +157,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
     dispose() {
       clearTimeout(woundTimer);
       clearTimeout(resultTimer);
+      clearTimeout(doneTimer);
       panel.remove();
       veil.remove();
     },

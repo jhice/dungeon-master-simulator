@@ -745,38 +745,40 @@ function clickFront(side = 'right', kind = null) {
 }
 
 // An action of the action hand (docs/044), by its index. What a strike or a shot does to a
-// creature is shown by the 'creatureHit' handler; the other results here, in the action area
-// (as DM writes the action done there) and in the status bar.
+// creature is shown by the 'creatureHit' handler; the action done is lit in the action panel
+// (docs/057), the other results are written in the status bar.
 function doAction(index) {
   const { result, item, action, broken, healed, group } = sim.act(index);
   game?.panel.setReady(sim.fatigue === 0); // disabled at once, not at the next tick
+  if (!NOT_DONE.has(result)) game?.panel.showAction(index);
+  if (result === 'noAmmo') game?.panel.showResult('Pas de munitions');
   const label = action?.label ?? '';
   const words = {
-    nothing: ['', action?.kind === 'climb' ? 'Pas de trappe ouverte devant' : action?.kind === 'heal' ? 'Rien à guérir' : 'Rien à lancer'],
-    exhausted: ['', 'Trop fatigué'],
-    pending: [label, `${label} : pas encore implémenté`],
-    thrown: [label, `Lancé : ${item && itemName(item)}`],
-    shot: [label, `Tiré : ${item && itemName(item)}`],
-    noAmmo: ['Pas de munitions', 'Il faut des munitions dans la main gauche'],
-    cast: [label, label],
-    light: [label, 'La lumière magique se répand'],
-    healed: [label, `${championName(sim.champion)} regagne ${healed} PV`],
-    heads: [label, 'C’est face'],
-    tails: [label, 'C’est pile'],
-    climbed: [label, 'Descente à la corde'],
-    done: [label, label],
-    nobody: [label, `${label} : personne devant`],
-    frightened: [label, group && `${describeGroup(dungeon, group).name} : pris de peur, il s’enfuit`],
-    resisted: [label, group && `${describeGroup(dungeon, group).name} : ne se laisse pas impressionner`],
-    doorHit: [label, broken ? '' : 'Coup sur la porte, qui tient bon'], // broken: see 'doorBroken'
-    air: [label, 'Le coup frappe dans le vide'],
-    wall: [label, 'Le coup frappe le mur'],
-    door: [label, 'Le coup frappe la porte, sans l’abîmer'],
+    nothing: action?.kind === 'climb' ? 'Pas de trappe ouverte devant' : action?.kind === 'heal' ? 'Rien à guérir' : 'Rien à lancer',
+    exhausted: 'Trop fatigué',
+    pending: `${label} : pas encore implémenté`,
+    thrown: `Lancé : ${item && itemName(item)}`,
+    shot: `Tiré : ${item && itemName(item)}`,
+    noAmmo: 'Il faut des munitions dans la main gauche',
+    cast: label,
+    light: 'La lumière magique se répand',
+    healed: `${championName(sim.champion)} regagne ${healed} PV`,
+    heads: 'C’est face',
+    tails: 'C’est pile',
+    climbed: 'Descente à la corde',
+    done: label,
+    nobody: `${label} : personne devant`,
+    frightened: group && `${describeGroup(dungeon, group).name} : pris de peur, il s’enfuit`,
+    resisted: group && `${describeGroup(dungeon, group).name} : ne se laisse pas impressionner`,
+    doorHit: broken ? '' : 'Coup sur la porte, qui tient bon', // broken: see 'doorBroken'
+    air: 'Le coup frappe dans le vide',
+    wall: 'Le coup frappe le mur',
+    door: 'Le coup frappe la porte, sans l’abîmer',
   }[result];
-  if (!words) return;
-  if (words[0]) game?.panel.showResult(words[0]);
-  if (words[1]) say(words[1]);
+  if (words) say(words);
 }
+// The results of sim.act() where the action did not take place.
+const NOT_DONE = new Set(['unavailable', 'dead', 'busy', 'exhausted', 'nothing', 'pending', 'noAmmo']);
 
 // A click with an item held by the cursor, out of reach (or on a creature): it is thrown
 // from that side of the view.

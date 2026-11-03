@@ -824,7 +824,7 @@ body {
   opacity: 0.5;
 }
 
-/* Action panel of the action hand: one line per action, or the result of the last one. */
+/* Action panel of the action hand: one line per action; above it, the result of the last one. */
 .champion-actions,
 .champion-result {
   display: flex;
@@ -863,6 +863,13 @@ body {
 
 .champion-action:disabled:hover {
   background: none;
+}
+
+/* The action done, lit for a moment, enabled or not (docs/057). */
+.champion-action.is-done,
+.champion-action.is-done:disabled {
+  background: #5a5648;
+  color: #f4ecd0;
 }
 
 .champion-no-action {
