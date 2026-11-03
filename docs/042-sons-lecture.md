@@ -8,7 +8,7 @@
 - **33 sons** d'Amiga 3.6, téléchargés depuis la page graphics.dat de greatstone, à la demande de l'utilisateur, faute d'autre pack.
 - Rangés dans `assets/sounds/NN.mp3`, avec NN le numéro du son Amiga (`01.mp3` = « Sound 01 - Switch »).
 - Format : MP3 mono, 44,1 kHz, 64 kb/s, 356 Ko en tout.
-- 30 sont utilisés. Restent hors jeu : 24 (Horn of Fear) et 27 (War Cry), en attente de leurs actions (C3c).
+- 30 sont utilisés. Restaient hors jeu : 24 (Horn of Fear) et 27 (War Cry), branchés depuis (doc 060).
 
 ## 2. Étape 1 : la simulation annonce les sons
 

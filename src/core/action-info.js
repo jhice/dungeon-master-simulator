@@ -9,7 +9,8 @@
 //   throw     the item of the action hand is thrown
 //   shoot     the ammunition of the ready hand is shot by the bow or sling of the action hand
 //   spell     a spell projectile (`spell`, `energy`), paid with mana (F327)
-//   fright    the group in front may flee (F401), `fright` + the Influence skill level
+//   fright    the group in front may flee (F401), `fright` + the Influence skill level; `sound`: heard
+//             even with nobody in front (War Cry, Blow Horn)
 //   light     magical light (F404)
 //   heal      the champion heals himself with his mana
 //   flip      heads or tails
@@ -73,6 +74,8 @@ const TABLE = [
 const BREAKS_DOORS = new Set(['Bash', 'Hack', 'Berzerk', 'Kick', 'Swing', 'Chop']);
 const SPELLS = { Fireball: ['fireball', 150], Spit: ['fireball', 250], Invoke: ['invoke', 0] };
 const FRIGHT = { 'War Cry': 3, Calm: 7, Brandish: 6, 'Blow Horn': 6, Confuse: 12 };
+// Amiga 3.6 only (docs/060): the two fright actions with a sound of their own.
+const SOUND = { 'War Cry': 'warCry', 'Blow Horn': 'horn' };
 // F407: the actions that use a charge of the item when done.
 const USE_CHARGE = new Set(['Fireball', 'Spit', 'Invoke', 'Lightning', 'Dispell', 'Confuse', 'Spellshield', 'Fireshield', 'Freeze Life', 'Light', 'Window']);
 
@@ -89,6 +92,7 @@ export const ACTIONS = TABLE.map(([index, name, skill, stamina, hitProbability, 
   spell: SPELLS[name]?.[0],
   energy: SPELLS[name]?.[1],
   fright: FRIGHT[name],
+  sound: SOUND[name],
   usesCharge: USE_CHARGE.has(name),
 }));
 

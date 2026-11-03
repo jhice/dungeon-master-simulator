@@ -6,6 +6,7 @@ import { Dungeon, SIDE_DELTAS, FACINGS } from '../src/core/dungeon.js';
 import { createSimulation } from '../src/sim/simulation.js';
 import { blockReason } from '../src/sim/rules.js';
 import { SOUNDS, attackSound, LATER_TICKS } from '../src/core/sound-info.js';
+import { actionNamed } from '../src/core/action-info.js';
 
 const dungeon = new Dungeon(JSON.parse(readFileSync(new URL('../data/dungeon.json', import.meta.url))));
 const sim = createSimulation(dungeon);
@@ -196,6 +197,29 @@ for (const audible of [true, false]) {
   }
   off();
   check(drops.length > 0 && drops.every((s) => s.delay === LATER_TICKS), `butin des Screamers : ${drops.length} son(s), délai ${drops.map((s) => s.delay).join(', ')}`);
+}
+
+// 9. Fright actions: War Cry and Blow Horn have their own sound, with or without a group in front (docs/060).
+{
+  // The sounds of an action, with `item` (a weapon's name) in the action hand. Fails if not available.
+  const cry = (name, item) => {
+    sim.tick(sim.fatigue);
+    sim.state.hands[1] = item ? { kind: 'weapon', index: dungeon.data.weapons.findIndex((w) => w.name === item) } : null;
+    let out;
+    const sounds = ids(heard(() => (out = sim.act(actionNamed(name).index))));
+    check(['nobody', 'resisted', 'frightened'].includes(out.result), `${name} effectuée : ${out.result}`);
+    return sounds;
+  };
+  sim.reset();
+  check(SOUNDS.warCry.file === '27' && SOUNDS.horn.file === '24', 'cri de guerre : fichier 27, cor : fichier 24');
+  check(cry('War Cry').includes('warCry'), 'cri de guerre sans créature en face');
+  check(cry('Blow Horn', 'Horn Of Fear').includes('horn'), 'cor sans créature en face');
+  check(!cry('Calm', 'Wand').some((id) => id === 'warCry' || id === 'horn'), 'Calm : aucun de ces deux sons');
+  const group = sim.state.groupAt(1, 8, 24);
+  const { from, facing } = besides(group.level, group.x, group.y);
+  sim.teleport(group.level, ...from);
+  face(facing);
+  check(cry('War Cry').includes('warCry'), 'cri de guerre face aux Screamers');
 }
 
 console.log(failures ? `\n${failures} échec(s)` : '\nTout est bon.');

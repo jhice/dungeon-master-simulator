@@ -23,6 +23,8 @@ export const SOUNDS = {
   wounded: sound(7), // the champion is hit (Zed: "Champion Wounded 1")
   swallow: sound(6), // a potion drunk
   combat: sound(12), // strike, throw
+  warCry: sound(27), // War Cry (Amiga only: no source, deduced from the label)
+  horn: sound(24), // Blow Horn (Amiga only: id.)
   door: sound(2), // each step of a door
   metal: sound(0), // a thrown weapon hits, a dead creature drops a weapon
   thud: sound(3), // another thrown item hits, drops without weapon, a door hit (mapping deduced)

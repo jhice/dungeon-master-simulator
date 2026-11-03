@@ -375,6 +375,7 @@ export function createSimulation(dungeon) {
   function frighten(action) {
     payAction(action);
     if (action.usesCharge) useCharge();
+    if (action.sound) sound(action.sound, party, true);
     const group = state.groupAt(party.level, ...front());
     if (!group) return { result: 'nobody' };
     const fear = creatureInfo(group.type).fear;

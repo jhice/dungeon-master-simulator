@@ -90,8 +90,8 @@ Une espèce a un `AttackSoundOrdinal` (table `G244`, dans les données du jeu). 
 | 26 | Move (Swamp Slime - Water Elemental) | id. | ces 2 espèces |
 | 31 | Move (Red Dragon) | id. | Red Dragon |
 | 32 | Move (Skeleton) | id. | Skeleton |
-| 24 | Blowing Horn Of Fear | action « Blow Horn » du Horn of Fear | — |
-| 27 | War Cry | action « War Cry » (C3c, en attente) | — |
+| 24 | Blowing Horn Of Fear | action « Blow Horn » du Horn of Fear (branché, doc 060) | — |
+| 27 | War Cry | action « War Cry » (branché, doc 060) | — |
 
 Ghost, Wizard Eye, Materializer, Black Flame et les Lords n'ont **pas de son de déplacement**.
 
