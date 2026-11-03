@@ -29,7 +29,8 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
     book.classList.toggle('is-open', !grimoire.hidden);
     book.blur();
   });
-  header.append(tab, book);
+  // header.append(tab, book);
+  header.append(tab);
   const row = element('div', 'spell-row');
   const choices = Array.from({ length: 6 }, (_, i) => {
     const button = element('button', 'spell-symbol');
@@ -58,7 +59,7 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
     del.blur();
   });
   line.append(cast, del);
-  panel.append(header, row, line, grimoire);
+  panel.append(header, row, line, book, grimoire);
   container.append(panel);
 
   let shownKnown = null; // names of the spells listed, to rebuild the list only when they change
@@ -91,7 +92,8 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
      */
     update(champion, known = []) {
       const step = champion.symbols.length;
-      tab.textContent = champion.name;
+      // tab.textContent = champion.name;
+      tab.textContent = 'Sorts';
       choices.forEach((button, i) => {
         const name = SYMBOLS[step]?.[i];
         button.replaceChildren(...(name ? [glyph(name)] : []));
