@@ -936,9 +936,10 @@ const DRINK_EFFECTS = { health: 'PV', stamina: 'endurance', mana: 'mana', water:
 const drinkEffect = (champion, effect, gained) =>
   !effect ? 'effet pas encore implémenté' : `+${gained} ${DRINK_EFFECTS[effect]}${effect === 'water' ? ` (${champion.water} / 2048)` : ''}`;
 sim.on('potionDrunk', ({ champion, name, effect, gained }) => say(`${championName(champion)} boit ${name} : ${drinkEffect(champion, effect, gained)}`));
-// What a strike or a thrown item did to a creature: the damage in the action area, a word in the status bar.
+// What a strike or a projectile did to a creature: the damage in the action area (not for a
+// thrown item or a fireball, which land later and must not hide the actions, docs/057), a word in the status bar.
 sim.on('creatureHit', ({ result, damage, group, killed, destroyed, thrown, spell }) => {
-  game?.panel.showResult(result === 'hit' ? String(damage) : result === 'immaterial' ? 'Sans effet' : 'Raté');
+  if (!thrown && !spell) game?.panel.showResult(result === 'hit' ? String(damage) : result === 'immaterial' ? 'Sans effet' : 'Raté');
   const { name } = describeGroup(dungeon, group);
   if (destroyed) say(`${name} : groupe anéanti`);
   else if (killed) say(`${name} tué`);

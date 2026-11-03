@@ -3,11 +3,12 @@
 // the item held by the cursor with the item of the hand. Below, the action panel of the
 // action hand (right): one button per action of its combo (docs/044), disabled while the
 // champion recovers from his last action (its fatigue, as in DM); the action done stays lit
-// during that fatigue (docs/057). Above them, a zone the height of 3 actions shows the damage
-// done or a word for a moment. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
+// during that fatigue (docs/057). The damage done or a word takes their place for a moment,
+// in a zone the height of 3 actions, as in DM. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
 // "Recommencer" button. The mouth, to drink, is under the item in hand of the game window (docs/050).
 
-const RESULT_MS = 900;
+const RESULT_MS = 440;
+const WOUND_MS = 880;
 const NO_FATIGUE_MS = 220; // an action without fatigue stays lit for one tick
 const HAND_LABELS = ['Main gauche', 'Main droite (action)'];
 
@@ -142,19 +143,23 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
       lightAction(String(id));
       if (ready) doneTimer = setTimeout(() => lightAction(null), NO_FATIGUE_MS);
     },
-    /** Result of an action, in the action area: the damage done, or a word. */
+    /** Result of an action, in place of the actions: the damage done, or a word. */
     showResult(text) {
       clearTimeout(resultTimer);
       result.textContent = text;
       result.hidden = false;
-      resultTimer = setTimeout(() => (result.hidden = true), RESULT_MS);
+      actions.hidden = true;
+      resultTimer = setTimeout(() => {
+        result.hidden = true;
+        actions.hidden = false;
+      }, RESULT_MS);
     },
     /** Damage taken by the champion: shown on his box. */
     wounded(damage) {
       clearTimeout(woundTimer);
       wound.textContent = String(damage);
       wound.hidden = false;
-      woundTimer = setTimeout(() => (wound.hidden = true), RESULT_MS);
+      woundTimer = setTimeout(() => (wound.hidden = true), WOUND_MS);
     },
     dispose() {
       clearTimeout(woundTimer);
