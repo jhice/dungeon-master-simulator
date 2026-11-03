@@ -8,6 +8,7 @@
 // Rulers along the top and left edges give the local coordinates of the level,
 // and in the global frame the global ones too; they stay visible when scrolling.
 
+import { t } from '../../i18n/i18n.js';
 import { assertRenderer } from '../renderer.js';
 import { bindShiftWheel } from '../shift-wheel.js';
 import { stateModifiers } from '../../core/tile-states.js';
@@ -158,7 +159,7 @@ export function createDomRenderer(
       label.setAttribute('y', y - 0.35);
       label.setAttribute('fill', color);
       label.classList.add('link-label');
-      label.textContent = `${fromHere ? '→' : '←'} N${other.level} (${other.x}, ${other.y})`;
+      label.textContent = `${fromHere ? '→' : '←'} ${t('level.short', { level: other.level })} (${other.x}, ${other.y})`;
       label.addEventListener('click', (event) => {
         event.stopPropagation();
         onFollow?.(other);
@@ -225,7 +226,7 @@ export function createDomRenderer(
     rulerTop.replaceChildren(...labels(width, x0, map.offset.x, map.width));
     rulerLeft.replaceChildren(...labels(height, y0, map.offset.y, map.height));
     corner.textContent = systems.length > 1 ? 'G\nL' : '';
-    corner.title = systems.length > 1 ? 'Coordonnées globales (G), puis locales au niveau (L)' : 'Coordonnées locales au niveau';
+    corner.title = t(systems.length > 1 ? 'rulers.both' : 'rulers.local');
   }
 
   function areaOf(level) {

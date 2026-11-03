@@ -6,6 +6,8 @@
 //     the levels where each key lies;
 //   - the others: deduced from the wall graphic of the actuator using them.
 
+import { t } from '../i18n/i18n.js';
+
 const KEYS_OFFSET = 167; // icons 176..191 = miscellaneous types 9 (Iron Key) .. 24 (Master Key)
 
 const KNOWN = {
@@ -15,7 +17,7 @@ const KNOWN = {
   125: { name: 'Copper Coin', certainty: 'probable' }, // "Coin Slot" graphics; order of the coins assumed
   126: { name: 'Silver Coin', certainty: 'probable' },
   127: { name: 'Gold Coin', certainty: 'probable' },
-  129: { name: 'gemme', certainty: 'incertain' }, // "Gem Hole" graphic, which gem is unknown
+  129: { name: t('logic.gem'), certainty: 'uncertain' }, // "Gem Hole" graphic, which gem is unknown
 };
 
 /**
@@ -31,13 +33,13 @@ export function itemIdOf(dungeon, { kind, index }) {
 }
 
 /**
- * @returns {{ name: string, certainty: 'confirmé'|'probable'|'incertain'|'inconnu' }}
+ * @returns {{ name: string, certainty: 'confirmed'|'probable'|'uncertain'|'unknown' }}
  */
 export function decodeItemId(dungeon, id) {
   const keyType = id - KEYS_OFFSET;
   if (keyType >= 9 && keyType <= 24) {
     const name = dungeon.data.catalog.miscellaneous[keyType];
-    if (name) return { name, certainty: 'confirmé' };
+    if (name) return { name, certainty: 'confirmed' };
   }
-  return KNOWN[id] ?? { name: `objet #${id}`, certainty: 'inconnu' };
+  return KNOWN[id] ?? { name: t('logic.itemNumber', { id }), certainty: 'unknown' };
 }

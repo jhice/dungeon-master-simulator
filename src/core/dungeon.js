@@ -4,6 +4,7 @@
 //   global (gx, gy) : common to all levels, gx = x + map.offset.x
 // Stairs and pits connect levels at identical global coordinates.
 
+import { gameText } from '../i18n/i18n.js';
 import { tileTypeOfChar } from './tile-types.js';
 
 // North is towards y - 1 (rows grow southwards).
@@ -83,5 +84,8 @@ function computeBounds(levels) {
 export async function loadDungeon(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return new Dungeon(await response.json());
+  const data = await response.json();
+  // The texts of the dungeon in the language of the page (docs/059): every reader gets them.
+  data.texts.forEach((entry, index) => (entry.text = gameText.text(index) ?? entry.text));
+  return new Dungeon(data);
 }

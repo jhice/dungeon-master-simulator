@@ -26,8 +26,10 @@ import { DEFAULT_AUDIO } from './audio/audio-settings.js';
 import { createAudio } from './audio/audio.js';
 import { createControls } from './sim/controls.js';
 import { BLOCK_LABELS } from './sim/rules.js';
-import { SYMBOLS } from './core/spell-info.js';
+import { SYMBOLS, symbolLabel, spellName } from './core/spell-info.js';
 import { itemDetails } from './core/item-info.js';
+import { t, gameText, getLanguage } from './i18n/i18n.js';
+import { createLanguageSelect } from './ui/language-select.js';
 
 // `create` may be async: the 3D renderer is loaded on demand (Three.js comes from a CDN).
 const RENDERERS = {
@@ -42,6 +44,8 @@ const RENDERERS = {
 };
 const MIN_CELL = 6;
 const MAX_CELL = 48;
+
+document.documentElement.lang = getLanguage();
 
 const viewWrap = document.getElementById('view-wrap'); // holds the view and the control panel
 const view = document.getElementById('view');
@@ -98,7 +102,7 @@ viewWrap.append(side);
 
 const tooltip = createTooltip();
 const tileMenu = createContextMenu();
-const creatureTypes = new Map(Object.entries(dungeon.data.catalog.creature).map(([type, name]) => [name, Number(type)]));
+const creatureTypes = new Map(Object.keys(dungeon.data.catalog.creature).map((type) => [gameText.creature(type), Number(type)]));
 const inventory = createInventoryPanel(side, buildInventory(dungeon), {
   levelCount: dungeon.levelCount,
   creatureType: (name) => creatureTypes.get(name),
@@ -111,7 +115,7 @@ const inventory = createInventoryPanel(side, buildInventory(dungeon), {
 });
 
 const textsPanel = createTextsPanel(side, texts, {
-  onLocate: (t) => locate({ name: t.champion?.name ?? t.text.split('\n')[0], level: t.level, x: t.x, y: t.y, inside: t.inside }),
+  onLocate: (entry) => locate({ name: entry.champion?.name ?? entry.text.split('\n')[0], level: entry.level, x: entry.x, y: entry.y, inside: entry.inside }),
   open: prefs.textsOpen,
   onToggle: (open) => {
     prefs.textsOpen = open;
@@ -134,7 +138,7 @@ async function mountRenderer() {
   panel = null;
   const id = prefs.renderer;
   view.dataset.renderer = id;
-  status.textContent = `Chargement du renderer ${RENDERERS[id].label}…`;
+  status.textContent = t('renderer.loading', { name: RENDERERS[id].label });
   mounting = (async () => {
     try {
       return await RENDERERS[id].create(view, dungeon, {
@@ -155,7 +159,7 @@ async function mountRenderer() {
       });
     } catch (error) {
       console.error(error);
-      status.textContent = `Renderer ${RENDERERS[id].label} indisponible : ${error.message}`;
+      status.textContent = t('renderer.unavailable', { name: RENDERERS[id].label, error: error.message });
       return null;
     }
   })();
@@ -188,9 +192,9 @@ function showLevel(level) {
   prefs.level = level;
   savePreferences(prefs);
   const m = dungeon.level(level);
-  const frameLabel = RENDERERS[prefs.renderer].frameless ? '' : `, repère ${prefs.frame}`;
+  const frameLabel = RENDERERS[prefs.renderer].frameless ? '' : `, ${t(`frame.${prefs.frame}`)}`;
   label.textContent =
-    `Niveau ${level} / ${dungeon.levelCount - 1} — ${m.width}×${m.height}, offset (${m.offset.x}, ${m.offset.y})` +
+    t('level.header', { level, last: dungeon.levelCount - 1, width: m.width, height: m.height, x: m.offset.x, y: m.offset.y }) +
     ` — ${RENDERERS[prefs.renderer].label}${frameLabel}`;
   if (selection && selection.level !== level) selection = null;
   refreshLinks();
@@ -219,10 +223,10 @@ function select(info, { navigate = true } = {}) {
   const same = selection && selection.level === info.level && selection.x === info.x && selection.y === info.y;
   selection = same ? null : { level: info.level, x: info.x, y: info.y };
   refreshLinks();
-  if (!selection) return showInfo('Sélection annulée');
+  if (!selection) return showInfo(t('select.cancelled'));
   const out = logic.outgoing(info.level, info.x, info.y).length;
   const into = logic.incoming(info.level, info.x, info.y).length;
-  showInfo(`Sélection : niveau ${info.level} (${info.x}, ${info.y}) · ${info.type} — ${out} lien(s) sortant(s), ${into} entrant(s)`);
+  showInfo(t('select.info', { level: info.level, x: info.x, y: info.y, type: tileName(info.type), out, into }));
 }
 
 // Cross-level link label clicked: go to the other end and select it.
@@ -243,13 +247,13 @@ function stairsTarget(info) {
 // Tooltip lines for the texts of a tile: inscription / message in full, champion sheet decoded.
 function textLines(info) {
   if (!prefs.showTexts) return [];
-  return textsAt(texts, info.level, info.x, info.y).map((t) => {
-    if (t.champion) {
-      return { color: TEXT_COLORS.champion, title: `Champion : ${t.champion.name}, ${t.champion.title}`, details: championSummary(t.champion) };
+  return textsAt(texts, info.level, info.x, info.y).map((entry) => {
+    if (entry.champion) {
+      return { color: TEXT_COLORS.champion, title: t('tooltip.champion', { name: entry.champion.name, title: entry.champion.title }), details: championSummary(entry.champion) };
     }
-    const face = t.onWall ? ` (${FACE_LABELS[t.position]})` : '';
-    const title = t.kind === 'message' ? `Message${face} — affiché par un mécanisme` : `Inscription${face}`;
-    return { color: TEXT_COLORS[t.kind], title, details: t.text.split('\n') };
+    const face = entry.onWall ? ` (${FACE_LABELS[entry.position]})` : '';
+    const title = t(entry.kind === 'message' ? 'tooltip.message' : 'tooltip.inscription', { face });
+    return { color: TEXT_COLORS[entry.kind], title, details: entry.text.split('\n') };
   });
 }
 
@@ -264,8 +268,8 @@ function mechanismLines(info) {
   if (teleporter) lines.push({ color: TELEPORTER_COLORS[teleporter.scope], ...describeTeleporter(dungeon, teleporter) });
   const into = logic.incoming(info.level, info.x, info.y);
   if (into.length) {
-    const sources = into.map((l) => (l.from.level === info.level ? `(${l.from.x}, ${l.from.y})` : `N${l.from.level} (${l.from.x}, ${l.from.y})`));
-    lines.push({ color: '#ffffff', title: `Déclenché par ${into.length} source(s)`, details: [sources.slice(0, 6).join(' · ') + (sources.length > 6 ? ' …' : '')] });
+    const sources = into.map((l) => (l.from.level === info.level ? `(${l.from.x}, ${l.from.y})` : `${t('level.short', { level: l.from.level })} (${l.from.x}, ${l.from.y})`));
+    lines.push({ color: '#ffffff', title: t('tooltip.triggeredBy', { count: into.length }), details: [sources.slice(0, 6).join(' · ') + (sources.length > 6 ? ' …' : '')] });
   }
   return lines;
 }
@@ -290,11 +294,13 @@ function showHover(info) {
   }
 }
 
+const tileName = (type) => t(`tile.${type}`);
+
 // One-line description of a tile (status bar, tooltip title).
 function tileSummary(info) {
-  let text = `niveau ${info.level} · (${info.x}, ${info.y}) local · [${info.gx}, ${info.gy}] global · ${info.type}`;
-  if (info.type === 'stairs') text += ` ${info.detail.direction === 'up' ? '↑ vers' : '↓ vers'} niveau ${info.level + (info.detail.direction === 'up' ? -1 : 1)} (clic)`;
-  if (info.type === 'door' || info.type === 'stairs') text += ` · axe ${info.detail.orientation}`;
+  let text = t('tile.summary', { level: info.level, x: info.x, y: info.y, gx: info.gx, gy: info.gy, type: tileName(info.type) });
+  if (info.type === 'stairs') text += ` ${info.detail.direction === 'up' ? '↑' : '↓'} ${t('tile.stairsTo', { level: info.level + (info.detail.direction === 'up' ? -1 : 1) })}`;
+  if (info.type === 'door' || info.type === 'stairs') text += ` · ${t('tile.axis', { axis: info.detail.orientation })}`;
   const state = prefs.showStates && info.detail ? describeState(info.type, info.detail) : null;
   if (state) text += ` · ${state}`;
   return text;
@@ -354,7 +360,7 @@ function setShowStates(enabled) {
   renderer.setShowStates(enabled);
   renderLegend(legend, prefs.renderer, { showStates: enabled });
   panel?.setValues({ showStates: enabled });
-  showInfo(`États des tuiles : ${enabled ? 'affichés' : 'masqués'}`);
+  showInfo(t('common.labelled', { label: t('panel.states'), value: t(enabled ? 'common.shown' : 'common.hidden') }));
 }
 
 // Settings changed by the renderer itself (e.g. the 3D display mode, key F).
@@ -379,8 +385,8 @@ function setLayer(key, enabled) {
   renderer.setLayers(layers());
   panel?.setValues({ [key]: enabled });
   refreshLinks();
-  const names = { showItems: 'Objets', showCreatures: 'Créatures', showMechanisms: 'Mécanismes', showTexts: 'Textes' };
-  showInfo(`${names[key]} : ${enabled ? 'affichés' : 'masqués'}`);
+  const names = { showItems: t('panel.items'), showCreatures: t('panel.creatures'), showMechanisms: t('panel.mechanisms'), showTexts: t('panel.texts') };
+  showInfo(t('common.labelled', { label: names[key], value: t(enabled ? 'common.shown' : 'common.hidden') }));
 }
 
 function setAllLinks(enabled) {
@@ -388,7 +394,7 @@ function setAllLinks(enabled) {
   savePreferences(prefs);
   refreshLinks();
   panel?.setValues({ allLinks: enabled });
-  showInfo(`Tous les liens du niveau : ${enabled ? 'affichés' : 'sélection seule'}`);
+  showInfo(t('common.labelled', { label: t('status.allLinks'), value: t(enabled ? 'common.shown' : 'status.selectionOnly') }));
 }
 
 // Inventory click: go to the level and point at the tile.
@@ -396,7 +402,7 @@ function locate(entry) {
   if (!renderer) return;
   showLevel(entry.level);
   renderer.highlightTile?.(entry.x, entry.y);
-  showInfo(`${entry.name} — niveau ${entry.level} (${entry.x}, ${entry.y})${entry.inside ? `, dans ${entry.inside}` : ''}`);
+  showInfo(`${entry.name} — ${t('common.levelAt', { level: entry.level, x: entry.x, y: entry.y })}${entry.inside ? `, ${t('common.inside', { name: entry.inside })}` : ''}`);
 }
 
 function setFrame(global) {
@@ -411,24 +417,24 @@ function setFrame(global) {
 const knownLighting = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_LIGHTING));
 const lighting = () => ({ ...DEFAULT_LIGHTING, ...knownLighting(prefs.lighting) });
 const LIGHTING_SCHEMA = [
-  { type: 'heading', label: 'Lumière (vue du jeu)' },
-  { type: 'range', key: 'intensity', label: 'Intensité', min: 0.1, max: 10, step: 0.1, format: (v) => v.toFixed(1) },
-  { type: 'range', key: 'distance', label: 'Portée', min: 1, max: 6, step: 0.1, format: (v) => `${v.toFixed(1)} cases` },
-  { type: 'range', key: 'decay', label: 'Atténuation', min: 0, max: 10, step: 0.1, format: (v) => v.toFixed(1) },
-  { type: 'checkbox', key: 'permanentLight', label: 'Lumière permanente (tout à 100 %)' },
-  { type: 'checkbox', key: 'torchHolders', label: 'Torches murales lumineuses' },
-  { type: 'checkbox', key: 'occlusion', label: 'Lumière arrêtée par les murs' },
-  { type: 'heading', label: 'Décors (vue du jeu)' },
-  { type: 'checkbox', key: 'ornamentModels', label: 'Objets 3D' },
+  { type: 'heading', label: t('panel.lightHeading') },
+  { type: 'range', key: 'intensity', label: t('panel.intensity'), min: 0.1, max: 10, step: 0.1, format: (v) => v.toFixed(1) },
+  { type: 'range', key: 'distance', label: t('panel.range'), min: 1, max: 6, step: 0.1, format: (v) => t('panel.tiles', { count: v.toFixed(1) }) },
+  { type: 'range', key: 'decay', label: t('panel.decay'), min: 0, max: 10, step: 0.1, format: (v) => v.toFixed(1) },
+  { type: 'checkbox', key: 'permanentLight', label: t('panel.permanentLight') },
+  { type: 'checkbox', key: 'torchHolders', label: t('panel.torchHolders') },
+  { type: 'checkbox', key: 'occlusion', label: t('panel.occlusion') },
+  { type: 'heading', label: t('panel.decorHeading') },
+  { type: 'checkbox', key: 'ornamentModels', label: t('panel.ornamentModels') },
 ];
 // Sounds (docs/041): kept in the preferences as the light.
 const knownAudio = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_AUDIO));
 const audioSettings = () => ({ ...DEFAULT_AUDIO, ...knownAudio(prefs.audio) });
 const AUDIO_SCHEMA = [
-  { type: 'heading', label: 'Sons' },
-  { type: 'checkbox', key: 'soundEnabled', label: 'Sons activés' },
-  { type: 'range', key: 'soundVolume', label: 'Volume', min: 0, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
-  { type: 'range', key: 'soundRange', label: 'Portée', min: 2, max: 16, step: 1, format: (v) => `${v} cases` },
+  { type: 'heading', label: t('panel.soundHeading') },
+  { type: 'checkbox', key: 'soundEnabled', label: t('panel.soundEnabled') },
+  { type: 'range', key: 'soundVolume', label: t('panel.volume'), min: 0, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
+  { type: 'range', key: 'soundRange', label: t('panel.range'), min: 2, max: 16, step: 1, format: (v) => t('panel.tiles', { count: v }) },
 ];
 function changeAudio(changes) {
   prefs.audio = { ...knownAudio(prefs.audio), ...changes };
@@ -447,40 +453,40 @@ function panelSchema() {
     {
       type: 'buttons',
       items: [
-        { label: '▲ Haut', title: 'Niveau précédent (PgPréc)', action: () => go(-1), disabled: () => renderer.currentLevel === 0 },
-        { label: '▼ Bas', title: 'Niveau suivant (PgSuiv)', action: () => go(+1), disabled: () => renderer.currentLevel === dungeon.levelCount - 1 },
-        { label: '▶ Jeu', title: 'Ouvrir / fermer la simulation (P)', action: () => (game ? closeGame() : openGame()) },
+        { label: `▲ ${t('panel.up')}`, title: t('panel.upTitle'), action: () => go(-1), disabled: () => renderer.currentLevel === 0 },
+        { label: `▼ ${t('panel.down')}`, title: t('panel.downTitle'), action: () => go(+1), disabled: () => renderer.currentLevel === dungeon.levelCount - 1 },
+        { label: `▶ ${t('panel.game')}`, title: t('panel.gameTitle'), action: () => (game ? closeGame() : openGame()) },
         {
           type: 'select',
-          title: 'Aller directement à un niveau',
-          options: dungeon.levels.map((_, i) => ({ value: i, label: `Niveau ${i}` })),
+          title: t('panel.levelTitle'),
+          options: dungeon.levels.map((_, i) => ({ value: i, label: t('common.level', { level: i }) })),
           value: () => renderer.currentLevel,
           onChange: (value) => showLevel(Number(value)),
         },
       ],
     },
   ];
-  if (renderer.setShowStates) schema.push({ type: 'checkbox', key: 'showStates', label: 'États des tuiles', shortcut: 'V' });
+  if (renderer.setShowStates) schema.push({ type: 'checkbox', key: 'showStates', label: t('panel.states'), shortcut: 'V' });
   if (renderer.setLayers) {
-    schema.push({ type: 'checkbox', key: 'showItems', label: 'Objets', shortcut: 'O' });
-    schema.push({ type: 'checkbox', key: 'showCreatures', label: 'Créatures', shortcut: 'C' });
-    schema.push({ type: 'checkbox', key: 'showMechanisms', label: 'Mécanismes', shortcut: 'K' });
-    schema.push({ type: 'checkbox', key: 'showTexts', label: 'Textes', shortcut: 'X' });
-    schema.push({ type: 'checkbox', key: 'allLinks', label: 'Tous les liens (sinon sélection)', shortcut: 'T' });
+    schema.push({ type: 'checkbox', key: 'showItems', label: t('panel.items'), shortcut: 'O' });
+    schema.push({ type: 'checkbox', key: 'showCreatures', label: t('panel.creatures'), shortcut: 'C' });
+    schema.push({ type: 'checkbox', key: 'showMechanisms', label: t('panel.mechanisms'), shortcut: 'K' });
+    schema.push({ type: 'checkbox', key: 'showTexts', label: t('panel.texts'), shortcut: 'X' });
+    schema.push({ type: 'checkbox', key: 'allLinks', label: t('panel.allLinks'), shortcut: 'T' });
   }
-  if (renderer.setLayers) schema.push({ type: 'checkbox', key: 'alwaysTooltip', label: 'Toujours afficher l’infobulle' });
+  if (renderer.setLayers) schema.push({ type: 'checkbox', key: 'alwaysTooltip', label: t('panel.alwaysTooltip') });
   if (!RENDERERS[prefs.renderer].frameless) {
-    schema.push({ type: 'checkbox', key: 'frameGlobal', label: 'Repère global', shortcut: 'G' });
-    schema.push({ type: 'checkbox', key: 'autoFit', label: 'Auto-ajustement (repère local)' });
+    schema.push({ type: 'checkbox', key: 'frameGlobal', label: t('panel.frameGlobal'), shortcut: 'G' });
+    schema.push({ type: 'checkbox', key: 'autoFit', label: t('panel.autoFit') });
   }
-  if (prefs.renderer === 'dom') schema.push({ type: 'checkbox', key: 'showRulers', label: 'Règles (coordonnées sur les bords)' });
-  schema.push({ type: 'checkbox', key: 'invincible', label: 'Invincibilité (Zed ne perd pas de PV)' });
+  if (prefs.renderer === 'dom') schema.push({ type: 'checkbox', key: 'showRulers', label: t('panel.rulers') });
+  schema.push({ type: 'checkbox', key: 'invincible', label: t('panel.invincible') });
   return [
     ...schema,
     ...(renderer.settingsSchema ?? []),
     ...LIGHTING_SCHEMA,
     ...AUDIO_SCHEMA,
-    { type: 'buttons', items: [{ label: 'Valeurs par défaut', title: 'Remettre toutes les valeurs du panneau par défaut', action: resetPanel }] },
+    { type: 'buttons', items: [{ label: t('panel.defaults'), title: t('panel.defaultsTitle'), action: resetPanel }] },
   ];
 }
 
@@ -547,7 +553,7 @@ function resetPanel() {
   game?.view.setLighting(DEFAULT_LIGHTING);
   audio.setSettings(DEFAULT_AUDIO);
   // The renderer is rebuilt with its default settings (and the frame), the panel with it.
-  mountRenderer().then(() => showInfo('Panneau : valeurs par défaut'));
+  mountRenderer().then(() => showInfo(t('status.panelReset')));
 }
 
 // Key -> toggle of a renderer checkbox setting declaring that shortcut (L, E in 3D).
@@ -557,7 +563,7 @@ function settingShortcut(key) {
   return () => {
     const enabled = !renderer.settings[field.key];
     changeSettings({ [field.key]: enabled });
-    showInfo(`${field.label} : ${enabled ? 'oui' : 'non'}`);
+    showInfo(t('common.labelled', { label: field.label, value: t(enabled ? 'common.yes' : 'common.no') }));
   };
 }
 
@@ -585,7 +591,9 @@ const GLOBAL_KEYS = {
   f: teleportToSelection,
 };
 
-const shortcuts = createShortcutsModal(document.body, document.getElementById('shortcuts-button'));
+const shortcutsButton = document.getElementById('shortcuts-button');
+const shortcuts = createShortcutsModal(document.body, shortcutsButton);
+createLanguageSelect(shortcutsButton);
 
 bindKeys((key, event) => {
   // The modal keeps the keyboard: nothing moves behind it. Escape is closed natively by <dialog>.
@@ -666,7 +674,7 @@ async function openGame() {
   } catch (error) {
     console.error(error);
     win.dispose();
-    showInfo(`Vue à la première personne indisponible : ${error.message}`);
+    showInfo(t('game.unavailable', { error: error.message }));
     return;
   } finally {
     opening = false;
@@ -691,13 +699,13 @@ function closeGame() {
 
 // F: the party jumps to the selected tile (to test a place directly), facing unchanged.
 function teleportToSelection() {
-  if (!selection) return showInfo('F : sélectionnez d’abord une case (clic)');
+  if (!selection) return showInfo(t('status.selectFirst'));
   return teleportTo(selection);
 }
 async function teleportTo(target) {
   if (!game) await openGame();
   const blocked = sim.teleport(target.level, target.x, target.y);
-  if (blocked) return showInfo(`Téléportation : case infranchissable (${BLOCK_LABELS[blocked]})`);
+  if (blocked) return showInfo(t('status.teleportBlocked', { reason: BLOCK_LABELS[blocked] }));
   // The party is there: the selection has done its job.
   if (selection) select(selection);
 }
@@ -708,19 +716,19 @@ function openTileMenu(info, event) {
   const { level, x, y } = info;
   const items = sim.state.itemsAt(level, x, y).length;
   const actuators = sim.state.actuatorsAt(level, x, y).length;
-  tileMenu.show(event.clientX, event.clientY, `Niveau ${level} (${x}, ${y}) · ${info.type}`, [
-    { label: 'Se téléporter ici (F)', action: () => teleportTo(info) },
-    { label: `Ramasser les objets (${items})`, disabled: !items, action: () => collectItems(info) },
-    { label: `Activer les actuators (${actuators})`, disabled: !actuators, action: () => fireActuators(info) },
+  tileMenu.show(event.clientX, event.clientY, `${t('common.levelAt', { level, x, y })} · ${tileName(info.type)}`, [
+    { label: t('menu.teleport'), action: () => teleportTo(info) },
+    { label: t('menu.collect', { count: items }), disabled: !items, action: () => collectItems(info) },
+    { label: t('menu.fire', { count: actuators }), disabled: !actuators, action: () => fireActuators(info) },
   ]);
 }
 function collectItems({ level, x, y }) {
   const count = sim.collectAll(level, x, y);
-  showInfo(`${count} objet(s) ramassé(s) dans l’inventaire`);
+  showInfo(t('menu.collected', { count }));
 }
 function fireActuators({ level, x, y }) {
   const fired = sim.fireAll(level, x, y);
-  showInfo(fired ? `${fired} actuator(s) activé(s)` : 'Aucun actuator actif (désactivés après usage ?)');
+  showInfo(fired ? t('menu.fired', { count: fired }) : t('menu.noneActive'));
 }
 
 // Click on the wall or door in front of the party (mouse in the view, or Space); on a
@@ -734,14 +742,14 @@ function clickFront(side = 'right', kind = null) {
   if (kind !== 'front' && sim.state.groupAt(sim.party.level, sim.party.x + dx, sim.party.y + dy)) {
     if (sim.hand) return throwHeld(side);
     const melee = sim.actions.find((a) => a.kind === 'melee');
-    return melee ? doAction(melee.index) : say('Aucune action de frappe avec cet objet');
+    return melee ? doAction(melee.index) : say(t('action.noMelee'));
   }
   if (sim.hand && sim.state.tileAt(sim.party.level, sim.party.x + dx, sim.party.y + dy)?.type === 'door') return throwHeld(side);
   const { target, fired, took, placed, filled } = sim.clickFront();
-  if (filled) say(filled === 'waterskin' ? 'La fontaine remplit la gourde' : 'La fontaine remplit la flasque : Water Flask');
-  else if (took) say(`Pris : ${itemName(sim.hand)}`);
-  else if (placed) say('Objet posé');
-  else if (!fired) say(target === 'wall' || target === 'door' ? 'Rien ne se passe' : 'Rien à actionner devant');
+  if (filled) say(filled === 'waterskin' ? t('fountain.waterskin') : t('fountain.flask', { item: gameText.item('Water Flask') }));
+  else if (took) say(t('action.taken', { item: itemName(sim.hand) }));
+  else if (placed) say(t('action.placed'));
+  else if (!fired) say(t(target === 'wall' || target === 'door' ? 'action.nothingHappens' : 'action.nothingInFront'));
 }
 
 // An action of the action hand (docs/044), by its index. What a strike or a shot does to a
@@ -751,29 +759,29 @@ function doAction(index) {
   const { result, item, action, broken, healed, group } = sim.act(index);
   game?.panel.setReady(sim.fatigue === 0); // disabled at once, not at the next tick
   if (!NOT_DONE.has(result)) game?.panel.showAction(index);
-  if (result === 'noAmmo') game?.panel.showResult('Pas de munitions');
-  const label = action?.label ?? '';
+  if (result === 'noAmmo') game?.panel.showResult(gameText.misc('needAmmo'));
+  const label = action ? gameText.action(action.index) : '';
   const words = {
-    nothing: action?.kind === 'climb' ? 'Pas de trappe ouverte devant' : action?.kind === 'heal' ? 'Rien à guérir' : 'Rien à lancer',
-    exhausted: 'Trop fatigué',
-    pending: `${label} : pas encore implémenté`,
-    thrown: `Lancé : ${item && itemName(item)}`,
-    shot: `Tiré : ${item && itemName(item)}`,
-    noAmmo: 'Il faut des munitions dans la main gauche',
+    nothing: t(action?.kind === 'climb' ? 'action.noPit' : action?.kind === 'heal' ? 'action.nothingToHeal' : 'action.nothingToCast'),
+    exhausted: t('action.exhausted'),
+    pending: t('action.pending', { label }),
+    thrown: t('action.thrown', { item: item && itemName(item) }),
+    shot: t('action.shot', { item: item && itemName(item) }),
+    noAmmo: t('action.noAmmo'),
     cast: label,
-    light: 'La lumière magique se répand',
-    healed: `${championName(sim.champion)} regagne ${healed} PV`,
-    heads: 'C’est face',
-    tails: 'C’est pile',
-    climbed: 'Descente à la corde',
+    light: t('action.light'),
+    healed: t('action.healed', { name: championName(sim.champion), value: healed }),
+    heads: gameText.misc('heads'),
+    tails: gameText.misc('tails'),
+    climbed: t('action.climbed'),
     done: label,
-    nobody: `${label} : personne devant`,
-    frightened: group && `${describeGroup(dungeon, group).name} : pris de peur, il s’enfuit`,
-    resisted: group && `${describeGroup(dungeon, group).name} : ne se laisse pas impressionner`,
-    doorHit: broken ? '' : 'Coup sur la porte, qui tient bon', // broken: see 'doorBroken'
-    air: 'Le coup frappe dans le vide',
-    wall: 'Le coup frappe le mur',
-    door: 'Le coup frappe la porte, sans l’abîmer',
+    nobody: t('action.nobody', { label }),
+    frightened: group && t('action.frightened', { name: describeGroup(dungeon, group).name }),
+    resisted: group && t('action.resisted', { name: describeGroup(dungeon, group).name }),
+    doorHit: broken ? '' : t('action.doorHit'), // broken: see 'doorBroken'
+    air: t('action.air'),
+    wall: t('action.wall'),
+    door: t('action.door'),
   }[result];
   if (words) say(words);
 }
@@ -786,16 +794,16 @@ function throwHeld(side) {
   if (!sim.hand) return;
   const { result, item } = sim.throwHeld(side);
   game?.panel.setReady(sim.fatigue === 0);
-  if (result === 'exhausted') say('Trop fatigué');
-  else if (result === 'thrown') say(`Lancé : ${itemName(item)}`);
+  if (result === 'exhausted') say(t('action.exhausted'));
+  else if (result === 'thrown') say(t('action.thrown', { item: itemName(item) }));
 }
 
 // The mouth (under the item in hand): the champion drinks what the cursor holds (docs/031, 050).
 function drink() {
   if (!sim.hand) return;
   const result = sim.drink();
-  if (result?.empty) say(`${itemName(sim.hand)} : la gourde est vide`);
-  else if (!result) say(`${itemName(sim.hand)} : ne se boit pas`);
+  if (result?.empty) say(t('drink.empty', { item: itemName(sim.hand) }));
+  else if (!result) say(t('drink.notDrinkable', { item: itemName(sim.hand) }));
 }
 
 // The champion's box: bars, hands, actions of the action hand.
@@ -804,7 +812,7 @@ function showChampion() {
   game?.panel.update(
     sim.champion,
     sim.hands.map(describe),
-    sim.actions.map((a) => ({ id: a.index, name: a.label })),
+    sim.actions.map((a) => ({ id: a.index, name: gameText.action(a.index) })),
   );
   game?.spells.update(sim.champion, sim.knownSpells);
 }
@@ -815,7 +823,7 @@ function clickFloor({ level, x, y, position, item }, side) {
   if (sim.hand) {
     if (!sim.drop(level, x, y, position)) throwHeld(side); // out of reach: thrown there
   } else if (item && !sim.pickUp(level, x, y, item)) {
-    say('Hors de portée');
+    say(gameText.misc('tooFar'));
   }
 }
 
@@ -824,7 +832,7 @@ const itemName = (ref) => describeItem(dungeon, ref).name;
 // In the inventory and the hands: a waterskin with its state (docs/050).
 const heldName = (ref) => {
   const { name, note } = describeItem(dungeon, ref);
-  return isWaterskin(dungeon, ref) ? `${name} (${note})` : name;
+  return isWaterskin(dungeon, ref) ? `${name} ${note}` : name;
 };
 // Name and details of an item, one per line (docs/034).
 const itemTooltip = (ref) => [itemName(ref), ...itemDetails(dungeon, ref)].join('\n');
@@ -849,15 +857,15 @@ function showInventory() {
   showChampion();
 }
 
-const FACING_LABELS = { N: 'nord', E: 'est', S: 'sud', W: 'ouest' };
+const FACING_LABELS = { N: gameText.misc('north'), E: gameText.misc('east'), S: gameText.misc('south'), W: gameText.misc('west') };
 
 // Status line of the game window: where the party is, and the light (docs/032; drawn by the view since docs/035).
 function showStatus() {
   const { level, x, y, facing } = sim.party;
   const { amount, palette, permanent, torches, magical } = sim.light;
-  const sources = [...torches.map((t) => `torche ${t.charges}`), ...(magical ? [`magie ${magical}`] : [])];
-  const light = permanent ? 'permanente' : `${amount} (palette ${palette}${sources.length ? `, ${sources.join(', ')}` : ''})`;
-  game?.window.setStatus(`niveau ${level} · (${x}, ${y}) · face ${FACING_LABELS[facing]} · lumière ${light}`);
+  const sources = [...torches.map((torch) => t('light.torch', { charges: torch.charges })), ...(magical ? [t('light.magic', { value: magical })] : [])];
+  const light = permanent ? t('light.permanent') : `${amount} (${t('light.palette', { value: palette })}${sources.length ? `, ${sources.join(', ')}` : ''})`;
+  game?.window.setStatus(t('game.status', { level, x, y, facing: FACING_LABELS[facing], light }));
 }
 
 function showParty(party) {
@@ -872,20 +880,21 @@ function showParty(party) {
 sim.on('partyMoved', ({ party, effects, loop }) => {
   showParty(party);
   if (!effects?.length) return;
-  showInfo(effects.map(describeEffect).join(' · ') + (loop ? ' · boucle interrompue' : ''));
+  showInfo(effects.map(describeEffect).join(' · ') + (loop ? ` · ${t('effect.loop')}` : ''));
   if (effects.some((e) => e.type === 'fall')) game?.window.flash(); // fell through a pit, as a bump
 });
 sim.on('itemsMoved', ({ to, items }) => {
-  showInfo(`${items.map(itemName).join(', ')} → niveau ${to.level} (${to.x}, ${to.y})`);
+  showInfo(`${items.map(itemName).join(', ')} → ${t('common.levelAt', { level: to.level, x: to.x, y: to.y })}`);
 });
 
 // Status bar text of an arrival effect (stairs, pit, teleporter), see src/sim/rules.js.
 function describeEffect({ type, direction, party, detail }) {
-  const where = `niveau ${party.level} (${party.x}, ${party.y})`;
-  if (type === 'stairs') return `Escalier ${direction === 'down' ? '↓' : '↑'} → ${where}`;
-  if (type === 'fall') return `Chute → ${where}`;
+  const where = t('common.levelAt', { level: party.level, x: party.x, y: party.y });
+  const facing = t('effect.facing', { facing: FACING_LABELS[party.facing] });
+  if (type === 'stairs') return `${tileName('stairs')} ${direction === 'down' ? '↓' : '↑'} → ${where}`;
+  if (type === 'fall') return `${t('effect.fall')} → ${where}`;
   const same = detail.at.map === party.level && detail.at.x === party.x && detail.at.y === party.y;
-  return same ? `Téléporteur : rotation, face ${FACING_LABELS[party.facing]}` : `Téléporteur → ${where}, face ${FACING_LABELS[party.facing]}`;
+  return same ? `${tileName('teleporter')} : ${facing}` : `${tileName('teleporter')} → ${where}, ${facing}`;
 }
 sim.on('reset', ({ party }) => {
   showParty(party);
@@ -909,51 +918,51 @@ sim.on('lightChanged', (light) => {
 // A torch in hand lost a charge: its name in the hands and its note change.
 sim.on('torchesWorn', ({ torches }) => {
   showInventory();
-  if (torches.some((t) => !t.charges)) say('Une torche s’est consumée');
+  if (torches.some((t) => !t.charges)) say(t('light.torchBurnt'));
 });
 sim.on('championChanged', showChampion);
 // Spell area (docs/030): the line of symbols changed; a spell was cast (G1: recognised, no effect yet).
 sim.on('symbolsChanged', ({ champion }) => game?.spells.update(champion, sim.knownSpells));
 // A scroll held for the first time: its spells go into the grimoire (docs/034).
 sim.on('grimoireChanged', ({ learned }) => {
-  if (learned.length) say(`Grimoire : ${learned.map((s) => `${s.name} (${s.symbols.join(' ')})`).join(', ')}`);
+  if (learned.length) say(t('spell.learned', { list: learned.map((s) => `${spellName(s)} (${s.symbols.map(symbolLabel).join(' ')})`).join(', ') }));
   game?.spells.update(sim.champion, sim.knownSpells);
 });
 sim.on('spellCast', ({ champion, spell, power, reason, item }) => {
   game?.panel.setReady(sim.fatigue === 0);
   const who = championName(champion);
-  if (!spell) return say(`${who} a prononcé un sort incompréhensible`);
+  if (!spell) return say(`${champion.name} ${gameText.misc('mumbles')}`);
   // The spell is named only when the grimoire knows it (docs/034); else its symbols alone.
-  const symbols = `${SYMBOLS[0][power - 1]} ${spell.symbols.join(' ')}`;
-  const words = sim.knownSpells.includes(spell) ? `${spell.name} (${symbols})` : symbols;
-  if (reason === 'needsFlask') return say(`${who} a besoin d’une flasque vide en main pour cette potion (${symbols})`);
-  if (reason === 'potion') return say(`${who} lance ${words} : la flasque devient ${itemName(item)}`);
-  say(`${who} lance ${words}${reason === 'unimplemented' ? ' · pas encore implémenté' : ''}`);
+  const symbols = `${SYMBOLS[0][power - 1]} ${spell.symbols.map(symbolLabel).join(' ')}`;
+  const words = sim.knownSpells.includes(spell) ? `${spellName(spell)} (${symbols})` : symbols;
+  if (reason === 'needsFlask') return say(`${champion.name} ${gameText.misc('needsFlask')} (${symbols})`);
+  if (reason === 'potion') return say(t('spell.castPotion', { name: who, words, item: itemName(item) }));
+  say(t('spell.castName', { name: who, words }) + (reason === 'unimplemented' ? ` · ${t('common.notImplemented')}` : ''));
 });
 const championName = (champion) => champion.name[0] + champion.name.slice(1).toLowerCase();
-const DRINK_EFFECTS = { health: 'PV', stamina: 'endurance', mana: 'mana', water: 'eau' };
+const DRINK_EFFECTS = { health: t('common.hp'), stamina: gameText.misc('stamina'), mana: gameText.misc('mana'), water: t('drink.water') };
 // Water (docs/050): the gauge of the champion follows, out of 2048 (no thirst yet).
 const drinkEffect = (champion, effect, gained) =>
-  !effect ? 'effet pas encore implémenté' : `+${gained} ${DRINK_EFFECTS[effect]}${effect === 'water' ? ` (${champion.water} / 2048)` : ''}`;
-sim.on('potionDrunk', ({ champion, name, effect, gained }) => say(`${championName(champion)} boit ${name} : ${drinkEffect(champion, effect, gained)}`));
+  !effect ? t('drink.noEffect') : `+${gained} ${DRINK_EFFECTS[effect]}${effect === 'water' ? ` (${champion.water} / 2048)` : ''}`;
+sim.on('potionDrunk', ({ champion, name, effect, gained }) => say(t('drink.drinks', { name: championName(champion), item: gameText.item(name), effect: drinkEffect(champion, effect, gained) })));
 // What a strike or a projectile did to a creature: the damage in the action area (not for a
 // thrown item or a fireball, which land later and must not hide the actions, docs/057), a word in the status bar.
 sim.on('creatureHit', ({ result, damage, group, killed, destroyed, thrown, spell }) => {
-  if (!thrown && !spell) game?.panel.showResult(result === 'hit' ? String(damage) : result === 'immaterial' ? 'Sans effet' : 'Raté');
+  if (!thrown && !spell) game?.panel.showResult(result === 'hit' ? String(damage) : t(result === 'immaterial' ? 'combat.noEffect' : 'combat.missed'));
   const { name } = describeGroup(dungeon, group);
-  if (destroyed) say(`${name} : groupe anéanti`);
-  else if (killed) say(`${name} tué`);
-  else if (result === 'immaterial') say(`${name} : immatériel, les coups le traversent`);
-  else if (thrown) say(result === 'hit' ? `${name} touché : ${damage} PV` : `${name} : sans dégâts`);
-  else if (spell) say(`${name} brûlé : ${damage} PV`);
+  if (destroyed) say(t('combat.destroyed', { name }));
+  else if (killed) say(t('combat.killed', { name }));
+  else if (result === 'immaterial') say(t('combat.immaterial', { name }));
+  else if (thrown) say(result === 'hit' ? t('combat.hit', { name, damage }) : t('combat.noDamage', { name }));
+  else if (spell) say(t('combat.burnt', { name, damage }));
 });
 // A fireball broke a door (docs/033).
 sim.on('doorBroken', ({ by }) => {
-  say({ melee: 'La porte vole en éclats', thrown: 'L’objet lancé fait voler la porte en éclats' }[by] ?? 'La boule de feu fait voler la porte en éclats');
+  say(t(`door.brokenBy.${by === 'melee' || by === 'thrown' ? by : 'fireball'}`));
   game?.window.flash();
 });
-sim.on('itemStolen', ({ group, item }) => say(`${describeGroup(dungeon, group).name} vous a volé : ${itemName(item)}`));
-sim.on('groupFled', ({ group, reason }) => reason === 'fear' && say(`${describeGroup(dungeon, group).name} : le groupe prend peur et s’enfuit`));
+sim.on('itemStolen', ({ group, item }) => say(t('combat.stolen', { name: describeGroup(dungeon, group).name, item: itemName(item) })));
+sim.on('groupFled', ({ group, reason }) => reason === 'fear' && say(t('combat.fled', { name: describeGroup(dungeon, group).name })));
 // Items in flight: redrawn in the first-person view once per frame.
 let projectileFrame = 0;
 sim.on('projectilesMoved', () => {
@@ -964,19 +973,19 @@ sim.on('projectilesMoved', () => {
 });
 sim.on('championHit', ({ result, damage }) => result === 'hit' && game?.panel.wounded(damage));
 const deathCause = ({ group, spell, fall, wall }) =>
-  group ? `tué par ${describeGroup(dungeon, group).name}` : spell ? 'brûlé par sa boule de feu' : fall ? 'dans sa chute' : wall ? 'contre un mur' : 'écrasé par une porte';
-sim.on('championDied', (event) => say(`${event.champion.name} est mort, ${deathCause(event)}`));
+  group ? t('death.group', { name: describeGroup(dungeon, group).name }) : t(spell ? 'death.spell' : fall ? 'death.fall' : wall ? 'death.wall' : 'death.door');
+sim.on('championDied', (event) => say(t('death.message', { name: event.champion.name, cause: deathCause(event) })));
 sim.on('championHit', ({ door, spell, fall, damage }) => {
-  if (door) say(`La porte se referme sur le groupe : ${damage} PV`);
-  if (fall) say(`Chute : ${damage} PV`);
+  if (door) say(t('door.closedOnParty', { damage }));
+  if (fall) say(t('combat.fall', { damage }));
   if (spell) {
-    say(`La boule de feu explose sur le groupe : ${damage} PV`);
+    say(t('combat.fireball', { damage }));
     game?.window.flash();
   }
 });
 sim.on('doorCrushed', ({ group, killed, destroyed }) => {
   const { name } = describeGroup(dungeon, group);
-  say(destroyed ? `${name} : écrasé par la porte, groupe anéanti` : killed ? `${name} : ${killed} écrasé(s) par la porte` : `La porte se referme sur ${name}`);
+  say(destroyed ? t('door.crushedAll', { name }) : killed ? t('door.crushed', { name, count: killed }) : t('door.closedOn', { name }));
 });
 
 // Creatures moved: their tiles are redrawn in 2D, only the creature markers of their level
@@ -986,7 +995,7 @@ let movedFrame = 0;
 sim.on('creaturesMoved', ({ group, from, to, generated }) => {
   if (generated) {
     const { count, name } = describeGroup(dungeon, group);
-    showInfo(`Générateur : ${count} × ${name} en (${to.x}, ${to.y})`);
+    showInfo(t('status.generated', { count, name, x: to.x, y: to.y }));
   }
   for (const tile of [from, to]) if (tile) movedTiles.set(`${tile.level}:${tile.x},${tile.y}`, tile);
   movedFrame ||= requestAnimationFrame(redrawCreatures);
@@ -994,7 +1003,7 @@ sim.on('creaturesMoved', ({ group, from, to, generated }) => {
 // A group noticed the party (C2): it comes after it.
 sim.on('groupAlerted', ({ group, seen }) => {
   const { count, name } = describeGroup(dungeon, group);
-  showInfo(`${count > 1 ? `${count} × ${name} vous ont` : `${name} vous a`} ${seen ? 'repéré' : 'trouvé'}`);
+  showInfo(t(seen ? 'status.seenBy' : 'status.foundBy', { count, name: count > 1 ? `${count} × ${name}` : name }));
 });
 function redrawCreatures() {
   movedFrame = 0;
@@ -1015,17 +1024,17 @@ sim.on('ornamentChanged', ({ level }) => game?.view.updateTile(level));
 
 // A mechanism changed a tile: redraw it everywhere and say so.
 const STATE_WORDS = {
-  door: ['Porte', 'ouverte', 'fermée'],
-  pit: ['Trappe', 'ouverte', 'fermée'],
-  teleporter: ['Téléporteur', 'activé', 'désactivé'],
-  fakewall: ['Faux mur', 'disparu', 'revenu'],
+  door: [t('tile.door'), t('state.open'), t('state.closed')],
+  pit: [t('tile.pit'), t('state.open'), t('state.closed')],
+  teleporter: [t('tile.teleporter'), t('state.enabled'), t('state.disabled')],
+  fakewall: [t('tile.fakewall'), t('state.vanished'), t('state.returned')],
 };
 sim.on('tileChanged', ({ level, x, y, type, detail }) => {
   game?.view.updateTile(level);
   renderer?.updateTile?.(level, x, y);
   if (type === 'door' && detail.moving) return; // said once it has stopped
   const [name, open, closed] = STATE_WORDS[type];
-  showInfo(`${name} (${x}, ${y}) niveau ${level} : ${detail.broken ? 'cassée' : detail.open ? open : closed}`);
+  showInfo(`${name} — ${t('common.labelled', { label: t('common.levelAt', { level, x, y }), value: detail.broken ? t('state.broken') : detail.open ? open : closed })}`);
 });
 // Messages: a text on a wall appears (or vanishes) on its face; a text on the floor is printed.
 sim.on('textChanged', ({ level, onWall }) => {
@@ -1034,7 +1043,7 @@ sim.on('textChanged', ({ level, onWall }) => {
 sim.on('textShown', ({ index }) => game?.window.message(dungeon.data.texts[index].text.replaceAll('\n', ' ')));
 sim.on('blocked', ({ reason }) => {
   game?.window.flash();
-  showInfo(`Bloqué : ${BLOCK_LABELS[reason]}`);
+  showInfo(t('status.blocked', { reason: BLOCK_LABELS[reason] }));
 });
 
 mountRenderer();

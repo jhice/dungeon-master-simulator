@@ -9,6 +9,8 @@
 //   { type: 'range', key, label, min, max, step, format?(v) }
 //   { type: 'heading', label } a title over the next controls
 
+import { t } from '../i18n/i18n.js';
+
 /**
  * @param {HTMLElement} container
  * @param {Array<object>} schema
@@ -25,7 +27,7 @@ export function createControlPanel(container, schema, values, onChange, { open =
   panel.open = open;
   panel.addEventListener('toggle', () => onToggle?.(panel.open));
   const summary = document.createElement('summary');
-  summary.textContent = 'Contrôles';
+  summary.textContent = t('panel.title');
   panel.append(summary);
 
   const setters = {}; // key -> (value) => void, to reflect changes made elsewhere (keyboard)

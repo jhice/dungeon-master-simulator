@@ -1,70 +1,72 @@
 // Modal listing the keyboard shortcuts (key H, or the toolbar button).
 // The keys themselves are bound in main.js and sim/controls.js: keep this list in step.
 
+import { t } from '../i18n/i18n.js';
+
 // A row: [keys, effect]; each key is shown in its own <kbd>.
 const SECTIONS = [
   {
-    title: 'Général',
+    title: t('shortcuts.general'),
     note: null,
     rows: [
-      [['H'], 'Afficher ou masquer ces raccourcis'],
-      [['P'], 'Ouvrir ou fermer le jeu'],
-      [['R'], 'Changer de vue (2D, 3D)'],
-      [['I'], 'Inventaire'],
-      [['J'], 'Textes'],
-      [['Échap'], 'Annuler la sélection'],
-      [['F'], 'Aller à la case sélectionnée'],
+      [['H'], t('shortcuts.help')],
+      [['P'], t('shortcuts.game')],
+      [['R'], t('shortcuts.view')],
+      [['I'], t('shortcuts.inventory')],
+      [['J'], t('shortcuts.texts')],
+      [[t('key.escape')], t('shortcuts.cancelSelection')],
+      [['F'], t('shortcuts.goToSelection')],
     ],
   },
   {
-    title: 'Jeu',
-    note: 'ZQSD et A/E pour les claviers AZERTY.',
+    title: t('shortcuts.playing'),
+    note: t('shortcuts.azerty'),
     rows: [
-      [['W', 'Pavé 5'], 'Avancer'],
-      [['S', 'Pavé 2'], 'Reculer'],
-      [['A', 'Pavé 1'], 'Pas à gauche'],
-      [['D', 'Pavé 3'], 'Pas à droite'],
-      [['Q', 'Pavé 4'], 'Tourner à gauche'],
-      [['E', 'Pavé 6'], 'Tourner à droite'],
+      [['W', t('key.numpad', { key: 5 })], t('shortcuts.forward')],
+      [['S', t('key.numpad', { key: 2 })], t('shortcuts.backward')],
+      [['A', t('key.numpad', { key: 1 })], t('shortcuts.strafeLeft')],
+      [['D', t('key.numpad', { key: 3 })], t('shortcuts.strafeRight')],
+      [['Q', t('key.numpad', { key: 4 })], t('shortcuts.turnLeft')],
+      [['E', t('key.numpad', { key: 6 })], t('shortcuts.turnRight')],
     ],
   },
   {
-    title: 'Niveaux',
+    title: t('shortcuts.levels'),
     note: null,
     rows: [
-      [['PgPréc'], 'Niveau précédent'],
-      [['PgSuiv'], 'Niveau suivant'],
-      [['Début'], 'Premier niveau'],
-      [['Fin'], 'Dernier niveau'],
+      [[t('key.pageUp')], t('shortcuts.previousLevel')],
+      [[t('key.pageDown')], t('shortcuts.nextLevel')],
+      [[t('key.home')], t('shortcuts.firstLevel')],
+      [[t('key.end')], t('shortcuts.lastLevel')],
     ],
   },
   {
-    title: 'Carte',
+    title: t('shortcuts.map'),
     note: null,
     rows: [
-      [['+'], 'Zoomer'],
-      [['−'], 'Dézoomer'],
-      [['0'], 'Ajuster la vue'],
-      [['V'], 'États des tuiles'],
-      [['O'], 'Objets'],
-      [['C'], 'Créatures'],
-      [['K'], 'Mécanismes'],
-      [['X'], 'Textes'],
-      [['T'], 'Tous les liens (sinon sélection)'],
+      [['+'], t('shortcuts.zoomIn')],
+      [['−'], t('shortcuts.zoomOut')],
+      [['0'], t('shortcuts.fit')],
+      [['V'], t('panel.states')],
+      [['O'], t('panel.items')],
+      [['C'], t('panel.creatures')],
+      [['K'], t('panel.mechanisms')],
+      [['X'], t('panel.texts')],
+      [['T'], t('panel.allLinks')],
     ],
   },
   {
-    title: 'Vue 2D',
+    title: t('shortcuts.view2d'),
     note: null,
-    rows: [[['G'], 'Repère global ou local']],
+    rows: [[['G'], t('shortcuts.frame')]],
   },
   {
-    title: 'Vue 3D',
+    title: t('shortcuts.view3d'),
     note: null,
     rows: [
-      [['L'], 'Liens escaliers / trappes'],
-      [['N'], 'Étiquettes de niveau'],
-      [['M'], 'Mode d’affichage des niveaux'],
+      [['L'], t('settings.links')],
+      [['N'], t('settings.labels')],
+      [['M'], t('shortcuts.displayMode')],
     ],
   },
 ];
@@ -101,6 +103,7 @@ function createSection({ title, note, rows }) {
  * @returns {{ toggle(): void, isOpen(): boolean }}
  */
 export function createShortcutsModal(container, button) {
+  button.firstChild.textContent = `${t('shortcuts.title')} `;
   const dialog = document.createElement('dialog');
   dialog.className = 'shortcuts-modal';
   dialog.setAttribute('aria-labelledby', 'shortcuts-title');
@@ -109,12 +112,12 @@ export function createShortcutsModal(container, button) {
   const header = document.createElement('header');
   const title = document.createElement('h2');
   title.id = 'shortcuts-title';
-  title.textContent = 'Raccourcis claviers';
+  title.textContent = t('shortcuts.title');
   const close = document.createElement('button');
   close.type = 'button';
   close.textContent = '×';
-  close.title = 'Fermer';
-  close.setAttribute('aria-label', 'Fermer');
+  close.title = t('common.close');
+  close.setAttribute('aria-label', t('common.close'));
   close.addEventListener('click', () => dialog.close());
   header.append(title, close);
 

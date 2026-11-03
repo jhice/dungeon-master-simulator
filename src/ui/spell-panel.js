@@ -4,7 +4,8 @@
 // symbol. Symbols are drawn from the Atari ST glyphs (7 × 7 pixels, spell-glyphs.js).
 // The book button opens the grimoire: the spells known from the scrolls read (docs/034).
 
-import { SYMBOLS, spellManaCost, findSpell } from '../core/spell-info.js';
+import { SYMBOLS, spellManaCost, findSpell, symbolLabel, spellName } from '../core/spell-info.js';
+import { t } from '../i18n/i18n.js';
 import { GLYPHS } from '../core/spell-glyphs.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -45,14 +46,14 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
   const line = element('div', 'spell-line');
   const cast = element('button', 'spell-cast');
   cast.type = 'button';
-  cast.title = 'Lancer le sort';
+  cast.title = t('spell.cast');
   cast.addEventListener('click', () => {
     onCast();
     cast.blur();
   });
   const del = element('button', 'spell-delete');
   del.type = 'button';
-  del.title = 'Effacer le dernier symbole';
+  del.title = t('spell.delete');
   del.append(arrowIcon());
   del.addEventListener('click', () => {
     onDelete();
@@ -65,8 +66,8 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
   let shownKnown = null; // names of the spells listed, to rebuild the list only when they change
   // The grimoire: one line per spell known, its symbols (without the power) and its name.
   function showGrimoire(known) {
-    book.textContent = `Grimoire (${known.length})`;
-    book.title = known.length ? 'Sorts appris dans les parchemins' : 'Aucun sort connu : ramassez des parchemins';
+    book.textContent = t('spell.grimoire', { count: known.length });
+    book.title = t(known.length ? 'spell.grimoireTitle' : 'spell.grimoireEmptyTitle');
     const key = known.map((s) => s.name).join();
     if (key === shownKnown) return;
     shownKnown = key;
@@ -75,14 +76,14 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
         const entry = element('div', 'spell-known');
         const symbols = element('span', 'spell-known-symbols');
         symbols.append(...spell.symbols.map(glyph));
-        symbols.title = spell.symbols.join(' ');
+        symbols.title = spell.symbols.map(symbolLabel).join(' ');
         const label = element('span');
-        label.textContent = spell.name;
+        label.textContent = spellName(spell);
         entry.append(symbols, label);
         return entry;
       }),
     );
-    if (!known.length) grimoire.textContent = 'Aucun sort connu';
+    if (!known.length) grimoire.textContent = t('spell.noneKnown');
   }
 
   return {
@@ -93,20 +94,20 @@ export function createSpellPanel(container, { onSymbol, onDelete, onCast }) {
     update(champion, known = []) {
       const step = champion.symbols.length;
       // tab.textContent = champion.name;
-      tab.textContent = 'Sorts';
+      tab.textContent = t('spell.tab');
       choices.forEach((button, i) => {
         const name = SYMBOLS[step]?.[i];
         button.replaceChildren(...(name ? [glyph(name)] : []));
         button.disabled = !name || champion.dead;
-        button.title = name ?? '';
+        button.title = name ? symbolLabel(name) : '';
       });
       const names = champion.symbols.map((index, s) => SYMBOLS[s][index]);
       cast.replaceChildren(...names.map(glyph));
       cast.disabled = !names.length || champion.dead;
       // The mana cost is shown, not spent yet (docs/029 Q2).
       const spell = findSpell(champion.symbols);
-      const name = spell && known.includes(spell) ? ` : ${spell.name}` : '';
-      cast.title = names.length ? `Lancer le sort ${names.join(' ')}${name} (${spellManaCost(champion.symbols)} mana, non décompté)` : 'Choisissez des symboles';
+      const name = spell && known.includes(spell) ? ` : ${spellName(spell)}` : '';
+      cast.title = names.length ? t('spell.castLine', { symbols: names.map(symbolLabel).join(' ') + name, mana: spellManaCost(champion.symbols) }) : t('spell.chooseSymbols');
       del.disabled = !names.length || champion.dead;
       showGrimoire(known);
     },

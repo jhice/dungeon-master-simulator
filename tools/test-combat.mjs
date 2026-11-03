@@ -54,7 +54,7 @@ function strikeUntilGone(group, max = 200) {
   check(c.health === 60 && c.stamina === 600 && c.mana === 10, `PV ${c.health}, endurance ${c.stamina / 10}, mana ${c.mana}`);
   check(c.strength === 40 && c.dexterity === 40 && c.vitality === 50, `force ${c.strength}, dextérité ${c.dexterity}, vitalité ${c.vitality}`);
   const items = names(sim.inventory);
-  check(items.length === 4 && items.includes('Torch'), `inventaire de départ : ${items.join(', ')}`);
+  check(items.length === 4 && items.includes('TORCH'), `inventaire de départ : ${items.join(', ')}`);
   check(sim.state.itemsAt(0, 10, 6).length === 0, 'le miroir de Zed (0, 10, 6) est vide');
 }
 
@@ -149,13 +149,13 @@ function strikeUntilGone(group, max = 200) {
   const shown = () => sim.actions.map((a) => a.name).join();
   sim.reset();
   check(shown() === 'Punch,Kick,War Cry', `main d'action vide : ${shown()}`);
-  const torch = sim.inventory.findIndex((ref) => names([ref])[0] === 'Torch');
+  const torch = sim.inventory.findIndex((ref) => names([ref])[0] === 'TORCH');
   sim.takeFromInventory(torch);
   sim.swapHand(1);
-  check(!sim.hand && names([sim.hands[1]])[0] === 'Torch', 'la Torch passe du curseur à la main droite');
+  check(!sim.hand && names([sim.hands[1]])[0] === 'TORCH', 'la Torch passe du curseur à la main droite');
   check(shown() === 'Swing', `Torch : ${shown()}`);
   sim.swapHand(1);
-  check(names([sim.hand])[0] === 'Torch' && !sim.hands[1], 'clic sur la main : elle revient au curseur');
+  check(names([sim.hand])[0] === 'TORCH' && !sim.hands[1], 'clic sur la main : elle revient au curseur');
   sim.state.hands[1] = { kind: 'weapon', index: weaponIndex('Dagger') };
   check(shown() === 'Throw,Stab,Slash', `Dagger : ${shown()}`);
   sim.state.hands[1] = { kind: 'weapon', index: weaponIndex('Throwing Star') };
@@ -234,7 +234,7 @@ function throwAndLand(ref) {
   faceGroup(group);
   const hits = [];
   const off = sim.on('creatureHit', (e) => e.thrown && hits.push(e));
-  const torch = sim.inventory.find((ref) => names([ref])[0] === 'Torch');
+  const torch = sim.inventory.find((ref) => names([ref])[0] === 'TORCH');
   const { landed } = throwAndLand(torch);
   off();
   check(hits.length === 1, `la Torch touche un Screamer : ${hits[0]?.result}, ${hits[0]?.damage} PV`);

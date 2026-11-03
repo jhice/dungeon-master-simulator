@@ -2,6 +2,7 @@
 
 import { SUBCELL_LABELS, FACE_LABELS } from '../core/contents.js';
 import { CATEGORY_COLORS, creatureColor } from '../render/palette.js';
+import { t } from '../i18n/i18n.js';
 
 const OFFSET = 16; // px between the pointer and the tooltip
 
@@ -60,8 +61,8 @@ function contentLines(contents, { items, creatures, onWall }) {
   const c = contents.creature;
   if (creatures && c) {
     const hp = c.members.map((m) => m.hp).join(' · ');
-    lines.push(line(creatureColor(c.type), `${c.count > 1 ? `${c.count} × ` : ''}${c.name}`, `PV ${hp} · face ${c.facing}`));
-    for (const item of c.possessions) lines.push(itemLine(item, 1, 'porte'));
+    lines.push(line(creatureColor(c.type), `${c.count > 1 ? `${c.count} × ` : ''}${c.name}`, t('tooltip.creature', { hp, facing: c.facing })));
+    for (const item of c.possessions) lines.push(itemLine(item, 1, t('tooltip.carries')));
   }
   if (items) {
     const labels = onWall ? FACE_LABELS : SUBCELL_LABELS;

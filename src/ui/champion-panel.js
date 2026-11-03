@@ -7,10 +7,12 @@
 // in a zone the height of 3 actions, as in DM. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
 // "Recommencer" button. The mouth, to drink, is under the item in hand of the game window (docs/050).
 
+import { t, gameText } from '../i18n/i18n.js';
+
 const RESULT_MS = 440;
 const WOUND_MS = 880;
 const NO_FATIGUE_MS = 220; // an action without fatigue stays lit for one tick
-const HAND_LABELS = ['Main gauche', 'Main droite (action)'];
+const HAND_LABELS = [t('champion.leftHand'), t('champion.rightHand')];
 
 /**
  * @param {HTMLElement} container the game viewport
@@ -42,9 +44,9 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
     bars.append(outer);
     return { outer, fill, label };
   };
-  const health = bar('health', 'Santé');
-  const stamina = bar('stamina', 'Endurance');
-  const mana = bar('mana', 'Mana');
+  const health = bar('health', gameText.misc('health'));
+  const stamina = bar('stamina', gameText.misc('stamina'));
+  const mana = bar('mana', gameText.misc('mana'));
   const body = element('div', 'champion-body');
   body.append(hands, bars);
   const wound = element('div', 'champion-wound');
@@ -62,7 +64,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
   const veilText = element('p');
   const restart = element('button');
   restart.type = 'button';
-  restart.textContent = 'Recommencer';
+  restart.textContent = t('champion.restart');
   restart.addEventListener('click', () => {
     onRestart();
     restart.blur();
@@ -83,7 +85,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
   // `scale`: stored / shown (stamina is stored ×10).
   const setBar = ({ outer, fill, label }, value, max, scale = 1) => {
     fill.style.height = `${max ? Math.min(100, Math.round((100 * value) / max)) : 0}%`; // an Ee Potion can go past the maximum
-    outer.title = `${label} : ${Math.floor(value / scale)} / ${Math.floor(max / scale)}`;
+    outer.title = t('common.labelled', { label, value: `${Math.floor(value / scale)} / ${Math.floor(max / scale)}` });
   };
 
   return {
@@ -93,7 +95,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
      */
     update(champion, handItems, actionList) {
       name.textContent = champion.name;
-      name.title = `${champion.name}, ${champion.title}\nEau : ${champion.water} / 2048`;
+      name.title = `${champion.name}, ${champion.title}\n${t('champion.water', { value: champion.water })}`;
       setBar(health, champion.health, champion.maxHealth);
       setBar(stamina, champion.stamina, champion.maxStamina, 10);
       setBar(mana, champion.mana, champion.maxMana);
@@ -101,7 +103,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
         const item = handItems[i];
         slot.style.setProperty('--c', item?.color ?? 'transparent');
         slot.classList.toggle('is-empty', !item);
-        slot.title = `${HAND_LABELS[i]} : ${item ? item.details ?? item.name : 'vide'}\n(clic : échanger avec l’objet tenu)`;
+        slot.title = `${t('common.labelled', { label: HAND_LABELS[i], value: item ? item.details ?? item.name : t('champion.handEmpty') })}\n${t('champion.swapHint')}`;
       });
       const key = actionList.map((a) => a.id).join();
       if (key !== shownActions) {
@@ -122,13 +124,13 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
         );
         if (!actionList.length) {
           const none = element('span', 'champion-no-action');
-          none.textContent = 'Aucune action';
+          none.textContent = t('champion.noAction');
           actions.append(none);
         }
       }
       box.classList.toggle('is-dead', champion.dead);
       veil.hidden = !champion.dead;
-      veilText.textContent = `${champion.name} est mort`;
+      veilText.textContent = t('champion.dead', { name: champion.name });
     },
     /** The champion can act (no fatigue): the action buttons are enabled. */
     setReady(value) {

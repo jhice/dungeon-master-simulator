@@ -47,7 +47,7 @@ const toLevel1 = () => {
   sim.swapHand(1); // the cursor's torch goes into the action hand
   const lit = sim.light;
   check(lit.amount === 100 && lit.palette === 0 && lit.torches.length === 1 && lit.torches[0].hand === 1, 'torche (15 charges) en main d’action : 100');
-  check(weapons[torches[0].index].lit === true && describeItem(dungeon, torches[0]).note === '15 charges, allumée', 'la torche est allumée');
+  check(weapons[torches[0].index].lit === true && describeItem(dungeon, torches[0]).note === '15 charges, lit', 'la torche est allumée');
   check(changes.at(-1)?.amount === 100, 'événement lightChanged émis');
   sim.swapHand(1); // back to the cursor
   check(sim.light.amount === 0 && weapons[torches[0].index].lit === false, 'au curseur : pas de lumière, torche éteinte');
@@ -68,7 +68,7 @@ const toLevel1 = () => {
   check(sim.light.amount === 100 + (LIGHT_POWER_TO_AMOUNT[13] >> 1), `deux torches (15 et 13) : ${sim.light.amount}`);
   weapons[torches[0].index].charges = 1;
   sim.tick(512);
-  check(weapons[torches[0].index].charges === 0 && describeItem(dungeon, torches[0]).note === 'consumée', 'torche à 0 charge : consumée');
+  check(weapons[torches[0].index].charges === 0 && describeItem(dungeon, torches[0]).note === '(BURNT OUT)', 'torche à 0 charge : consumée');
   check(sim.light.amount === LIGHT_POWER_TO_AMOUNT[14], 'une torche consumée n’éclaire plus');
 }
 

@@ -2,6 +2,8 @@
 // miscellaneous) and creature groups, with their sub-tile positions and
 // nested contents (chest contents, creature possessions). Renderer-agnostic.
 
+import { t, gameText } from '../i18n/i18n.js';
+
 // Item kinds as they appear in tile `items` references, with their pool in dungeon.json.
 export const ITEM_POOLS = {
   weapon: 'weapons',
@@ -14,13 +16,13 @@ export const ITEM_POOLS = {
 export const ITEM_KINDS = Object.keys(ITEM_POOLS);
 
 export const CATEGORY_LABELS = {
-  creature: 'Créatures',
-  weapon: 'Armes',
-  cloth: 'Vêtements',
-  scroll: 'Parchemins',
-  potion: 'Potions',
-  container: 'Coffres',
-  miscellaneous: 'Divers',
+  creature: t('category.creature'),
+  weapon: t('category.weapon'),
+  cloth: t('category.cloth'),
+  scroll: t('category.scroll'),
+  potion: t('category.potion'),
+  container: t('category.container'),
+  miscellaneous: t('category.miscellaneous'),
 };
 
 // Sub-tile positions 0..3, in DM engine order: clockwise from north-west.
@@ -34,29 +36,29 @@ const SUBCELLS = [
 ];
 /** Fractional (u, v) inside the tile, u east, v south. */
 export const subcellOffset = (position) => SUBCELLS[position];
-export const SUBCELL_LABELS = ['NO', 'NE', 'SE', 'SO'];
+export const SUBCELL_LABELS = [t('subcell.0'), t('subcell.1'), t('subcell.2'), t('subcell.3')];
 // On a wall tile, the position is the face the item lies against.
 export const FACES = ['N', 'E', 'S', 'W'];
-export const FACE_LABELS = ['face N', 'face E', 'face S', 'face O'];
+export const FACE_LABELS = [t('face.0'), t('face.1'), t('face.2'), t('face.3')];
 
 /** States of a waterskin (miscellaneous type 1) by charge count, as DM describes it (ReDMCSB F342, docs/050). */
-export const WATERSKIN_STATES = ['vide', 'presque vide', 'presque pleine', 'pleine'];
+export const WATERSKIN_STATES = [gameText.misc('empty'), gameText.misc('almostEmpty'), gameText.misc('almostFull'), gameText.misc('full')];
 
 /** Name and extra info of an item reference ({ kind, index }). */
 export function describeItem(dungeon, { kind, index, position }) {
   const entry = dungeon.data[ITEM_POOLS[kind]][index];
-  const item = { kind, index, position, category: kind, name: entry.name ?? kind };
+  const item = { kind, index, position, category: kind, name: gameText.item(entry.name ?? kind) };
   if (kind === 'scroll') {
-    item.name = 'Scroll';
+    item.name = gameText.item('Scroll');
     const text = dungeon.data.texts[entry.text]?.text;
     if (text) item.note = text.split('\n')[0];
   }
-  if (kind === 'potion' && entry.power) item.note = `puissance ${Math.ceil(entry.power / 40)}`;
-  if (kind === 'weapon' && entry.charges) item.note = `${entry.charges} charge${entry.charges > 1 ? 's' : ''}`;
+  if (kind === 'potion' && entry.power) item.note = t('item.power', { power: Math.ceil(entry.power / 40) });
+  if (kind === 'weapon' && entry.charges) item.note = t('item.charges', { count: entry.charges });
   // A torch (type 2): lit in a hand, burnt out at 0 charges (docs/032).
   if (kind === 'weapon' && entry.type === 2) {
-    if (!entry.charges) item.note = 'consumée';
-    else if (entry.lit) item.note += ', allumée';
+    if (!entry.charges) item.note = gameText.misc('burntOut');
+    else if (entry.lit) item.note += `, ${t('item.lit')}`;
   }
   if (kind === 'miscellaneous' && entry.type === 1) item.note = WATERSKIN_STATES[entry.subtype ?? 0];
   if (entry.items?.length) item.contents = entry.items.map((ref) => describeItem(dungeon, ref));
@@ -73,7 +75,7 @@ export function describeGroup(dungeon, group) {
     index: group.id,
     category: 'creature',
     type: group.type,
-    name: dungeon.data.catalog.creature[group.type] ?? `Creature ${group.type}`,
+    name: gameText.creature(group.type),
     count: group.members.length,
     members: group.members, // [{ hp, position }], position null = alone in the centre
     facing: group.facing,

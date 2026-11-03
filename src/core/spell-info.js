@@ -14,6 +14,8 @@
 // effect      what the spell does, for the phases that code it (G2 potions, G3 torch, openDoor, fireball)
 // retained    part of what phases G2 and G3 implement (docs/029 § 1)
 
+import { getLanguage, t } from '../i18n/i18n.js';
+
 /** The 4 rows of 6 symbols, chosen in this order: power, element, form, class / alignment. */
 export const SYMBOLS = [
   ['Lo', 'Um', 'On', 'Ee', 'Pal', 'Mon'],
@@ -75,6 +77,14 @@ export const SPELLS = [
 /** Name of the symbol `index` (0..5) of the step `step` (0..3). */
 export const symbolName = (step, index) => SYMBOLS[step][index];
 
+// The French scrolls of DM spell 4 symbols otherwise: they teach the same spells (docs/059).
+const FRENCH_SYMBOLS = { Vi: 'Vim', Ya: 'Yap', Des: 'Dos', Ew: 'Ev' };
+const ENGLISH_WORDS = Object.fromEntries(Object.entries(FRENCH_SYMBOLS).map(([symbol, word]) => [word.toUpperCase(), symbol.toUpperCase()]));
+/** A symbol as the scrolls of the current language write it. */
+export const symbolLabel = (name) => (getLanguage() === 'fr' && FRENCH_SYMBOLS[name]) || name;
+/** Name of a spell in the current language. */
+export const spellName = (spell) => t(`spell.${spell.name}`);
+
 /**
  * Mana cost of choosing the symbol `index` at step `step`, the power symbol being `power`
  * (0..5, ignored at step 0), as F399_MENUS_AddChampionSymbol computes it.
@@ -113,7 +123,8 @@ export function spellsInText(text) {
     if (spell) found.add(spell);
     run = [];
   };
-  for (const token of text.toUpperCase().match(/[A-Z]+|[^A-Z\s]+/g) ?? []) {
+  for (const word of text.toUpperCase().match(/[A-Z]+|[^A-Z\s]+/g) ?? []) {
+    const token = ENGLISH_WORDS[word] ?? word;
     if (token === 'ZOKATHRA') {
       close();
       found.add(SPELLS.find((s) => s.effect === 'zokathra'));

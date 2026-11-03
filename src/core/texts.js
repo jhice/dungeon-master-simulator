@@ -2,23 +2,30 @@
 // scrolls and the champion sheets of the Hall of Champions (decoded).
 
 import { ITEM_POOLS } from './contents.js';
+import { t, gameText } from '../i18n/i18n.js';
 
 export const TEXT_KIND_LABELS = {
-  inscription: 'Inscriptions',
-  message: 'Messages',
-  scroll: 'Parchemins',
-  champion: 'Champions',
+  inscription: t('textKind.inscription'),
+  message: t('textKind.message'),
+  scroll: t('textKind.scroll'),
+  champion: t('textKind.champion'),
+};
+export const TEXT_KIND_SINGULAR = {
+  inscription: t('textKind.one.inscription'),
+  message: t('textKind.one.message'),
+  scroll: t('textKind.one.scroll'),
+  champion: t('textKind.one.champion'),
 };
 
 // Champion sheet: NAME / TITLE / (empty) / M|F / 3 lines of letters A..P = hex digits.
 const CHAMPION_SHEET = /^(.*)\n(.*)\n\n([MF])\n([A-P]{12})\n([A-P]{14})\n([A-P]{16})$/;
-export const ATTRIBUTE_LABELS = ['Chance', 'Force', 'Dextérité', 'Sagesse', 'Vitalité', 'Anti-magie', 'Anti-feu'];
+export const ATTRIBUTE_LABELS = [t('attribute.luck'), ...['strength', 'dexterity', 'wisdom', 'vitality', 'antiMagic', 'antiFire'].map(gameText.misc)];
 // The 16 hidden skills, 4 per class (the class level derives from them).
 export const SKILL_CLASSES = [
-  { name: 'Guerrier', skills: ['Swing', 'Thrust', 'Club', 'Parry'] },
-  { name: 'Ninja', skills: ['Steal', 'Fight', 'Throw', 'Shoot'] },
-  { name: 'Prêtre', skills: ['Identify', 'Heal', 'Influence', 'Defend'] },
-  { name: 'Magicien', skills: ['Fire', 'Air', 'Earth', 'Water'] },
+  { name: gameText.misc('fighter'), skills: ['Swing', 'Thrust', 'Club', 'Parry'] },
+  { name: gameText.misc('ninja'), skills: ['Steal', 'Fight', 'Throw', 'Shoot'] },
+  { name: gameText.misc('priest'), skills: ['Identify', 'Heal', 'Influence', 'Defend'] },
+  { name: gameText.misc('wizard'), skills: ['Fire', 'Air', 'Earth', 'Water'] },
 ];
 
 const hex = (letters) => [...letters].reduce((value, c) => value * 16 + (c.charCodeAt(0) - 65), 0);
@@ -32,7 +39,7 @@ export function decodeChampion(text) {
   return {
     name,
     title,
-    gender: gender === 'M' ? 'homme' : 'femme',
+    gender: t(gender === 'M' ? 'champion.male' : 'champion.female'),
     health: hex(vitals.slice(0, 4)),
     stamina: hex(vitals.slice(4, 8)) / 10, // stored ×10, displayed /10 in the game
     mana: hex(vitals.slice(8, 12)),
@@ -46,10 +53,10 @@ export function decodeChampion(text) {
 
 /** One-line summary of a champion, for tooltips. */
 export function championSummary(c) {
-  const classes = c.classes.map((k) => k.name).join(' / ') || 'aucune classe';
+  const classes = c.classes.map((k) => k.name).join(' / ') || t('champion.noClass');
   return [
     `${c.gender} · ${classes}`,
-    `PV ${c.health} · Endurance ${c.stamina} · Mana ${c.mana}`,
+    `${gameText.misc('health')} ${c.health} · ${gameText.misc('stamina')} ${c.stamina} · ${gameText.misc('mana')} ${c.mana}`,
     c.attributes.map((a) => `${a.label} ${a.value}`).join(' · '),
   ];
 }
@@ -58,9 +65,10 @@ export function championSummary(c) {
 function locate(dungeon, at) {
   if (!at) return null;
   if (at.in) {
-    const owner = dungeon.data[at.in === 'creature' ? 'creatures' : ITEM_POOLS[at.in]][at.index];
+    const creature = at.in === 'creature';
+    const owner = dungeon.data[creature ? 'creatures' : ITEM_POOLS[at.in]][at.index];
     const place = locate(dungeon, owner?.at);
-    return place && { ...place, inside: owner.name ?? at.in };
+    return place && { ...place, inside: creature ? gameText.creature(owner.type) : gameText.item(owner.name ?? at.in) };
   }
   return { level: at.map, x: at.x, y: at.y };
 }

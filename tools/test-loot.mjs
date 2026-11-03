@@ -51,12 +51,12 @@ function killGroup(group, max = 400) {
   const carried = names(screamers.items);
   killGroup(screamers);
   const lying = names(sim.state.itemsAt(1, 8, 24));
-  const slices = lying.filter((n) => n === 'Screamer Slice').length;
+  const slices = lying.filter((n) => n === 'SCREAMER SLICE').length;
   check(slices >= 4 && slices <= 8, `4 Screamers tués : ${slices} Screamer Slice (1 à 2 chacun)`);
   check(carried.every((n) => lying.includes(n)), `et leurs possessions : ${carried.join(', ')}`);
   const trolin = [...sim.state.groups].find((g) => g.level === 2 && speciesOf(g) === 'Trolin' && g.members.length === 1 && faceGroup(g));
   killGroup(trolin);
-  const clubs = names(sim.state.itemsAt(2, trolin.x, trolin.y)).filter((n) => n === 'Club').length;
+  const clubs = names(sim.state.itemsAt(2, trolin.x, trolin.y)).filter((n) => n === 'CLUB').length;
   check(clubs === 1, `Trolin tué en N2 (${trolin.x}, ${trolin.y}) : ${clubs} Club`);
   check(dungeon.data.weapons.length === weaponsAtStart + 1, `un objet créé dans la table des armes (${dungeon.data.weapons.length})`);
   sim.reset();
@@ -97,7 +97,7 @@ function killGroup(group, max = 400) {
   immortal();
   const giggler = [...sim.state.groups].find((g) => speciesOf(g) === 'Giggler' && g.members.length === 1);
   check(giggler, `Giggler au niveau ${giggler.level} (${giggler.x}, ${giggler.y})`);
-  const torch = sim.inventory.findIndex((ref) => names([ref])[0] === 'Torch');
+  const torch = sim.inventory.findIndex((ref) => names([ref])[0] === 'TORCH');
   sim.takeFromInventory(torch);
   sim.swapHand(1);
   faceGroup(giggler);
@@ -108,13 +108,13 @@ function killGroup(group, max = 400) {
   for (let t = 0; t < 6 * 30 && !stolen; t++) sim.tick(1);
   off();
   offFled();
-  check(stolen && names([stolen.item])[0] === 'Torch' && !sim.hands[1], `le Giggler vole la ${stolen && names([stolen.item])[0]} de la main droite`);
-  check(fled.includes('theft') && names(giggler.items).includes('Torch'), 'il la garde et s’enfuit');
+  check(stolen && names([stolen.item])[0] === 'TORCH' && !sim.hands[1], `le Giggler vole la ${stolen && names([stolen.item])[0]} de la main droite`);
+  check(fled.includes('theft') && names(giggler.items).includes('TORCH'), 'il la garde et s’enfuit');
   const { x: px, y: py } = sim.party;
   sim.tick(6 * 3);
   check(Math.abs(giggler.x - px) + Math.abs(giggler.y - py) > 1, `il s'est éloigné, en (${giggler.x}, ${giggler.y})`);
   check(killGroup(giggler), 'rattrapé et tué');
-  check(names(sim.state.itemsAt(giggler.level, giggler.x, giggler.y)).includes('Torch'), `la Torch tombe sur sa case (${giggler.x}, ${giggler.y})`);
+  check(names(sim.state.itemsAt(giggler.level, giggler.x, giggler.y)).includes('TORCH'), `la Torch tombe sur sa case (${giggler.x}, ${giggler.y})`);
 }
 
 // 3b. N9 (11, 5), the party on its right (feedback on C4): once blocked, the Giggler with
@@ -123,7 +123,7 @@ function killGroup(group, max = 400) {
   sim.reset();
   immortal();
   const giggler = sim.state.groupAt(9, 11, 5);
-  sim.state.hands[1] = sim.inventory.find((ref) => names([ref])[0] === 'Torch');
+  sim.state.hands[1] = sim.inventory.find((ref) => names([ref])[0] === 'TORCH');
   sim.teleport(9, 12, 5);
   while (sim.party.facing !== 'W') sim.command('turnRight');
   let stolen = false;

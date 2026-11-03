@@ -8,6 +8,8 @@
 //   fakewall open        the wall has vanished (passable, not drawn)
 //            imaginary   illusory wall: drawn but passable
 
+import { t } from '../i18n/i18n.js';
+
 // Doors move by steps, one per tick (ReDMCSB, TIMELINE.C, F241): 0 = open … 4 = closed.
 // The party and projectiles pass while the door is closed by 1/4 at most; a creature,
 // while it is closed no more than its height (vertical doors) or 1/4 (horizontal ones).
@@ -46,13 +48,13 @@ export function describeState(type, detail) {
   const state = tileState(type, detail);
   if (!state) return null;
   if (type === 'fakewall') {
-    if (state.open) return 'ouvert (disparu, franchissable)';
-    return state.imaginary ? 'imaginaire (franchissable)' : 'fermé (bloquant)';
+    if (state.open) return t('state.fakewall.open');
+    return t(state.imaginary ? 'state.fakewall.imaginary' : 'state.fakewall.closed');
   }
-  if (type === 'door' && detail.broken) return 'cassée (franchissable)';
-  if (type === 'door' && doorStep(detail) > 0 && doorStep(detail) < DOOR_CLOSED) return `fermée à ${doorStep(detail)}/${DOOR_CLOSED}`;
-  const words = [state.open ? 'ouverte' : 'fermée'];
-  if (state.invisible) words.push('invisible');
-  if (state.imaginary) words.push('imaginaire');
+  if (type === 'door' && detail.broken) return t('state.door.broken');
+  if (type === 'door' && doorStep(detail) > 0 && doorStep(detail) < DOOR_CLOSED) return t('state.door.step', { step: doorStep(detail), of: DOOR_CLOSED });
+  const words = [t(state.open ? 'state.open' : 'state.closed')];
+  if (state.invisible) words.push(t('state.invisible'));
+  if (state.imaginary) words.push(t('state.imaginary'));
   return words.join(', ');
 }

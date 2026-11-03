@@ -4,6 +4,8 @@
 // are reported to the caller, which remembers them.
 // Below the viewport, a message area (as in DM) prints the messages of the dungeon.
 
+import { t } from '../i18n/i18n.js';
+
 const MIN_WIDTH = 240;
 const DEFAULT_WIDTH = 480;
 const MESSAGE_LINES = 3; // latest messages kept
@@ -23,16 +25,16 @@ const MESSAGE_MS = 12000; // before a message fades out
 export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onSelectItem, onStow, onMouth } = {}) {
   const win = document.createElement('section');
   win.className = 'game-window';
-  win.setAttribute('aria-label', 'Simulation');
+  win.setAttribute('aria-label', t('game.title'));
 
   const bar = document.createElement('header');
   bar.className = 'game-bar';
   const title = document.createElement('span');
   title.className = 'game-title';
-  title.textContent = 'Simulation';
+  title.textContent = t('game.title');
   const status = document.createElement('span');
   status.className = 'game-status';
-  bar.append(title, status, button('⟲', 'Revenir au départ', onReset), button('×', 'Fermer (P)', onClose));
+  bar.append(title, status, button('⟲', t('game.restart'), onReset), button('×', t('game.close'), onClose));
 
   const viewport = document.createElement('div');
   viewport.className = 'game-viewport';
@@ -48,10 +50,10 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
   handColumn.className = 'game-hand-column';
   const handSlot = document.createElement('span');
   handSlot.className = 'game-hand';
-  const mouth = button('👄 Bouche', 'Bouche de Zed : boire l’objet tenu (potion, gourde)', onMouth);
+  const mouth = button(`👄 ${t('game.mouth')}`, t('game.mouthTitle'), onMouth);
   mouth.classList.add('game-mouth');
   handColumn.append(handSlot, mouth);
-  const stowButton = button('Ranger', 'Ranger l’objet tenu dans l’inventaire (clic droit dans la vue)', onStow);
+  const stowButton = button(t('game.stow'), t('game.stowTitle'), onStow);
   const chips = document.createElement('div');
   chips.className = 'game-items';
   inventory.append(handColumn, stowButton, chips);
@@ -135,7 +137,7 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
     },
     /** Items carried: [{ name, color, details? }], and the item in hand ({ name, color, details? } or null). */
     setInventory(items, hand) {
-      handSlot.textContent = hand ? `Tenu : ${hand.name}` : 'Rien de tenu';
+      handSlot.textContent = hand ? t('game.held', { name: hand.name }) : t('game.nothingHeld');
       handSlot.title = hand?.details ?? '';
       handSlot.classList.toggle('is-empty', !hand);
       handSlot.style.setProperty('--c', hand?.color ?? 'transparent');
@@ -143,13 +145,13 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
       mouth.disabled = !hand;
       chips.replaceChildren(
         ...items.map((item, i) => {
-          const chip = button(item.name, `${item.details ?? item.name}\n(clic : prendre avec le curseur)`, () => onSelectItem?.(i));
+          const chip = button(item.name, `${item.details ?? item.name}\n${t('game.takeHint')}`, () => onSelectItem?.(i));
           chip.className = 'game-item';
           chip.style.setProperty('--c', item.color);
           return chip;
         }),
       );
-      if (!items.length) chips.textContent = 'Inventaire vide';
+      if (!items.length) chips.textContent = t('game.inventoryEmpty');
     },
     /** Short visual feedback (blocked move). */
     flash() {

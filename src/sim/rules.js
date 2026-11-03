@@ -4,6 +4,7 @@
 // Phase B: what happens on arrival on a tile (stairs, pits, teleporters), chained.
 // Phase C1: the same for creatures (creaturePassage(), resolveCreatureArrival()).
 
+import { t } from '../i18n/i18n.js';
 import { SIDE_DELTAS, FACINGS } from '../core/dungeon.js';
 import { doorPassable } from '../core/tile-states.js';
 
@@ -29,7 +30,7 @@ export function blockReason(state, level, x, y) {
   }
 }
 
-export const BLOCK_LABELS = { outside: 'bord de la carte', wall: 'mur', fakewall: 'mur', door: 'porte fermée', creature: 'créature' };
+export const BLOCK_LABELS = { outside: t('block.outside'), wall: t('block.wall'), fakewall: t('block.wall'), door: t('block.door'), creature: t('block.creature') };
 
 /**
  * How far a door may be closed for a creature of species `info` to walk under it, and

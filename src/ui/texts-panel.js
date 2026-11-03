@@ -1,9 +1,10 @@
 // Texts panel: inscriptions, messages, scrolls and champion sheets, with full
 // text, filters, search; clicking an entry locates it on the map.
 
-import { TEXT_KIND_LABELS, championSummary } from '../core/texts.js';
+import { TEXT_KIND_LABELS, TEXT_KIND_SINGULAR, championSummary } from '../core/texts.js';
 import { FACE_LABELS, SUBCELL_LABELS } from '../core/contents.js';
 import { TEXT_COLORS } from '../render/palette.js';
+import { t as translate } from '../i18n/i18n.js';
 
 const KINDS = Object.keys(TEXT_KIND_LABELS);
 
@@ -24,7 +25,7 @@ export function createTextsPanel(container, texts, { onLocate, open = false, onT
   panel.addEventListener('toggle', () => onToggle?.(panel.open));
   const summary = document.createElement('summary');
   // summary.textContent = `Textes · ${texts.length}`;
-  summary.textContent = `Textes`;
+  summary.textContent = translate('panel.texts');
 
   const chips = document.createElement('div');
   chips.className = 'inv-chips';
@@ -44,7 +45,7 @@ export function createTextsPanel(container, texts, { onLocate, open = false, onT
 
   const search = document.createElement('input');
   search.type = 'search';
-  search.placeholder = 'Rechercher dans les textes…';
+  search.placeholder = translate('texts.search');
   search.className = 'texts-search';
   search.addEventListener('input', () => {
     filters.text = search.value.trim().toUpperCase();
@@ -77,16 +78,16 @@ export function createTextsPanel(container, texts, { onLocate, open = false, onT
     item.type = 'button';
     item.className = `text-card is-${t.kind}`;
     item.style.setProperty('--c', TEXT_COLORS[t.kind]);
-    item.title = 'Localiser sur la carte';
+    item.title = translate('common.locate');
     const where = document.createElement('span');
     where.className = 'text-where';
     const side = t.position === undefined ? '' : ` · ${(t.onWall ? FACE_LABELS : SUBCELL_LABELS)[t.position]}`;
-    where.textContent = `${TEXT_KIND_LABELS[t.kind].replace(/s$/, '')} · niveau ${t.level} (${t.x}, ${t.y})${side}${t.inside ? ` · dans ${t.inside}` : ''}`;
+    where.textContent = `${TEXT_KIND_SINGULAR[t.kind]} · ${translate('common.levelAt', { level: t.level, x: t.x, y: t.y })}${side}${t.inside ? ` · ${translate('common.inside', { name: t.inside })}` : ''}`;
     const body = document.createElement('span');
     body.className = 'text-body';
     if (t.champion) {
       const c = t.champion;
-      body.textContent = [`${c.name}, ${c.title}`, ...championSummary(c), ...c.classes.map((k) => `${k.name} : ${k.skills.filter((s) => s.level).map((s) => `${s.skill} ${s.level}`).join(' · ')}`)].join('\n');
+      body.textContent = [`${c.name}, ${c.title}`, ...championSummary(c), ...c.classes.map((k) => translate('common.labelled', { label: k.name, value: k.skills.filter((s) => s.level).map((s) => `${translate(`skill.${s.skill}`)} ${s.level}`).join(' · ') }))].join('\n');
     } else {
       body.textContent = t.text;
     }
@@ -98,7 +99,7 @@ export function createTextsPanel(container, texts, { onLocate, open = false, onT
   function empty() {
     const p = document.createElement('p');
     p.className = 'inv-empty';
-    p.textContent = 'Aucun texte.';
+    p.textContent = translate('texts.none');
     return p;
   }
 

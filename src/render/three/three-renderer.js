@@ -12,6 +12,7 @@ import { buildLevelMeshes, disposeLevelMeshes, DEFAULT_WALL_HEIGHT } from './lev
 import { buildLevelContents, buildLevelCreatures } from './level-contents.js';
 import { readTheme } from './theme.js';
 import { linkColor } from '../palette.js';
+import { t } from '../../i18n/i18n.js';
 import { bindShiftWheel } from '../shift-wheel.js';
 
 // `mode` (display mode, key F) is not in the panel but is kept with the other settings.
@@ -20,19 +21,19 @@ export const DEFAULT_SETTINGS = { levelGap: 5, wallHeight: DEFAULT_WALL_HEIGHT, 
 // Shown in the control panel; checkboxes with a `shortcut` are toggled by that key (main.js).
 const SETTINGS_SCHEMA = [
   // E, like W/A/S/D/Q, moves the party (simulation): labels moved to N.
-  { key: 'links', label: 'Liens escaliers / trappes', type: 'checkbox', shortcut: 'L' },
-  { key: 'labels', label: 'Étiquettes de niveau', type: 'checkbox', shortcut: 'N' },
+  { key: 'links', label: t('settings.links'), type: 'checkbox', shortcut: 'L' },
+  { key: 'labels', label: t('settings.labels'), type: 'checkbox', shortcut: 'N' },
   // Re-frame the camera on each level change, as the 0 key does.
-  { key: 'autoAdjust', label: 'Auto-ajustement', type: 'checkbox' },
-  { key: 'levelGap', label: 'Espacement des niveaux', type: 'range', min: 1.5, max: 10, step: 0.5, format: (v) => v.toFixed(1) },
+  { key: 'autoAdjust', label: t('settings.autoAdjust'), type: 'checkbox' },
+  { key: 'levelGap', label: t('settings.levelGap'), type: 'range', min: 1.5, max: 10, step: 0.5, format: (v) => v.toFixed(1) },
   // 1 = a full cube; the original game is a corridor of tall walls.
-  { key: 'wallHeight', label: 'Hauteur des murs', type: 'range', min: 0.1, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
+  { key: 'wallHeight', label: t('settings.wallHeight'), type: 'range', min: 0.1, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
 ];
 
 const FADED_OPACITY = 0.12;
 // How non-focused levels are shown.
 const DISPLAY_MODES = ['focus', 'all', 'solo'];
-const DISPLAY_MODE_LABELS = { focus: 'niveau courant mis en avant', all: 'tous les niveaux', solo: 'niveau courant seul' };
+const DISPLAY_MODE_LABELS = { focus: t('settings.mode.focus'), all: t('settings.mode.all'), solo: t('settings.mode.solo') };
 
 /**
  * @param {HTMLElement} container
@@ -163,8 +164,8 @@ export function createThreeRenderer(
     const element = document.createElement('button');
     element.type = 'button';
     element.className = 'level-tag';
-    element.textContent = `Niveau ${i}`;
-    element.title = `Aller au niveau ${i}`;
+    element.textContent = t('common.level', { level: i });
+    element.title = t('settings.goToLevel', { level: i });
     element.addEventListener('pointerdown', (event) => event.stopPropagation());
     element.addEventListener('click', () => onRequestLevel?.(i));
     const object = new CSS2DObject(element);
@@ -510,7 +511,7 @@ export function createThreeRenderer(
         settings.mode = mode;
         applyDisplayMode();
         onSettingsChange?.({ ...settings }); // remembered by main.js, across renderers and visits
-        onInfo?.(`Mode : ${DISPLAY_MODE_LABELS[mode]}`);
+        onInfo?.(t('settings.mode', { mode: DISPLAY_MODE_LABELS[mode] }));
       },
     },
     dispose() {

@@ -3,6 +3,7 @@
 
 import { CATEGORY_LABELS, SUBCELL_LABELS, FACE_LABELS } from '../core/contents.js';
 import { CATEGORY_COLORS, creatureColor } from '../render/palette.js';
+import { t } from '../i18n/i18n.js';
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
@@ -32,7 +33,7 @@ export function createInventoryPanel(container, entries, { levelCount, onLocate,
   const totals = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
   for (const e of entries) totals[e.category] += e.count ?? 1;
   // summary.textContent = `Inventaire · ${totals.creature} créatures · ${entries.length - entries.filter((e) => e.category === 'creature').length} objets`;
-  summary.textContent = `Inventaire créatures et objets`;
+  summary.textContent = t('inventory.title');
   const chipButtons = CATEGORIES.map((category) => {
     const chip = document.createElement('button');
     chip.type = 'button';
@@ -50,15 +51,15 @@ export function createInventoryPanel(container, entries, { levelCount, onLocate,
   const controls = document.createElement('div');
   controls.className = 'inv-controls';
   const levelSelect = document.createElement('select');
-  levelSelect.append(new Option('Tous les niveaux', ''));
-  for (let i = 0; i < levelCount; i++) levelSelect.append(new Option(`Niveau ${i}`, String(i)));
+  levelSelect.append(new Option(t('inventory.allLevels'), ''));
+  for (let i = 0; i < levelCount; i++) levelSelect.append(new Option(t('common.level', { level: i }), String(i)));
   levelSelect.addEventListener('change', () => {
     filters.level = levelSelect.value === '' ? null : Number(levelSelect.value);
     render();
   });
   const search = document.createElement('input');
   search.type = 'search';
-  search.placeholder = 'Rechercher…';
+  search.placeholder = t('inventory.search');
   search.addEventListener('input', () => {
     filters.text = search.value.trim().toLowerCase();
     render();
@@ -127,10 +128,10 @@ export function createInventoryPanel(container, entries, { levelCount, onLocate,
     const button = document.createElement('button');
     button.type = 'button';
     const labels = e.onWall ? FACE_LABELS : SUBCELL_LABELS;
-    const where = e.inside ? `dans ${e.inside}` : e.position === null || e.position === undefined ? '' : labels[e.position];
+    const where = e.inside ? t('common.inside', { name: e.inside }) : e.position === null || e.position === undefined ? '' : labels[e.position];
     const extra = [e.count > 1 ? `×${e.count}` : '', where, e.note].filter(Boolean).join(' · ');
-    button.textContent = `Niveau ${e.level} (${e.x}, ${e.y})${extra ? ` — ${extra}` : ''}`;
-    button.title = 'Localiser sur la carte';
+    button.textContent = `${t('common.levelAt', { level: e.level, x: e.x, y: e.y })}${extra ? ` — ${extra}` : ''}`;
+    button.title = t('common.locate');
     button.addEventListener('click', () => onLocate(e));
     li.append(button);
     return li;
@@ -139,7 +140,7 @@ export function createInventoryPanel(container, entries, { levelCount, onLocate,
   function emptyMessage() {
     const p = document.createElement('p');
     p.className = 'inv-empty';
-    p.textContent = 'Aucun résultat.';
+    p.textContent = t('inventory.none');
     return p;
   }
 

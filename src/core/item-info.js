@@ -8,6 +8,7 @@
 
 import { ITEM_POOLS, WATERSKIN_STATES } from './contents.js';
 import { parseCombo } from './action-info.js';
+import { t, gameText } from '../i18n/i18n.js';
 
 // A combo (action-info.js, parseCombo): actions, `:n` minimum skill level, `*` needs a charge.
 // prettier-ignore
@@ -241,7 +242,7 @@ const TORCH = 2;
 const EMPTY_FLASK = 20;
 const WATER_FLASK = 15;
 const WATERSKIN = 1; // miscellaneous type
-const kg = (weight) => `${weight.toFixed(1).replace('.', ',')} kg`;
+const kg = (weight) => t('item.kg', { weight: weight.toFixed(1).replace('.', t('common.decimal')) });
 
 /**
  * Lines describing an item held in hand (docs/034), for its tooltip: a scroll's whole text;
@@ -253,32 +254,33 @@ export function itemDetails(dungeon, ref) {
   const entry = dungeon.data[ITEM_POOLS[ref.kind]][ref.index] ?? {};
   const info = itemInfo(dungeon, ref);
   const lines = [];
-  if (ref.kind === 'scroll') lines.push(...(dungeon.data.texts[entry.text]?.text ?? '(illisible)').split('\n'));
+  if (ref.kind === 'scroll') lines.push(...(dungeon.data.texts[entry.text]?.text ?? t('item.unreadable')).split('\n'));
   if (ref.kind === 'potion') {
-    if (entry.type === EMPTY_FLASK) lines.push('Flasque vide : un sort de potion ou une fontaine la remplit');
-    else if (entry.type === WATER_FLASK) lines.push('Eau : se boit (bouche)');
-    else if (entry.power) lines.push(`Puissance ${entry.power} (${POWER_SYMBOLS[Math.min(5, Math.max(1, Math.floor(entry.power / 40)) - 1)]})`);
+    if (entry.type === EMPTY_FLASK) lines.push(t('item.emptyFlask'));
+    else if (entry.type === WATER_FLASK) lines.push(t('item.waterFlask'));
+    else if (entry.power) lines.push(t('item.powerSymbol', { power: entry.power, symbol: POWER_SYMBOLS[Math.min(5, Math.max(1, Math.floor(entry.power / 40)) - 1)] }));
   }
   if (ref.kind === 'miscellaneous' && entry.type === WATERSKIN) {
-    lines.push(`Gourde ${WATERSKIN_STATES[entry.subtype ?? 0]} (${entry.subtype ?? 0} gorgée${entry.subtype > 1 ? 's' : ''} sur 3)`);
-    lines.push('Se boit (bouche) ; une fontaine la remplit');
+    lines.push(`${gameText.item('Water')} ${WATERSKIN_STATES[entry.subtype ?? 0]} (${t('item.sips', { count: entry.subtype ?? 0 })})`);
+    lines.push(t('item.waterskin'));
   }
   if (ref.kind === 'weapon' && entry.type === TORCH) {
-    lines.push(entry.charges ? `${entry.charges} charge${entry.charges > 1 ? 's' : ''} sur 15, ${entry.lit ? 'allumée' : 'éteinte'}` : 'Consumée');
-  } else if (entry.charges) lines.push(`${entry.charges} charge${entry.charges > 1 ? 's' : ''}`);
+    lines.push(entry.charges ? t('item.torchCharges', { count: entry.charges, state: t(entry.lit ? 'item.lit' : 'item.unlit') }) : gameText.misc('burntOut'));
+  } else if (entry.charges) lines.push(t('item.charges', { count: entry.charges }));
   if (info.weapon) {
-    if (info.strength) lines.push(`Bonus de force : ${info.strength}`);
-    if (info.kinetic) lines.push(`Énergie cinétique (lancer) : ${info.kinetic}`);
+    if (info.strength) lines.push(t('item.strength', { value: info.strength }));
+    if (info.kinetic) lines.push(t('item.kinetic', { value: info.kinetic }));
   }
   // The actions of its combo, with their damage (1/32) and the minimum skill level (docs/044).
   const actions = info.combo.map(({ action, minLevel }) => {
-    const notes = [action.damage && `dégâts ${action.damage}`, minLevel && `niveau ${minLevel}`].filter(Boolean);
-    return notes.length ? `${action.label} (${notes.join(', ')})` : action.label;
+    const notes = [action.damage && t('item.damage', { value: action.damage }), minLevel && t('item.minLevel', { value: minLevel })].filter(Boolean);
+    const label = gameText.action(action.index);
+    return notes.length ? `${label} (${notes.join(', ')})` : label;
   });
-  if (actions.length) lines.push(`Actions : ${actions.join(', ')}`);
-  const states = [entry.poisoned && 'empoisonné', entry.cursed && 'maudit', entry.broken && 'cassé'].filter(Boolean);
+  if (actions.length) lines.push(t('item.actions', { list: actions.join(', ') }));
+  const states = [entry.poisoned && gameText.misc('poisoned'), entry.cursed && gameText.misc('cursed'), entry.broken && gameText.misc('broken')].filter(Boolean);
   if (states.length) lines.push(states.join(', '));
-  if (ref.kind === 'container' && entry.items) lines.push(`${entry.items.length} objet${entry.items.length > 1 ? 's' : ''} dedans`);
-  lines.push(`Poids : ${kg(info.weight)}`);
+  if (ref.kind === 'container' && entry.items) lines.push(t('item.contains', { count: entry.items.length }));
+  lines.push(t('item.weight', { weight: kg(info.weight) }));
   return lines;
 }

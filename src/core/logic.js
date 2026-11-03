@@ -3,23 +3,24 @@
 // renderers only receive the links to draw.
 
 import { decodeItemId } from './item-ids.js';
+import { t, gameText } from '../i18n/i18n.js';
 
 // Families of actuators, for markers and colours.
 export const FAMILY_LABELS = {
-  floorTrigger: 'déclencheur au sol',
-  wallTrigger: 'déclencheur mural',
-  logic: 'logique (porte ET/OU, compteur)',
-  shooter: 'lanceur de projectiles',
-  generator: 'générateur de créatures',
-  portrait: 'portrait de champion',
-  inactive: 'inactif / décor',
+  floorTrigger: t('family.floorTrigger'),
+  wallTrigger: t('family.wallTrigger'),
+  logic: t('family.logic'),
+  shooter: t('family.shooter'),
+  generator: t('family.generator'),
+  portrait: t('family.portrait'),
+  inactive: t('family.inactive'),
 };
 
 export const ACTION_LABELS = {
-  set: 'active / ouvre',
-  clear: 'désactive / ferme',
-  toggle: 'bascule',
-  hold: 'maintient (tant que pressé)',
+  set: t('logic.action.set'),
+  clear: t('logic.action.clear'),
+  toggle: t('logic.action.toggle'),
+  hold: t('logic.action.hold'),
 };
 
 export function actuatorFamily(a) {
@@ -32,47 +33,46 @@ export function actuatorFamily(a) {
   return 'wallTrigger';
 }
 
-const SCOPE_LABELS = { all: 'tout', creatures: 'créatures', items: 'objets', items_party: 'groupe et objets' };
+const SCOPE_LABELS = { all: t('logic.scope.all'), creatures: t('logic.scope.creatures'), items: t('logic.scope.items'), items_party: t('logic.scope.itemsParty') };
 
 /** Short description of an actuator: { title, details: string[] }. */
 export function describeActuator(dungeon, a) {
   const details = [];
   if (a.dataNote === 'item identifier') {
     const item = decodeItemId(dungeon, a.data);
-    details.push(`objet attendu : ${item.name}${item.certainty === 'confirmé' ? '' : ` (${item.certainty})`}`);
+    details.push(t('logic.expected', { item: gameText.item(item.name) }) + (item.certainty === 'confirmed' ? '' : ` (${t(`logic.certainty.${item.certainty}`)})`));
   } else if (a.generator) {
-    const name = dungeon.data.catalog.creature[a.data] ?? `créature ${a.data}`;
-    const count = a.generator.isMax ? `jusqu'à ${a.generator.count}` : `${a.generator.count}`;
-    details.push(`génère ${count} × ${name}`);
+    const count = a.generator.isMax ? t('logic.upTo', { count: a.generator.count }) : `${a.generator.count}`;
+    details.push(t('logic.generates', { count, name: gameText.creature(a.data) }));
   } else if (a.dataNote) {
     details.push(a.dataNote);
   }
   if (a.gate) {
     const bits = (b) => b.map((v) => (v ? 1 : 0)).join('');
-    details.push(`état ${bits(a.gate.current)} / référence ${bits(a.gate.reference)}`);
+    details.push(t('logic.gate', { current: bits(a.gate.current), reference: bits(a.gate.reference) }));
   }
-  if (a.type === 6) details.push(`compteur : ${a.data}`);
-  if (a.missile) details.push(`puissance ${a.missile.power}`);
+  if (a.type === 6) details.push(t('logic.counter', { value: a.data }));
+  if (a.missile) details.push(t('item.power', { power: a.missile.power }));
   if (a.remote) details.push(`→ ${ACTION_LABELS[a.action] ?? a.action} (${a.remote.x}, ${a.remote.y})`);
-  if (a.local) details.push(`action locale : ${a.local.name ?? a.local.action}`);
-  if (a.delay) details.push(`délai ${a.delay}`);
-  if (a.onceOnly) details.push('une seule fois');
-  if (a.revert) details.push('inversé');
+  if (a.local) details.push(t('logic.localAction', { name: a.local.name ?? a.local.action }));
+  if (a.delay) details.push(t('logic.delay', { value: a.delay }));
+  if (a.onceOnly) details.push(t('logic.once'));
+  if (a.revert) details.push(t('logic.reverted'));
   return { title: a.typeName ?? `actuator ${a.type}`, details };
 }
 
-export function describeTeleporter(dungeon, t) {
-  const destMap = dungeon.level(t.dest.map);
+export function describeTeleporter(dungeon, teleporter) {
+  const destMap = dungeon.level(teleporter.dest.map);
   const details = [
-    `→ niveau ${t.dest.map} (${t.dest.x}, ${t.dest.y})`,
-    `transporte : ${SCOPE_LABELS[t.scope] ?? t.scope}`,
+    t('logic.destination', { level: teleporter.dest.map, x: teleporter.dest.x, y: teleporter.dest.y }),
+    t('logic.carries', { what: SCOPE_LABELS[teleporter.scope] ?? teleporter.scope }),
   ];
-  if (t.rotation || t.rotationType === 'absolute') {
-    details.push(t.rotationType === 'absolute' ? `orientation finale ${['N', 'E', 'S', 'O'][t.rotation / 90]}` : `rotation ${t.rotation}°`);
+  if (teleporter.rotation || teleporter.rotationType === 'absolute') {
+    details.push(teleporter.rotationType === 'absolute' ? t('logic.finalFacing', { dir: t(`dir.${teleporter.rotation / 90}`) }) : t('logic.rotation', { value: teleporter.rotation }));
   }
-  if (t.sound) details.push('son');
-  if (!destMap) details.push('destination invalide');
-  return { title: 'Téléporteur', details };
+  if (teleporter.sound) details.push(t('logic.sound'));
+  if (!destMap) details.push(t('logic.badDestination'));
+  return { title: t('tile.teleporter'), details };
 }
 
 const keyOf = (level, x, y) => `${level}:${x},${y}`;

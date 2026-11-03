@@ -39,6 +39,21 @@ body {
   font-weight: 600;
 }
 
+.language-select {
+  padding: 0.15rem 0.25rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #222;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.language-select:hover {
+  border-color: var(--accent);
+}
+
 .shortcuts-button {
   padding: 0.15rem 0.5rem;
   border: 1px solid #555;
