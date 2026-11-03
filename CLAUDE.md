@@ -78,7 +78,7 @@ Analyser le fichier XML en se concentrant d'abord sur
     - les deux mains de Zed et un panneau d'actions par objet, avec délai de fatigue ;
     - lancer de tout objet et moteur de projectiles (`projectiles.js`) ;
     - caractéristiques des objets dans `src/core/item-info.js`.
-  - Actions des objets (doc 044) : les combos de DM remplacent « Frapper » (`src/core/action-info.js`, combos dans `item-info.js`), filtrés par niveau de compétence (`skillLevel`, F303) et charges ; frappes (et portes), tir, sorts d'objets, peur, lumière, soin, pile ou face, corde ; les autres « pas encore implémentés ». L'action effectuée s'éclaire dans le panneau ; seuls les dégâts et les mots comme « Raté » restent en jaune (doc 057).
+  - Actions des objets (doc 044) : les combos de DM remplacent « Frapper » (`src/core/action-info.js`, combos dans `item-info.js`), filtrés par niveau de compétence (`skillLevel`, F303) et charges ; frappes (et portes), tir, sorts d'objets, peur, lumière, soin, pile ou face, corde ; les autres « pas encore implémentés ». L'action effectuée reste éclairée pendant sa fatigue ; les dégâts et les mots comme « Raté » s'affichent en jaune dans une zone de 3 actions de haut, au-dessus du panneau (doc 057).
 - **Données du moteur reconstituées** depuis la *Dungeon Master Encyclopaedia* :
   - `creature-info.js` (espèces) ;
   - `item-info.js` (objets) ;

@@ -824,7 +824,7 @@ body {
   opacity: 0.5;
 }
 
-/* Action panel of the action hand: one line per action; above it, the result of the last one. */
+/* Action panel of the action hand: one line per action; above it, the result of the last one, 3 actions high. */
 .champion-actions,
 .champion-result {
   display: flex;
@@ -833,9 +833,13 @@ body {
   background: #000c;
 }
 
-.champion-actions[hidden],
-.champion-result[hidden] {
+.champion-actions[hidden] {
   display: none;
+}
+
+/* Hidden but keeping its place: the actions do not move when a result shows. */
+.champion-result[hidden] {
+  visibility: hidden;
 }
 
 .champion-action {
@@ -865,11 +869,11 @@ body {
   background: none;
 }
 
-/* The action done, lit for a moment, enabled or not (docs/057). */
+/* The action done, lit during its fatigue (docs/057). */
 .champion-action.is-done,
 .champion-action.is-done:disabled {
-  background: #5a5648;
-  color: #f4ecd0;
+  background: #1a1a1a;
+  /* color: #f4ecd0; */
 }
 
 .champion-no-action {
@@ -878,6 +882,9 @@ body {
 }
 
 .champion-result {
+  height: calc(3 * (2.4cqw + 2 * 0.8cqw) + 2 * 0.2cqw + 2 * 0.3cqw); /* 3 actions and their borders */
+  align-items: center;
+  justify-content: center;
   padding: 0.8cqw;
   color: #ffd84a;
   text-align: center;

@@ -2,12 +2,13 @@
 // name, his two hands and three bars (health, stamina, mana). A click on a hand swaps
 // the item held by the cursor with the item of the hand. Below, the action panel of the
 // action hand (right): one button per action of its combo (docs/044), disabled while the
-// champion recovers from his last action (its fatigue, as in DM); the action done is lit
-// for a moment (docs/057), and the damage done or a word shows above them, as the action
-// area of DM does. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
+// champion recovers from his last action (its fatigue, as in DM); the action done stays lit
+// during that fatigue (docs/057). Above them, a zone the height of 3 actions shows the damage
+// done or a word for a moment. A hit taken shows the damage on the box. When the champion dies, a veil covers the view with a
 // "Recommencer" button. The mouth, to drink, is under the item in hand of the game window (docs/050).
 
 const RESULT_MS = 900;
+const NO_FATIGUE_MS = 220; // an action without fatigue stays lit for one tick
 const HAND_LABELS = ['Main gauche', 'Main droite (action)'];
 
 /**
@@ -133,12 +134,13 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
       if (value === ready) return;
       ready = value;
       for (const button of actions.querySelectorAll('button')) button.disabled = !ready;
+      if (ready) lightAction(null);
     },
-    /** The action done (its index): its button is lit for a moment. */
+    /** The action done (its index): its button is lit until the champion can act again. Call after setReady. */
     showAction(id) {
       clearTimeout(doneTimer);
       lightAction(String(id));
-      doneTimer = setTimeout(() => lightAction(null), RESULT_MS);
+      if (ready) doneTimer = setTimeout(() => lightAction(null), NO_FATIGUE_MS);
     },
     /** Result of an action, in the action area: the damage done, or a word. */
     showResult(text) {
