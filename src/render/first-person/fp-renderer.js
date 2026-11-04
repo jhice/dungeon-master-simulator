@@ -23,7 +23,7 @@
 // coordinates, invisible or not: DM draws its "ceiling pit" graphic the same way).
 
 import * as THREE from 'three';
-import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry, PIT_DEPTH, NICHE } from '../three/level-meshes.js';
+import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry, PIT_DEPTH, NICHE, CEILING_COLOR } from '../three/level-meshes.js';
 import { buildLevelContents, buildLevelCreatures } from '../three/level-contents.js';
 import { createDecor } from './fp-decor.js';
 import { createLights } from './fp-lights.js';
@@ -49,8 +49,8 @@ export const VIEW = {
 };
 const ASPECT = 4 / 3;
 const WALL_HEIGHT = 0.7;
-const CEILING_COLOR = '#696660';
-const STAIRS_PLASTER = '#cc8866'; // the walls of the stairs in the pictures of DM
+const NICHE_BACK = '#26241f';
+const PIT_SHADE = '#d0d0d0';
 const MIRRORED_PARTS = ['wall', 'floor', 'pitRim', 'wallFace', 'nicheFaceSquare', 'nicheFaceArched'];
 
 /**
@@ -109,13 +109,14 @@ export function createFirstPersonRenderer(
     pitRim: floorTexture,
     pitShaft: pitShaftTexture(),
   };
+  const ceilingTextures = { ceiling: ceilingTexture(false), ceilingPit: ceilingTexture(true) };
   // Stairs (docs/064): the same textures for a staircase going up or down.
-  const stairsTextures = { Steps: stairsStoneTexture(true), Stone: stairsStoneTexture(false), Walls: plasterTexture(), Rails: woodTexture() };
+  wallTexture.wrapS = wallTexture.wrapT = ceilingTextures.ceiling.wrapS = ceilingTextures.ceiling.wrapT = THREE.RepeatWrapping;
+  const stairsTextures = { Steps: stepTexture(), Walls: wallTexture, Ceiling: ceilingTextures.ceiling, Rails: woodTexture() };
   for (const [part, texture] of Object.entries(stairsTextures)) {
     textures[`stairsUp${part}`] = texture;
     textures[`stairsDown${part}`] = texture;
   }
-  const ceilingTextures = { ceiling: ceilingTexture(false), ceilingPit: ceilingTexture(true) };
   // Ornaments as 3D objects, hollow pits (fp-models.js, docs/053).
   let useModels = lighting.ornamentModels ?? DEFAULT_LIGHTING.ornamentModels;
   const decor = createDecor(dungeon, state, WALL_HEIGHT, useModels);
@@ -191,7 +192,7 @@ export function createFirstPersonRenderer(
       for (let x = 0; x < map.width; x++) {
         const tile = state.tileAt(levelIndex, x, y);
         if (tile.type === 'wall') continue;
-        if (useModels && tile.type === 'stairs' && tile.detail.direction === 'up') continue; // the tunnel goes through
+        if (useModels && tile.type === 'stairs') continue; // the tunnel has its own ceiling
         lists[pitAbove(x, y) ? 'ceilingPit' : 'ceiling'].push({ x, y });
       }
     }
@@ -215,7 +216,7 @@ export function createFirstPersonRenderer(
       });
     if (useModels && lists.ceilingPit.length) {
       const shaft = pitShaftGeometry(PIT_DEPTH).rotateX(Math.PI); // going up
-      meshes.push(instanced(shaft, new THREE.MeshLambertMaterial({ map: textures.pitShaft }), lists.ceilingPit));
+      meshes.push(instanced(shaft, new THREE.MeshLambertMaterial({ color: theme.floor, map: textures.pitShaft }), lists.ceilingPit));
       shaft.dispose();
     }
     for (const geometry of new Set(Object.values(geometries))) geometry.dispose();
@@ -717,91 +718,49 @@ function flagstoneTexture() {
   });
 }
 
-// The inside of a pit: stone blocks sinking into the dark (black at the bottom, v = 0), under a
-// pale lip at the top (v = 1). Its walls are in shadow: the blocks are not lit by much.
+// The inside of a pit: plain, without joints, as light as the flagstones of the floor on average (the
+// colour of the floor tints it), sinking into the dark (black at the bottom, v = 0).
 function pitShaftTexture() {
   return canvasTexture(128, (g, size) => {
-    const rand = random(31);
-    const rows = 4;
-    const rh = size / rows;
-    g.fillStyle = '#39362f';
-    g.fillRect(0, 0, size, size);
-    for (let r = 0; r < rows; r++) {
-      const shift = (r % 2) * 22;
-      for (let c = -1; c < 3; c++) {
-        const shade = 120 + Math.floor(rand() * 45);
-        g.fillStyle = `rgb(${shade} ${shade - 4} ${shade - 12})`;
-        g.fillRect(c * 44 + shift + 2, r * rh + 2, 40, rh - 4);
-      }
-    }
     const dark = g.createLinearGradient(0, 0, 0, size);
-    dark.addColorStop(0, 'rgb(0 0 0 / 0.1)');
-    dark.addColorStop(0.75, 'rgb(0 0 0 / 1)');
+    dark.addColorStop(0, PIT_SHADE);
+    dark.addColorStop(0.75, '#000000');
     g.fillStyle = dark;
     g.fillRect(0, 0, size, size);
-    g.fillStyle = '#a8a298';
-    g.fillRect(0, 0, size, 3);
   });
 }
 
 // The inside of an alcove: the sides (upper half) darken towards the back, the back (lower half)
-// is stone in the shade. No shadow here: the texture gives the depth.
+// has the darkest colour of the sides. No shadow here: the texture gives the depth.
 function nicheInsideTexture() {
   return canvasTexture(128, (g, size) => {
-    const rand = random(41);
     const half = size / 2;
-    const rows = 3;
-    const rh = half / rows;
-    g.fillStyle = '#2c2a26';
-    g.fillRect(0, half, size, half);
-    for (let r = 0; r < rows; r++) {
-      const shift = (r % 2) * 22;
-      for (let c = -1; c < 3; c++) {
-        const shade = 74 + Math.floor(rand() * 22);
-        g.fillStyle = `rgb(${shade} ${shade - 3} ${shade - 9})`;
-        g.fillRect(c * 44 + shift + 2, half + r * rh + 2, 40, rh - 4);
-      }
-    }
     const side = g.createLinearGradient(0, 0, 0, half);
     side.addColorStop(0, '#6e6a62');
-    side.addColorStop(1, '#26241f');
+    side.addColorStop(1, NICHE_BACK);
     g.fillStyle = side;
     g.fillRect(0, 0, size, half);
+    g.fillStyle = NICHE_BACK;
+    g.fillRect(0, half, size, half);
   });
 }
 
-// Stone of the stairs: fine grain with white flecks, as in DM. With `edge`, the nose of a step (or of a
-// band of the ceiling): a pale line at the top, a dark one at the bottom. Repeats along its walls.
-function stairsStoneTexture(edge) {
+// Steps of the stairs: speckled, as in DM, as light as the flagstones of the floor (the same colour
+// tints them). One repeat per tile, as the floor.
+function stepTexture() {
   const texture = canvasTexture(128, (g, size) => {
-    const rand = random(edge ? 53 : 59);
-    g.fillStyle = '#a8a8a8';
+    const rand = random(53);
+    g.fillStyle = '#d4d4d4';
     g.fillRect(0, 0, size, size);
     for (let i = 0; i < 2600; i++) {
-      const shade = rand() < 0.5 ? 118 : 196;
+      const shade = rand() < 0.5 ? 178 : 232;
       g.fillStyle = `rgb(${shade} ${shade} ${shade})`;
       g.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), 2, 2);
     }
     for (let i = 0; i < 90; i++) {
-      g.fillStyle = '#f4f4f4';
+      g.fillStyle = '#ffffff';
       g.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), 2, 2);
     }
-    if (!edge) return;
-    g.fillStyle = '#e4e4e4';
-    g.fillRect(0, 0, size, 6);
-    g.fillStyle = '#3a3a3a';
-    g.fillRect(0, size - 5, size, 5);
-  });
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  return texture;
-}
-
-function plasterTexture() {
-  const texture = canvasTexture(64, (g, size) => {
-    const rand = random(61);
-    g.fillStyle = STAIRS_PLASTER;
-    g.fillRect(0, 0, size, size);
-    speckle(g, size, rand, 120);
   });
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   return texture;

@@ -26,8 +26,7 @@ import { stairsGeometries, stairsParts } from './stairs-model.js';
 export const DEFAULT_WALL_HEIGHT = 0.7;
 const FLOOR_THICKNESS = 0.05;
 const STEPS = 4;
-// Under their textures, as the light of the view easily saturates (fp-lights.js).
-const STAIRS_COLORS = { Steps: '#808080', Stone: '#707070', Walls: '#b0b0b0', Rails: '#c0c0c0', Rivets: '#e8e8e8' };
+export const CEILING_COLOR = '#696660'; // of the first-person view
 const PIT_SIZE = 0.76; // side of the hole of a pit
 export const PIT_DEPTH = 0.6; // of its shaft, in the first-person view
 // Alcove: width, bottom and top (shares of the wall height), depth into the wall (tiles).
@@ -143,8 +142,9 @@ function nicheInsideGeometry(wallHeight, arched) {
 function partDefinitions(theme, h, stairsTunnels) {
   // Stairs of the first-person view: textured by fp-renderer.js, faded by their vertex colours.
   const stairs = stairsTunnels ? stairsGeometries(h.wall) : {};
+  const stairsColors = { Steps: theme.floor, Walls: theme.wall, Ceiling: CEILING_COLOR, Rails: '#c0c0c0', Rivets: '#e8e8e8' };
   const stairsDefinitions = Object.fromEntries(
-    Object.entries(stairs).map(([part, geometry]) => [part, { geometry, color: STAIRS_COLORS[part.replace(/stairs(Up|Down)/, '')], vertexColors: true }]),
+    Object.entries(stairs).map(([part, geometry]) => [part, { geometry, color: stairsColors[part.replace(/stairs(Up|Down)/, '')], vertexColors: true }]),
   );
   return {
     ...stairsDefinitions,
@@ -171,7 +171,7 @@ function partDefinitions(theme, h, stairsTunnels) {
     // carry it (items only, creatures only) is in a coloured volume.
     // A hollow pit (first-person view): no floor, the rim around the hole and the shaft under it.
     pitRim: { geometry: pitRimGeometry(), color: theme.floor },
-    pitShaft: { geometry: pitShaftGeometry(PIT_DEPTH), color: '#ffffff' },
+    pitShaft: { geometry: pitShaftGeometry(PIT_DEPTH), color: theme.floor },
     // A wall tile with an alcove (first-person view): its faces one by one, as no box can have a hole.
     wallFace: { geometry: new THREE.PlaneGeometry(1, h.wall).translate(0, 0, 0.5), color: theme.wall },
     nicheFaceSquare: { geometry: nicheFaceGeometry(h.wall, false), color: theme.wall },
