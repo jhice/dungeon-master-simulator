@@ -19,12 +19,15 @@
 
 import * as THREE from 'three';
 import { tileState, doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
+import { stairsGeometries, stairsParts } from './stairs-model.js';
 
 // Wall height is a setting (fraction of a tile, 1 = cube); doors span it,
 // teleporters are 90 % of it, stairs span it.
 export const DEFAULT_WALL_HEIGHT = 0.7;
 const FLOOR_THICKNESS = 0.05;
 const STEPS = 4;
+// Under their textures, as the light of the view easily saturates (fp-lights.js).
+const STAIRS_COLORS = { Steps: '#808080', Stone: '#707070', Walls: '#b0b0b0', Rails: '#c0c0c0', Rivets: '#e8e8e8' };
 const PIT_SIZE = 0.76; // side of the hole of a pit
 export const PIT_DEPTH = 0.6; // of its shaft, in the first-person view
 // Alcove: width, bottom and top (shares of the wall height), depth into the wall (tiles).
@@ -137,8 +140,14 @@ function nicheInsideGeometry(wallHeight, arched) {
  * Part definitions: geometry, colour key in the theme, and a function that
  * pushes instance matrices for a tile.
  */
-function partDefinitions(theme, h) {
+function partDefinitions(theme, h, stairsTunnels) {
+  // Stairs of the first-person view: textured by fp-renderer.js, faded by their vertex colours.
+  const stairs = stairsTunnels ? stairsGeometries(h.wall) : {};
+  const stairsDefinitions = Object.fromEntries(
+    Object.entries(stairs).map(([part, geometry]) => [part, { geometry, color: STAIRS_COLORS[part.replace(/stairs(Up|Down)/, '')], vertexColors: true }]),
+  );
   return {
+    ...stairsDefinitions,
     wall: { geometry: new THREE.BoxGeometry(1, h.wall, 1), color: theme.wall },
     fakewall: { geometry: new THREE.BoxGeometry(1, h.wall, 1), color: theme.fakewall },
     floor: { geometry: new THREE.BoxGeometry(1, FLOOR_THICKNESS, 1), color: theme.floor },
@@ -189,16 +198,17 @@ function partDefinitions(theme, h) {
  * @param {(level, x, y) => object} [options.tileAt] tile source (default: the dungeon; the simulation passes its state)
  * @param {boolean} [options.game=false] first-person look, see above
  * @param {boolean} [options.hollowPits=false] with `game`: an open visible pit is a real hole
+ * @param {boolean} [options.stairsTunnels=false] with `game`: stairs are tunnels (stairs-model.js, docs/064)
  * @param {(x, y) => Array<{ face: number, arched: boolean }>} [options.niches] with `game`: the alcoves
  *   of a wall tile (faces N, E, S, W), real recesses in the wall
  * @returns {{ group: THREE.Group, meshes: Array<THREE.InstancedMesh|THREE.LineSegments> }}
  * Each mesh has userData.part, userData.variant, userData.baseOpacity and, for
  * instanced meshes, userData.tiles[instanceId] = tile info (for hovering).
  */
-export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false, hollowPits = false, niches } = {}) {
+export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeight = DEFAULT_WALL_HEIGHT, tileAt, game = false, hollowPits = false, stairsTunnels = false, niches } = {}) {
   const map = dungeon.level(levelIndex);
   const h = dimensions(wallHeight);
-  const parts = partDefinitions(theme, h);
+  const parts = partDefinitions(theme, h, game && stairsTunnels);
   const instances = new Map(); // "part:variant" -> [{ matrix, info }]
   const openWallCenters = []; // vanished fake walls, drawn as wireframe outlines
   const m4 = new THREE.Matrix4();
@@ -239,7 +249,9 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
         continue;
       }
       if (tile.type === 'stairs') {
-        addStairs(add, info, px, pz, dungeon.accessSide(levelIndex, x, y), h);
+        const side = dungeon.accessSide(levelIndex, x, y);
+        if (game && stairsTunnels) addStairsTunnel(add, info, px, pz, side);
+        else addStairs(add, info, px, pz, side, h);
         continue;
       }
       if (tile.type === 'pit' && game && hollowPits && tile.detail.open && !tile.detail.invisible) {
@@ -279,6 +291,7 @@ export function buildLevelMeshes(dungeon, levelIndex, theme, center, { wallHeigh
       // The first-person view does not restyle its meshes: its translucent parts are set here.
       ...(game && def.opacity !== undefined && { transparent: true, opacity: def.opacity, depthWrite: false }),
       ...(game && def.doubleSide && { side: THREE.DoubleSide }),
+      ...(def.vertexColors && { vertexColors: true }),
     });
     // Each part may appear in several variants: they need their own geometry to be disposed independently.
     const mesh = new THREE.InstancedMesh(def.geometry.clone(), material, list.length);
@@ -372,6 +385,12 @@ function buildOutlines(centers, color, h) {
   const lines = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color }));
   lines.userData = { part: 'fakewallOpen', variant: 'states', baseOpacity: 1 };
   return lines;
+}
+
+// A tunnel of the first-person view, turned as the stairs below.
+function addStairsTunnel(add, info, px, pz, accessSide) {
+  const rotation = STAIRS_ROTATION[accessSide ?? (info.detail.orientation === 'WE' ? 'W' : 'N')];
+  for (const part of stairsParts(info.detail.direction === 'up')) add(part, info, [px, 0, pz], [1, 1, 1], rotation);
 }
 
 // Stairs model: STEPS boxes along +z, starting at the access side (z = -0.5 before rotation).

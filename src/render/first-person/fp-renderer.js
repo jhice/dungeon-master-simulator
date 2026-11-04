@@ -50,6 +50,7 @@ export const VIEW = {
 const ASPECT = 4 / 3;
 const WALL_HEIGHT = 0.7;
 const CEILING_COLOR = '#696660';
+const STAIRS_PLASTER = '#cc8866'; // the walls of the stairs in the pictures of DM
 const MIRRORED_PARTS = ['wall', 'floor', 'pitRim', 'wallFace', 'nicheFaceSquare', 'nicheFaceArched'];
 
 /**
@@ -108,6 +109,12 @@ export function createFirstPersonRenderer(
     pitRim: floorTexture,
     pitShaft: pitShaftTexture(),
   };
+  // Stairs (docs/064): the same textures for a staircase going up or down.
+  const stairsTextures = { Steps: stairsStoneTexture(true), Stone: stairsStoneTexture(false), Walls: plasterTexture(), Rails: woodTexture() };
+  for (const [part, texture] of Object.entries(stairsTextures)) {
+    textures[`stairsUp${part}`] = texture;
+    textures[`stairsDown${part}`] = texture;
+  }
   const ceilingTextures = { ceiling: ceilingTexture(false), ceilingPit: ceilingTexture(true) };
   // Ornaments as 3D objects, hollow pits (fp-models.js, docs/053).
   let useModels = lighting.ornamentModels ?? DEFAULT_LIGHTING.ornamentModels;
@@ -135,6 +142,7 @@ export function createFirstPersonRenderer(
       tileAt: state.tileAt,
       game: true,
       hollowPits: useModels,
+      stairsTunnels: useModels,
       niches: useModels ? (x, y) => decor.niches(levelIndex, x, y) : undefined,
     });
     // Items and creatures (still), as markers of the 3D renderer. Mechanisms and texts
@@ -181,7 +189,9 @@ export function createFirstPersonRenderer(
     const lists = { ceiling: [], ceilingPit: [] };
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
-        if (state.tileAt(levelIndex, x, y).type === 'wall') continue;
+        const tile = state.tileAt(levelIndex, x, y);
+        if (tile.type === 'wall') continue;
+        if (useModels && tile.type === 'stairs' && tile.detail.direction === 'up') continue; // the tunnel goes through
         lists[pitAbove(x, y) ? 'ceilingPit' : 'ceiling'].push({ x, y });
       }
     }
@@ -237,8 +247,10 @@ export function createFirstPersonRenderer(
     }
   }
 
+  // Tunnels of the stairs run past their tile, where the masks say a wall: they are seen only from
+  // their mouth, and do not read the masks.
   function patchMaterials(object) {
-    if (!object.isMesh) return;
+    if (!object.isMesh || object.userData.part?.startsWith('stairs')) return;
     for (const material of [object.material].flat()) occlusion.patchMaterial(material);
   }
 
@@ -617,7 +629,7 @@ export function createFirstPersonRenderer(
       disposeRetired();
       occlusion.dispose();
       decor.dispose();
-      for (const texture of [...Object.values(textures), ...Object.values(ceilingTextures)]) texture.dispose();
+      for (const texture of new Set([...Object.values(textures), ...Object.values(ceilingTextures)])) texture.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },
@@ -756,6 +768,58 @@ function nicheInsideTexture() {
     g.fillStyle = side;
     g.fillRect(0, 0, size, half);
   });
+}
+
+// Stone of the stairs: fine grain with white flecks, as in DM. With `edge`, the nose of a step (or of a
+// band of the ceiling): a pale line at the top, a dark one at the bottom. Repeats along its walls.
+function stairsStoneTexture(edge) {
+  const texture = canvasTexture(128, (g, size) => {
+    const rand = random(edge ? 53 : 59);
+    g.fillStyle = '#a8a8a8';
+    g.fillRect(0, 0, size, size);
+    for (let i = 0; i < 2600; i++) {
+      const shade = rand() < 0.5 ? 118 : 196;
+      g.fillStyle = `rgb(${shade} ${shade} ${shade})`;
+      g.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), 2, 2);
+    }
+    for (let i = 0; i < 90; i++) {
+      g.fillStyle = '#f4f4f4';
+      g.fillRect(Math.floor(rand() * size), Math.floor(rand() * size), 2, 2);
+    }
+    if (!edge) return;
+    g.fillStyle = '#e4e4e4';
+    g.fillRect(0, 0, size, 6);
+    g.fillStyle = '#3a3a3a';
+    g.fillRect(0, size - 5, size, 5);
+  });
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function plasterTexture() {
+  const texture = canvasTexture(64, (g, size) => {
+    const rand = random(61);
+    g.fillStyle = STAIRS_PLASTER;
+    g.fillRect(0, 0, size, size);
+    speckle(g, size, rand, 120);
+  });
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+// Wood of the handrails: dark red-brown, the grain along v.
+function woodTexture() {
+  const texture = canvasTexture(32, (g, size) => {
+    g.fillStyle = '#6a2406';
+    g.fillRect(0, 0, size, size);
+    g.fillStyle = '#8c4a0a';
+    g.fillRect(12, 0, 6, size);
+    g.fillStyle = '#2c0e02';
+    g.fillRect(0, 0, 3, size);
+    g.fillRect(size - 3, 0, 3, size);
+  });
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  return texture;
 }
 
 // Ceiling: large irregular slabs, darker joints; with a pit of the level above, a dark
