@@ -1,4 +1,4 @@
-import { loadDungeon, SIDE_DELTAS } from './core/dungeon.js';
+import { loadDungeon, FACINGS, SIDE_DELTAS } from './core/dungeon.js';
 import { describeState } from './core/tile-states.js';
 import { tileContents, buildInventory } from './core/contents.js';
 import { buildLogic, describeActuator, describeTeleporter, actuatorFamily } from './core/logic.js';
@@ -23,6 +23,7 @@ import { createSimulation } from './sim/simulation.js';
 import { isWaterskin } from './sim/water.js';
 import { DEFAULT_LIGHTING } from './render/first-person/lighting-settings.js';
 import { DEFAULT_AUDIO } from './audio/audio-settings.js';
+import { DEFAULT_ANIMATION } from './render/animation-settings.js';
 import { createAudio } from './audio/audio.js';
 import { createControls } from './sim/controls.js';
 import { BLOCK_LABELS } from './sim/rules.js';
@@ -81,6 +82,7 @@ const prefs = loadPreferences({
   gameLayout: null, // its position and width
   lighting: {}, // light of the first-person view (docs/037), over DEFAULT_LIGHTING
   audio: {}, // sounds (docs/041), over DEFAULT_AUDIO
+  animation: {}, // animated moves (docs/062), over DEFAULT_ANIMATION
 });
 if (!RENDERERS[prefs.renderer]) prefs.renderer = 'dom';
 view.classList.toggle('hide-rulers', !prefs.showRulers);
@@ -436,6 +438,19 @@ const AUDIO_SCHEMA = [
   { type: 'range', key: 'soundVolume', label: t('panel.volume'), min: 0, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)} %` },
   { type: 'range', key: 'soundRange', label: t('panel.range'), min: 2, max: 16, step: 1, format: (v) => t('panel.tiles', { count: v }) },
 ];
+// Animated moves (docs/062): kept in the preferences as the light, read at each move.
+const knownAnimation = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_ANIMATION));
+const animation = () => ({ ...DEFAULT_ANIMATION, ...knownAnimation(prefs.animation) });
+const ANIMATION_SCHEMA = [
+  { type: 'heading', label: t('panel.movesHeading') },
+  { type: 'checkbox', key: 'smoothMoves', label: t('panel.smoothMoves') },
+  { type: 'range', key: 'stepMs', label: t('panel.stepDuration'), min: 100, max: 440, step: 20, format: (v) => `${v} ms` },
+  { type: 'range', key: 'turnMs', label: t('panel.turnDuration'), min: 80, max: 400, step: 20, format: (v) => `${v} ms` },
+];
+function changeAnimation(changes) {
+  prefs.animation = { ...knownAnimation(prefs.animation), ...changes };
+  savePreferences(prefs);
+}
 function changeAudio(changes) {
   prefs.audio = { ...knownAudio(prefs.audio), ...changes };
   savePreferences(prefs);
@@ -484,6 +499,7 @@ function panelSchema() {
   return [
     ...schema,
     ...(renderer.settingsSchema ?? []),
+    ...ANIMATION_SCHEMA,
     ...LIGHTING_SCHEMA,
     ...AUDIO_SCHEMA,
     { type: 'buttons', items: [{ label: t('panel.defaults'), title: t('panel.defaultsTitle'), action: resetPanel }] },
@@ -505,6 +521,7 @@ const panelValues = () => ({
   ...renderer.settings,
   ...lighting(),
   ...audioSettings(),
+  ...animation(),
 });
 
 function onPanelChange(allChanges) {
@@ -512,7 +529,9 @@ function onPanelChange(allChanges) {
   if (Object.keys(lightingChanges).length) changeLighting(lightingChanges);
   const audioChanges = Object.fromEntries(Object.entries(allChanges).filter(([key]) => key in DEFAULT_AUDIO));
   if (Object.keys(audioChanges).length) changeAudio(audioChanges);
-  const changes = Object.fromEntries(Object.entries(allChanges).filter(([key]) => !(key in DEFAULT_LIGHTING) && !(key in DEFAULT_AUDIO)));
+  const animationChanges = Object.fromEntries(Object.entries(allChanges).filter(([key]) => key in DEFAULT_ANIMATION));
+  if (Object.keys(animationChanges).length) changeAnimation(animationChanges);
+  const changes = Object.fromEntries(Object.entries(allChanges).filter(([key]) => !(key in DEFAULT_LIGHTING) && !(key in DEFAULT_AUDIO) && !(key in DEFAULT_ANIMATION)));
   const { showStates, showItems, showCreatures, showMechanisms, showTexts, allLinks, frameGlobal, alwaysTooltip, autoFit, showRulers, invincible, ...settings } = changes;
   // Simple viewer preferences (no immediate effect beyond the next hover / level change).
   for (const [key, value] of Object.entries({ alwaysTooltip, autoFit })) {
@@ -542,10 +561,10 @@ function onPanelChange(allChanges) {
   if (Object.keys(settings).length) changeSettings(settings);
 }
 
-// "Valeurs par défaut": every value of the panel (viewer, every renderer, light, sounds),
+// "Valeurs par défaut": every value of the panel (viewer, every renderer, moves, light, sounds),
 // and the position and size of the game window.
 function resetPanel() {
-  Object.assign(prefs, PANEL_DEFAULTS, { settings: {}, lighting: {}, audio: {}, gameLayout: null });
+  Object.assign(prefs, PANEL_DEFAULTS, { settings: {}, lighting: {}, audio: {}, animation: {}, gameLayout: null });
   savePreferences(prefs);
   view.classList.toggle('hide-rulers', !prefs.showRulers);
   sim.invincible = prefs.invincible;
@@ -619,7 +638,14 @@ const TICK_MS = (11 * 1000) / 50;
 // Sounds of the simulation (docs/041): the files of DM Amiga 3.6, in assets/sounds/.
 const audio = createAudio({ base: 'assets/sounds/', party: () => sim.party, tickMs: TICK_MS, settings: audioSettings() });
 sim.on('sound', audio.request);
-const moveKey = createControls((command) => sim.command(command));
+const TURNS = new Set(['turnLeft', 'turnRight']);
+const BUMP_SHARE = 0.6; // of the duration of a step
+// Duration of the animation of a move, in ms; 0: instant (docs/062).
+function moveDuration(command) {
+  const { smoothMoves, stepMs, turnMs } = animation();
+  return smoothMoves ? (TURNS.has(command) ? turnMs : stepMs) : 0;
+}
+const moveKey = createControls((command) => sim.command(command), moveDuration);
 let game = null; // { window, view, panel } while the game window is open
 let opening = false;
 
@@ -687,6 +713,7 @@ async function openGame() {
 function closeGame() {
   if (!game) return;
   clearInterval(game.clock);
+  moveKey.stop();
   game.panel.dispose();
   game.spells.dispose();
   game.view.dispose();
@@ -868,17 +895,24 @@ function showStatus() {
   game?.window.setStatus(t('game.status', { level, x, y, facing: FACING_LABELS[facing], light }));
 }
 
-function showParty(party) {
+function showParty(party, duration = 0) {
   if (!game) return;
-  game.view.setParty(party);
+  game.view.setParty(party, duration);
   showStatus();
   if (!renderer) return; // being mounted: mountRenderer() places the party
   if (renderer.currentLevel !== party.level) showLevel(party.level);
   renderer.setParty?.(party);
 }
 
-sim.on('partyMoved', ({ party, effects, loop }) => {
-  showParty(party);
+// A turn or a plain step is animated; stairs, pits and teleporters cut at once (docs/061, Q2).
+function partyMoveDuration({ party, from, kind, effects }) {
+  if (kind === 'turn') return moveDuration('turnLeft');
+  const plainStep = kind === 'step' && !effects?.length && party.level === from.level && Math.abs(party.x - from.x) + Math.abs(party.y - from.y) === 1;
+  return plainStep ? moveDuration('forward') : 0;
+}
+sim.on('partyMoved', (event) => {
+  const { party, effects, loop } = event;
+  showParty(party, partyMoveDuration(event));
   if (!effects?.length) return;
   showInfo(effects.map(describeEffect).join(' · ') + (loop ? ` · ${t('effect.loop')}` : ''));
   if (effects.some((e) => e.type === 'fall')) game?.window.flash(); // fell through a pit, as a bump
@@ -897,6 +931,7 @@ function describeEffect({ type, direction, party, detail }) {
   return same ? `${tileName('teleporter')} : ${facing}` : `${tileName('teleporter')} → ${where}, ${facing}`;
 }
 sim.on('reset', ({ party }) => {
+  moveKey.stop();
   showParty(party);
   game?.view.setProjectiles(party.level, []);
   showInventory();
@@ -1041,7 +1076,10 @@ sim.on('textChanged', ({ level, onWall }) => {
   if (onWall) game?.view.updateTile(level);
 });
 sim.on('textShown', ({ index }) => game?.window.message(dungeon.data.texts[index].text.replaceAll('\n', ' ')));
-sim.on('blocked', ({ reason }) => {
+const BUMP_TURNS = { forward: 0, right: 1, back: 2, left: 3 }; // quarter turns from the facing
+sim.on('blocked', ({ party, reason, command }) => {
+  const duration = moveDuration(command);
+  if (duration) game?.view.bump(FACINGS[(FACINGS.indexOf(party.facing) + BUMP_TURNS[command]) % 4], duration * BUMP_SHARE);
   game?.window.flash();
   showInfo(t('status.blocked', { reason: BLOCK_LABELS[reason] }));
 });

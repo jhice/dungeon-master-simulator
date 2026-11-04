@@ -514,7 +514,7 @@ export function createSimulation(dungeon) {
     }
     const result = step(state, party, name);
     if (result.blocked) {
-      events.emit('blocked', { party, reason: result.blocked });
+      events.emit('blocked', { party, reason: result.blocked, command: name });
       // Running into a wall, a closed door or fake wall (ReDMCSB F366): the champions of the front
       // row take an attack of 1 "self" ((1 × 130) / 64 = 2 without armour), and the party cries out.
       if (result.blocked !== 'creature') {

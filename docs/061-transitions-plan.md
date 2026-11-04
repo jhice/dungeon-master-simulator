@@ -3,7 +3,8 @@
 > Demande de l'utilisateur : [012-simulation.md](012-simulation.md), phase F, « transitions animées et option instantané / transition »,
 > pour le déplacement du groupe, des créatures et des projectiles.
 > **Document de planification.** Rien n'est implémenté ici. Le 16/9 et la sauvegarde de partie, aussi en phase F, restent à part.
-> Les questions du § 7 sont à trancher avant T1.
+> **État (2026-11-04) :** T1 est faite ([doc 062](062-transitions-t1-groupe.md)). **T2 à T5 sont en attente, à la demande de l'utilisateur :** mettre de la « vraie 3D » dans la simulation n'est plus la priorité.
+> Les questions du § 7 restent ouvertes pour ces étapes, sauf Q1 (durées choisies : 300 ms par pas et par quart de tour).
 
 ## 1. Le principe : la simulation reste sur la grille
 

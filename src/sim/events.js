@@ -2,7 +2,7 @@
 // Events (see also logic.js: tileChanged, textChanged, actuatorFired, ornamentChanged):
 //   'partyMoved' { party, from, kind: 'step'|'turn'|'teleport', effects?, loop? }
 //                effects: [{ type: 'stairs'|'fall'|'teleport', party }…] applied after a step (rules.js)
-//   'blocked'    { party, reason }
+//   'blocked'    { party, reason, command }
 //   'itemsMoved' { from, to, items } items fell through a pit or were carried by a teleporter
 //   'creaturesMoved' { group, from, to, carried?, generated?, turned? } a group stepped, fell, was carried,
 //                appeared (from = null) or turned on the spot; from / to = { level, x, y, facing } (creatures.js)

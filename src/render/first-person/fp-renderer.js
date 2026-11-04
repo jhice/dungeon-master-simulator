@@ -5,7 +5,8 @@
 // Units as in level-meshes.js: 1 tile = 1 unit, x = east, z = south, y = up;
 // here the level is built in local coordinates (tile (x, y) spans [x, x+1]).
 //
-// Rendering is on demand (party moved, state changed, resize).
+// Rendering is on demand (party moved, state changed, resize); a frame loop runs only while the
+// camera is animated (docs/062).
 // Mouse: a click on the wall or door just in front of the party is reported
 // (wall buttons, levers, locks, alcoves, door buttons), and so is a click on the
 // floor (a sub-tile, maybe with an item): main.js picks up or drops there if it
@@ -25,12 +26,14 @@ import { buildLevelMeshes, disposeLevelMeshes, pitRimGeometry, pitShaftGeometry,
 import { buildLevelContents, buildLevelCreatures } from '../three/level-contents.js';
 import { createDecor } from './fp-decor.js';
 import { createLights } from './fp-lights.js';
-import { createOcclusion, lightMasks, opaqueTile } from './fp-occlusion.js';
+import { createOcclusion, opaqueTile } from './fp-occlusion.js';
+import { lightMasks, updateLightMask } from './light-masks.js';
 import { DEFAULT_LIGHTING } from './lighting-settings.js';
 import { isAlcove, doorLook } from '../../core/ornaments.js';
 import { doorSeesThrough } from './ornament-art.js';
 import { tileContents } from '../../core/contents.js';
 import { readTheme } from '../three/theme.js';
+import { createMotion, nearestQuarter, EASE } from '../motion.js';
 import { FACINGS, SIDE_DELTAS } from '../../core/dungeon.js';
 
 // Field of view (docs/012-simulation.md § 4): the eye is pulled back from the
@@ -235,14 +238,24 @@ export function createFirstPersonRenderer(
   }
 
   // Bits of the lights seeing each tile of the level (fp-occlusion.js).
+  function opaqueAt(x, y) {
+    const tile = state.tileAt(level, x, y);
+    return opaqueTile(tile) && !(tile?.type === 'door' && doorSeesThrough(doorLook(dungeon, level, x, y)));
+  }
+  let masks = null;
   function updateMasks() {
     masksStale = false;
+    eyeMoved = false;
     const map = dungeon.level(level);
-    const opaque = (x, y) => {
-      const tile = state.tileAt(level, x, y);
-      return opaqueTile(tile) && !(tile?.type === 'door' && doorSeesThrough(doorLook(dungeon, level, x, y)));
-    };
-    occlusion.setMasks(lightMasks(map.width, map.height, opaque, lights.sources()), map.width, map.height);
+    masks = lightMasks(map.width, map.height, opaqueAt, lights.sources());
+    occlusion.setMasks(masks, map.width, map.height);
+  }
+  // Only the party's light moved (bit 0, the first of lights.sources()).
+  function updateEyeMask() {
+    eyeMoved = false;
+    const map = dungeon.level(level);
+    updateLightMask(masks, map.width, map.height, opaqueAt, lights.sources()[0], 0);
+    occlusion.setMasks(masks, map.width, map.height);
   }
 
   // The old level leaves the scene at once, but is disposed only after the next render (docs/052):
@@ -305,19 +318,49 @@ export function createFirstPersonRenderer(
     render();
   }
 
-  function placeCamera(party) {
-    const yaw = -FACINGS.indexOf(party.facing) * (Math.PI / 2); // N looks towards -z
+  // The eye at a pose of the party: { x, y, turns } in tiles and quarter turns (0 = N).
+  function placeCamera({ x, y, turns }) {
+    const yaw = -turns * (Math.PI / 2); // N looks towards -z
     const back = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(VIEW.pullBack);
-    camera.position.set(party.x + 0.5, VIEW.eyeHeight, party.y + 0.5).add(back);
+    camera.position.set(x + 0.5, VIEW.eyeHeight, y + 0.5).add(back);
     camera.rotation.set(0, yaw, 0);
   }
 
-  // On demand, at once (something changed).
-  function render() {
-    if (occlusion.enabled && masksStale && built) updateMasks();
-    if (built) decor.pressPads(built.pads, level, party);
+  // The pose of the party comes from the motion (motion.js). The mask of its light follows the eye at
+  // each frame, even inside a tile: in a turn, the eye goes around the centre of the tile and sees
+  // walls that it did not see from where it was (docs/062).
+  const motion = createMotion();
+  const BUMP_DEPTH = 0.07; // in tiles
+  let eyeMoved = false;
+  let frame = 0; // a frame of the loop is pending
+  function applyPose() {
+    placeCamera(motion.sample('party'));
+    eyeMoved = true;
+  }
+  function animate() {
+    frame = 0;
+    const running = motion.active();
+    applyPose();
+    draw();
+    if (running) frame = requestAnimationFrame(animate);
+  }
+  function startAnimation() {
+    frame ||= requestAnimationFrame(animate);
+  }
+
+  function draw() {
+    if (occlusion.enabled && built) {
+      if (masksStale || !masks) updateMasks();
+      else if (eyeMoved) updateEyeMask();
+    }
     renderer.render(scene, camera);
     if (retired.length) disposeRetired(); // the new level holds the shader programs now
+  }
+
+  // On demand (something changed): at once, or by the next frame of the loop if it is running.
+  function render() {
+    if (built) decor.pressPads(built.pads, level, party);
+    if (!frame) draw();
   }
 
   function resize() {
@@ -432,13 +475,36 @@ export function createFirstPersonRenderer(
 
   let party = null;
   return {
-    /** Shows the view of the party ({ level, x, y, facing }), rebuilding the level if it changed. */
-    setParty(next) {
+    /**
+     * Shows the view of the party ({ level, x, y, facing }), rebuilding the level if it changed.
+     * @param {number} [duration] of the animation from the pose shown, in ms; 0: at once
+     */
+    setParty(next, duration = 0) {
       party = next;
       if (party.level !== level) build(party.level);
-      placeCamera(party);
+      const index = FACINGS.indexOf(party.facing);
+      const pose = { x: party.x, y: party.y };
+      if (duration > 0) {
+        const shown = motion.sample('party');
+        const turning = shown.x === party.x && shown.y === party.y;
+        motion.move('party', { ...pose, turns: nearestQuarter(shown.turns, index) }, { duration, ease: turning ? EASE.smooth : EASE.gentle });
+        render();
+        startAnimation();
+        return;
+      }
+      motion.move('party', { ...pose, turns: index });
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      applyPose();
       masksStale = true;
       render();
+    },
+    /** The party ran into something, towards the side (N, E, S, W): a short jolt there and back. */
+    bump(side, duration) {
+      const [dx, dy] = SIDE_DELTAS[side];
+      const rest = { x: party.x, y: party.y, turns: FACINGS.indexOf(party.facing) };
+      motion.move('party', { ...rest, x: rest.x + dx * BUMP_DEPTH, y: rest.y + dy * BUMP_DEPTH }, { from: rest, duration, ease: EASE.bump });
+      startAnimation();
     },
     /** Settings of the light changed (control panel, docs/037): some of DEFAULT_LIGHTING (lighting-settings.js). */
     setLighting(changes) {
@@ -487,6 +553,8 @@ export function createFirstPersonRenderer(
     /** Items in flight on a level: [{ item, x, y, position (sub-tile) }]. */
     setProjectiles,
     dispose() {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener('click', onClick);
       renderer.domElement.removeEventListener('contextmenu', onRightClick);

@@ -1,9 +1,8 @@
 // Walls stop the light (setting `occlusion`, docs/038): without shadows, a PointLight lights every
 // face turned to it within its reach, through walls. Here each light only lights the tiles it sees
 // on the grid of the level:
-// - lightMasks() casts rays on the grid from each light to the tiles within its reach: a tile is
-//   seen if one ray (to its centre or near a corner) crosses no wall, closed fake wall or closed
-//   door; the tile at the end of the ray may be one (its faces are lit). One bit per light;
+// - lightMasks() (light-masks.js) gives each tile within reach of a light one bit, if the light
+//   sees any part of it past the walls, closed fake walls and closed doors;
 // - the bits go to a texture of the level (one texel per tile), read by the lit materials of the
 //   view: patchMaterial() multiplies the contribution of point light i by its bit at the tile of
 //   the fragment. A fragment on a wall face is pushed a little along its normal, into the tile the
@@ -15,8 +14,6 @@
 import * as THREE from 'three';
 import { doorStep, DOOR_CLOSED } from '../../core/tile-states.js';
 
-const RAY_STEP = 0.05; // tiles between two samples of a ray
-const TARGETS = [[0.5, 0.5], [0.1, 0.1], [0.9, 0.1], [0.1, 0.9], [0.9, 0.9]]; // in a tile
 const NUDGE = 0.05; // along the normal, out of a wall face
 
 /** Does this tile stop the light? */
@@ -26,39 +23,6 @@ export function opaqueTile(tile) {
   if (tile.type === 'fakewall') return !tile.detail.open;
   if (tile.type === 'door') return !tile.detail.broken && doorStep(tile.detail) === DOOR_CLOSED;
   return false;
-}
-
-/**
- * Bits of the lights seeing each tile: Uint8Array(width × height), bit i for sources[i].
- * @param {number} width
- * @param {number} height
- * @param {(x, y) => boolean} opaque
- * @param {Array<{ x: number, z: number, reach: number }|null>} sources light positions (in tiles) and reach
- */
-export function lightMasks(width, height, opaque, sources) {
-  const masks = new Uint8Array(width * height);
-  sources.forEach((source, bit) => {
-    if (!source) return;
-    const [sx, sy] = [Math.floor(source.x), Math.floor(source.z)];
-    const r = Math.ceil(source.reach);
-    for (let y = Math.max(0, sy - r); y <= Math.min(height - 1, sy + r); y++) {
-      for (let x = Math.max(0, sx - r); x <= Math.min(width - 1, sx + r); x++) {
-        if (TARGETS.some(([u, v]) => clear(source.x, source.z, x + u, y + v, x, y, opaque))) masks[y * width + x] |= 1 << bit;
-      }
-    }
-  });
-  return masks;
-}
-
-// Does the ray from (ax, az) to (bx, bz) reach the tile (tx, ty) without crossing an opaque tile?
-function clear(ax, az, bx, bz, tx, ty, opaque) {
-  const steps = Math.ceil(Math.hypot(bx - ax, bz - az) / RAY_STEP);
-  for (let i = 1; i < steps; i++) {
-    const x = Math.floor(ax + ((bx - ax) * i) / steps);
-    const y = Math.floor(az + ((bz - az) * i) / steps);
-    if ((x !== tx || y !== ty) && opaque(x, y)) return false;
-  }
-  return true;
 }
 
 /** The masks of the shown level, and the patch of the materials reading them. */
@@ -131,8 +95,12 @@ export function createOcclusion() {
       };
       material.customProgramCacheKey = () => `${key.call(material)}|occlusion:${enabled}`;
     },
-    /** New masks of the level (lightMasks). */
+    /** New masks of the level (lightMasks), or the same array changed in place. */
     setMasks(masks, width, height) {
+      if (uniforms.occMask.value?.image.data === masks) {
+        uniforms.occMask.value.needsUpdate = true;
+        return;
+      }
       uniforms.occMask.value?.dispose();
       const texture = new THREE.DataTexture(masks, width, height, THREE.RedFormat, THREE.UnsignedByteType);
       texture.unpackAlignment = 1;

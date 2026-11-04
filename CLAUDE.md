@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-03, après la doc 061.
+> Mis à jour le 2026-11-03, après la doc 062.
 
 ### Données et visualiseur
 
@@ -99,7 +99,7 @@ Analyser le fichier XML en se concentrant d'abord sur
   - Les porte-torches ont une `PointLight` chacun (option, écart avec DM).
   - Panneau « Lumière (vue du jeu) » : intensité, portée, atténuation, lumière permanente, torches murales lumineuses ; défauts dans `lighting-settings.js`.
   - Plus d'ombres, de scintillement, de brouillard, de relief ni de lumière hémisphérique.
-- **Lumière arrêtée par les murs (doc 038) :** option du panneau (`occlusion`, `fp-occlusion.js`). Un masque par case et par lumière, calculé par rayons sur la grille, est lu par le shader des matériaux Lambert de la vue.
+- **Lumière arrêtée par les murs (doc 038) :** option du panneau (`occlusion`, `fp-occlusion.js`). Un masque par case et par lumière, calculé exactement sur la grille par secteurs d'angle (`light-masks.js`, doc 062), est lu par le shader des matériaux Lambert de la vue.
 - **Messages du jeu (doc 048) :** `say()` (`main.js`) les écrit dans la zone de messages de la simulation et dans la barre d'état ; les informations de débogage restent dans la barre d'état seule.
 - **Eau (doc 050) :** gourdes à 4 états (`src/sim/water.js`), fontaines qui remplissent gourde et flasque vide, comme DM ; bouche sous l'objet tenu (remplace le clic sur le cadre de Zed) ; jauge d'eau de Zed sans effet (faim et soif en attente).
 - **Portes et chutes (doc 051) :** une porte cède à une attaque au moins égale à sa défense (F232), sans compteur de coups ; un objet tenu, cliqué sur une porte, est lancé, l'attaque et tombe devant le battant ; une chute coûte 34 à 44 PV à Zed (F324), la corde épargne la première trappe contre de l'endurance.
@@ -107,7 +107,8 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Décors en objets 3D (doc 053) :** `src/render/first-person/fp-models.js` compose levier, porte-torche, miroir, serrures, interrupteurs, fontaine, Vi Altar, Amalgam et tête de goule à partir de pièces simples ; option du panneau, qui commande aussi les trappes creuses au sol et au plafond. Les portes à ouvertures et les herses laissent voir et passer la lumière.
 - **Alcôves, plaques, derniers décors (doc 054) :** alcôves creusées dans le mur (carrée, voûtée, Vi Altar), objets dans le creux ; trappe fermée identique au sol, comme DM ; plaques de pression à dalle mobile, appuyée sous ce qui pèse (`pressPads`) ; grilles de sol et décors muraux restants en objets 3D. **Problème connu, non résolu :** objets 3D noirs par intermittence dans les captures de Chrome sans interface (doc 054, § 6).
 - **Durée d'un tick (doc 047) :** 220 ms (`TICK_MS`, `main.js`), soit 11 synchronisations verticales à 50 Hz, comme la boucle de jeu de DM en PAL.
-- **Tests Node :** `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
+- **Déplacements animés, T1 (doc 062, plan : doc 061) :** la simulation reste sur sa grille ; `src/render/motion.js` anime la caméra de la vue à la 1re personne (pas, quart de tour, à-coup) ; file de 5 commandes dans `controls.js`, une touche maintenue ne répète pas ; section du panneau, avec mode instantané. Créatures, projectiles et cartes restent en sauts de case (T2 à T5 en attente).
+- **Tests Node :** `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
 
 ### En attente
 
@@ -120,7 +121,7 @@ Analyser le fichier XML en se concentrant d'abord sur
   - délai d'errance.
   
   Chaque doc les signale.
-- **Phase F de la simulation** (doc 012) : transitions animées (plan : doc 061, questions à trancher), 16/9, sauvegarde de partie.
+- **Phase F de la simulation** (doc 012) : transitions animées (plan : doc 061 ; T1 faite, doc 062 ; **T2 à T5 en attente, à la demande de l'utilisateur** : mettre de la « vraie 3D » dans la simulation n'est plus la priorité), 16/9, sauvegarde de partie.
 - **Sons (docs 039 à 042) :**
   - inventaire : 33 sons d'Amiga 3.6, avec leurs déclencheurs pris dans ReDMCSB (doc 040) ;
   - plan (doc 041) ;
