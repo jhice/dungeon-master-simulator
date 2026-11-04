@@ -78,6 +78,7 @@ export function createSimulation(dungeon) {
     hitGroup: (p, group) => (p.spell ? magic.hitGroup(p, group) : projectileHits(p, group)),
     drop: (level, x, y, items) => logic.itemsDropped(level, x, y, items),
     impact: (p, target) => magic.impact(p, target),
+    fizzle: (p) => magic.fizzle(p),
   });
 
   // Light around the party (docs/032): torches in hand, magical light; Hall always lit.

@@ -8,6 +8,7 @@ import { SKILLS } from '../core/spell-info.js';
 import { creatureInfo } from '../core/creature-info.js';
 import { itemInfo } from '../core/item-info.js';
 import { DOOR_CLOSED, doorStep } from '../core/tile-states.js';
+import { subTile } from './projectiles.js';
 
 const DOOR_DEFENSE = { Porticullis: 110, Wooden: 42, Iron: 230, Ra: 255 };
 const SPELL_ATTACK = 90; // attack of a spell projectile when cast (F327)
@@ -112,13 +113,19 @@ export function createMagic(dungeon, state, clock, hooks) {
     return true;
   }
 
+  // What the views show of a spell that ends: its colour, where it was (docs/063).
+  function burst(p, fizzled = false) {
+    emit('explosion', { level: p.level, x: p.x, y: p.y, position: subTile(p.direction, p.side, p.row), spell: p.spell, energy: p.energy, fizzled });
+  }
+
   /**
    * A fireball explodes on a tile (F213): it burns the party standing there, or else every creature
    * of the group there (fire resistance, non-material ones a quarter); a tick later, a door of the
    * tile may break (F220).
    */
-  function explode(level, x, y, energy) {
-    emit('explosion', { level, x, y, spell: 'fireball' });
+  function explode(projectile) {
+    const { level, x, y, energy } = projectile;
+    burst(projectile);
     emit('sound', { id: 'explosion', level, x, y });
     let attack = explosionAttack(energy);
     const p = party();
@@ -152,7 +159,10 @@ export function createMagic(dungeon, state, clock, hooks) {
    * fireball, without exploding (docs/051). Returns true if the projectile stops.
    */
   function impact(p, target) {
-    if (p.spell === 'openDoor') emit('sound', { id: 'spell', level: p.level, x: p.x, y: p.y });
+    if (p.spell === 'openDoor') {
+      emit('sound', { id: 'spell', level: p.level, x: p.x, y: p.y });
+      burst(p);
+    }
     if (target === 'door') {
       const detail = state.tileAt(p.level, p.x, p.y).detail;
       if (p.spell === 'openDoor') {
@@ -163,7 +173,7 @@ export function createMagic(dungeon, state, clock, hooks) {
       const attack = impactAttack(p) + 1;
       attackDoor(p.level, p.x, p.y, attack + rnd(attack), false, p.spell ? 'fireball' : 'thrown');
     }
-    if (p.spell === 'fireball') explode(p.level, p.x, p.y, p.energy);
+    if (p.spell === 'fireball') explode(p);
     return true;
   }
 
@@ -177,6 +187,7 @@ export function createMagic(dungeon, state, clock, hooks) {
     const member = group.members[rnd(group.members.length)];
     if (p.spell === 'fireball' && group.type === BLACK_FLAME) {
       member.hp = Math.min(MAX_HEALTH, member.hp + impactAttack(p));
+      burst(p, true);
       return true;
     }
     if (info.nonMaterial) return false;
@@ -184,10 +195,10 @@ export function createMagic(dungeon, state, clock, hooks) {
       const damage = info.defense ? Math.floor((impactAttack(p) << 6) / info.defense) : 0;
       const gone = damage > 0 && hooks.hurtCreature(group, member, damage);
       if (!gone && state.groupAt(group.level, group.x, group.y) === group) hooks.provoke(group);
-      explode(p.level, p.x, p.y, p.energy);
-    }
+      explode(p);
+    } else burst(p);
     return true;
   }
 
-  return { launch, launchAction, torch, impact, hitGroup, attackDoor, projectileEnergy };
+  return { launch, launchAction, torch, impact, hitGroup, attackDoor, projectileEnergy, fizzle: (p) => burst(p, true) };
 }

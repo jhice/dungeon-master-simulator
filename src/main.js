@@ -991,6 +991,8 @@ sim.on('creatureHit', ({ result, damage, group, killed, destroyed, thrown, spell
   else if (thrown) say(result === 'hit' ? t('combat.hit', { name, damage }) : t('combat.noDamage', { name }));
   else if (spell) say(t('combat.burnt', { name, damage }));
 });
+// A spell ends in the air: particles of its colour (docs/063).
+sim.on('explosion', (event) => game?.view.spellBurst(event));
 // A fireball broke a door (docs/033).
 sim.on('doorBroken', ({ by }) => {
   say(t(`door.brokenBy.${by === 'melee' || by === 'thrown' ? by : 'fireball'}`));
@@ -1027,7 +1029,8 @@ sim.on('doorCrushed', ({ group, killed, destroyed }) => {
 // in 3D and in the first person view; once per frame, as several move in the same tick.
 const movedTiles = new Map(); // "level:x,y" -> { level, x, y }
 let movedFrame = 0;
-sim.on('creaturesMoved', ({ group, from, to, generated }) => {
+sim.on('creaturesMoved', ({ group, from, to, generated, killed, position }) => {
+  if (killed) game?.view.creatureSmoke({ ...from, position, type: group.type });
   if (generated) {
     const { count, name } = describeGroup(dungeon, group);
     showInfo(t('status.generated', { count, name, x: to.x, y: to.y }));

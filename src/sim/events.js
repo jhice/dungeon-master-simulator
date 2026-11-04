@@ -7,7 +7,8 @@
 //   'creaturesMoved' { group, from, to, carried?, generated?, turned? } a group stepped, fell, was carried,
 //                appeared (from = null) or turned on the spot; from / to = { level, x, y, facing } (creatures.js)
 //   'groupAlerted' { group, seen } a group noticed the party (seen, or met next to it) and goes after it
-//                (creaturesMoved also carries `killed: true` when a member dies; to = null: the group is gone)
+//                (creaturesMoved also carries `killed: true` and `position`, the sub-tile of the member, when a
+//                member dies; to = null: the group is gone)
 //   'championChanged' { champion } health, stamina, mana or state of the champion changed (champion.js)
 //   'creatureHit' { result, damage, group, killed, destroyed } the champion struck a group (combat.js)
 //   'championHit' { group, result: 'hit'|'miss', damage } a group attacked the champion
@@ -21,7 +22,8 @@
 //   'potionDrunk' { champion, item, name, effect: 'health'|'stamina'|'mana'|null, gained } (potions.js)
 //   'lightChanged' { amount, palette, permanent, torches: [{ hand, item, charges }], magical } (light.js)
 //   'torchesWorn' { torches: [{ hand, item, charges }] } the torches in hand lost a charge (every 512 ticks)
-//   'explosion'  { level, x, y, spell: 'fireball' } a fireball exploded on a tile (magic.js)
+//   'explosion'  { level, x, y, position, spell, energy, fizzled } a spell ended on a sub-tile, for the eye: a
+//                fireball exploded, Open Door struck; fizzled: nothing but a wisp (magic.js, docs/063)
 //   'doorBroken' { level, x, y, by: 'fireball'|'melee' } a fireball or a strike broke a door (magic.js)
 //                (creatureHit and championHit carry `spell: 'fireball'` when a fireball wounds)
 //   'grimoireChanged' { scrolls: [index], learned: [spell] } the party held new scrolls (grimoire.js)

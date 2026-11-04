@@ -6,14 +6,15 @@
 // here the level is built in local coordinates (tile (x, y) spans [x, x+1]).
 //
 // Rendering is on demand (party moved, state changed, resize); a frame loop runs only while the
-// camera is animated (docs/062).
+// camera is animated (docs/062) or particles are alive (docs/063).
 // Mouse: a click on the wall or door just in front of the party is reported
 // (wall buttons, levers, locks, alcoves, door buttons), and so is a click on the
 // floor (a sub-tile, maybe with an item): main.js picks up or drops there if it
 // is within reach. The cursor shows what is clickable, and the item in hand.
 // Teleporter fields do not stop the pointer. A click elsewhere (far floor, far walls)
 // is reported too, with the side of the view (throwing, docs/024); so is a right click.
-// Items in flight (projectiles) are small cubes, set by main.js.
+// Items in flight (projectiles) are small cubes, set by main.js. Smoke of a death and bursts of
+// the spells are particles (fp-particles.js, docs/063).
 //
 // Walls, floor and ceiling textures are mirrored on every other tile ((x + y) odd):
 // stepping along a straight corridor changes the picture, as in DM, which flips its
@@ -27,6 +28,8 @@ import { buildLevelContents, buildLevelCreatures } from '../three/level-contents
 import { createDecor } from './fp-decor.js';
 import { createLights } from './fp-lights.js';
 import { createOcclusion, opaqueTile } from './fp-occlusion.js';
+import { createParticleView } from './fp-particles.js';
+import { SPELL_COLORS } from '../particles.js';
 import { lightMasks, updateLightMask } from './light-masks.js';
 import { DEFAULT_LIGHTING } from './lighting-settings.js';
 import { isAlcove, doorLook } from '../../core/ornaments.js';
@@ -35,6 +38,7 @@ import { tileContents } from '../../core/contents.js';
 import { readTheme } from '../three/theme.js';
 import { createMotion, nearestQuarter, EASE } from '../motion.js';
 import { FACINGS, SIDE_DELTAS } from '../../core/dungeon.js';
+import { standingHeight } from '../../core/creature-info.js';
 
 // Field of view (docs/012-simulation.md § 4): the eye is pulled back from the
 // tile centre, so the floor of the current tile and the side openings show.
@@ -88,6 +92,7 @@ export function createFirstPersonRenderer(
   const occlusion = createOcclusion();
   occlusion.enabled = lighting.occlusion ?? DEFAULT_LIGHTING.occlusion;
   let masksStale = true;
+  const particles = createParticleView(scene, WALL_HEIGHT);
 
   const floorTexture = flagstoneTexture();
   const wallTexture = stoneTexture();
@@ -292,7 +297,6 @@ export function createFirstPersonRenderer(
   // shrinks as it flies; SPELL_RADIUS at energy 255.
   const SPELL_RADIUS = 0.12;
   const spellGeometry = new THREE.SphereGeometry(1, 16, 12);
-  const SPELL_COLORS = { fireball: '#ff7a1a', openDoor: '#4a8cff' };
   const SPELL_HEIGHT = 0.45;
   const projectileGroup = new THREE.Group();
   scene.add(projectileGroup);
@@ -318,6 +322,23 @@ export function createFirstPersonRenderer(
     render();
   }
 
+  // Where a thing of a tile stands: its sub-tile, or the centre (null).
+  function spotOf(x, y, position) {
+    const [u, v] = SUB_TILE[position] ?? [0.5, 0.5];
+    return { x: x + u, z: y + v };
+  }
+
+  // How much the lights reach a spot, 0..1: the attenuation of a PointLight, without its decay. Smoke
+  // is not lit by the scene; out of the light it stays faint, so that a death in the dark still shows.
+  const SMOKE_MIN_LIGHT = 0.3;
+  function litAt({ x, z }) {
+    let lit = SMOKE_MIN_LIGHT;
+    for (const source of lights.sources()) {
+      if (source) lit = Math.max(lit, Math.max(1 - (Math.hypot(source.x - x, source.z - z) / source.reach) ** 4, 0) ** 2);
+    }
+    return lit;
+  }
+
   // The eye at a pose of the party: { x, y, turns } in tiles and quarter turns (0 = N).
   function placeCamera({ x, y, turns }) {
     const yaw = -turns * (Math.PI / 2); // N looks towards -z
@@ -332,6 +353,7 @@ export function createFirstPersonRenderer(
   const motion = createMotion();
   const BUMP_DEPTH = 0.07; // in tiles
   let eyeMoved = false;
+  let moving = false; // the camera is animated
   let frame = 0; // a frame of the loop is pending
   function applyPose() {
     placeCamera(motion.sample('party'));
@@ -339,10 +361,13 @@ export function createFirstPersonRenderer(
   }
   function animate() {
     frame = 0;
-    const running = motion.active();
-    applyPose();
+    if (moving) {
+      moving = motion.active();
+      applyPose();
+    }
+    particles.update();
     draw();
-    if (running) frame = requestAnimationFrame(animate);
+    if (moving || particles.active()) frame = requestAnimationFrame(animate);
   }
   function startAnimation() {
     frame ||= requestAnimationFrame(animate);
@@ -369,6 +394,7 @@ export function createFirstPersonRenderer(
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    particles.resize(renderer.domElement.height, camera.fov);
     render();
   }
   const resizeObserver = new ResizeObserver(resize);
@@ -481,7 +507,10 @@ export function createFirstPersonRenderer(
      */
     setParty(next, duration = 0) {
       party = next;
-      if (party.level !== level) build(party.level);
+      if (party.level !== level) {
+        particles.clear();
+        build(party.level);
+      }
       const index = FACINGS.indexOf(party.facing);
       const pose = { x: party.x, y: party.y };
       if (duration > 0) {
@@ -489,21 +518,25 @@ export function createFirstPersonRenderer(
         const turning = shown.x === party.x && shown.y === party.y;
         motion.move('party', { ...pose, turns: nearestQuarter(shown.turns, index) }, { duration, ease: turning ? EASE.smooth : EASE.gentle });
         render();
+        moving = true;
         startAnimation();
         return;
       }
       motion.move('party', { ...pose, turns: index });
       if (frame) cancelAnimationFrame(frame);
       frame = 0;
+      moving = false;
       applyPose();
       masksStale = true;
       render();
+      if (particles.active()) startAnimation();
     },
     /** The party ran into something, towards the side (N, E, S, W): a short jolt there and back. */
     bump(side, duration) {
       const [dx, dy] = SIDE_DELTAS[side];
       const rest = { x: party.x, y: party.y, turns: FACINGS.indexOf(party.facing) };
       motion.move('party', { ...rest, x: rest.x + dx * BUMP_DEPTH, y: rest.y + dy * BUMP_DEPTH }, { from: rest, duration, ease: EASE.bump });
+      moving = true;
       startAnimation();
     },
     /** Settings of the light changed (control panel, docs/037): some of DEFAULT_LIGHTING (lighting-settings.js). */
@@ -552,6 +585,21 @@ export function createFirstPersonRenderer(
     },
     /** Items in flight on a level: [{ item, x, y, position (sub-tile) }]. */
     setProjectiles,
+    /** A creature died on a tile: smoke as tall as its species; `position`: its sub-tile, or null. */
+    creatureSmoke({ level: at, x, y, position, type }) {
+      if (at !== level) return;
+      const spot = spotOf(x, y, position);
+      particles.smoke({ ...spot, height: standingHeight(type) * WALL_HEIGHT, tint: litAt(spot) });
+      startAnimation();
+    },
+    /** A spell ended on a tile ('explosion', events.js): a burst of its colour, by its energy. */
+    spellBurst({ level: at, x, y, position, spell, energy, fizzled }) {
+      if (at !== level) return;
+      const spot = spotOf(x, y, position);
+      const scale = fizzled ? 0.3 : 0.55 + (Math.min(energy, 255) / 255) * 0.75;
+      particles.explosion({ ...spot, y: SPELL_HEIGHT, color: SPELL_COLORS[spell] ?? '#ffffff', scale, soot: spell === 'fireball' && !fizzled, tint: litAt(spot) });
+      startAnimation();
+    },
     dispose() {
       if (frame) cancelAnimationFrame(frame);
       frame = 0;
@@ -559,6 +607,7 @@ export function createFirstPersonRenderer(
       renderer.domElement.removeEventListener('click', onClick);
       renderer.domElement.removeEventListener('contextmenu', onRightClick);
       setProjectiles(null, []);
+      particles.dispose();
       projectileGeometry.dispose();
       spellGeometry.dispose();
       renderer.domElement.removeEventListener('pointermove', onMove);

@@ -225,7 +225,7 @@ export function createCreatures(dungeon, state, clock, logic, { emit, party, par
     if (group.members.length) {
       if (items.length) logic.itemsDropped(at.level, at.x, at.y, items);
       if (items.length) dropSound(at, items);
-      emit('creaturesMoved', { group, from: at, to: at, killed: true });
+      emit('creaturesMoved', { group, from: at, to: at, killed: true, position: member.position });
       if (group.fleeUntil <= clock.now && randomInt(15) >= creatureInfo(group.type).fear) scare(group, 'fear');
       return false;
     }
@@ -234,7 +234,7 @@ export function createCreatures(dungeon, state, clock, logic, { emit, party, par
     group.items = [];
     if (items.length) logic.itemsDropped(at.level, at.x, at.y, items);
     if (items.length) dropSound(at, items);
-    emit('creaturesMoved', { group, from: at, to: null, killed: true });
+    emit('creaturesMoved', { group, from: at, to: null, killed: true, position: member.position });
     return true;
   }
 

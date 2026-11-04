@@ -39,8 +39,9 @@ export function subTile(direction, side, row) {
  * @param {(level, x, y, items) => void} hooks.drop the item falls on a tile (logic.itemsDropped)
  * @param {(projectile, target: 'door'|'wall') => boolean} hooks.impact a spell or an item meets the door
  *   of its tile, or a spell the wall in front of its tile: true if it stops there
+ * @param {(projectile) => void} hooks.fizzle a spell runs out of energy in the air
  */
-export function createProjectiles(state, { emit, hitGroup, drop, impact }) {
+export function createProjectiles(state, { emit, hitGroup, drop, impact, fizzle }) {
   let flying; // id -> projectile
   let nextId;
 
@@ -86,7 +87,10 @@ export function createProjectiles(state, { emit, hitGroup, drop, impact }) {
     if (p.spell) {
       if (p.free) p.free = false;
       else {
-        if (p.energy <= p.stepLoss) return land(p);
+        if (p.energy <= p.stepLoss) {
+          fizzle(p);
+          return land(p);
+        }
         p.energy -= p.stepLoss;
         p.attack = Math.max(0, p.attack - p.stepLoss);
       }

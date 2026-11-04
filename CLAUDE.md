@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-03, après la doc 062.
+> Mis à jour le 2026-11-04, après la doc 063.
 
 ### Données et visualiseur
 
@@ -108,7 +108,8 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Alcôves, plaques, derniers décors (doc 054) :** alcôves creusées dans le mur (carrée, voûtée, Vi Altar), objets dans le creux ; trappe fermée identique au sol, comme DM ; plaques de pression à dalle mobile, appuyée sous ce qui pèse (`pressPads`) ; grilles de sol et décors muraux restants en objets 3D. **Problème connu, non résolu :** objets 3D noirs par intermittence dans les captures de Chrome sans interface (doc 054, § 6).
 - **Durée d'un tick (doc 047) :** 220 ms (`TICK_MS`, `main.js`), soit 11 synchronisations verticales à 50 Hz, comme la boucle de jeu de DM en PAL.
 - **Déplacements animés, T1 (doc 062, plan : doc 061) :** la simulation reste sur sa grille ; `src/render/motion.js` anime la caméra de la vue à la 1re personne (pas, quart de tour, à-coup) ; file de 5 commandes dans `controls.js`, une touche maintenue ne répète pas ; section du panneau, avec mode instantané. Créatures, projectiles et cartes restent en sauts de case (T2 à T5 en attente).
-- **Tests Node :** `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
+- **Particules (doc 063) :** `src/render/particles.js` (sans DOM) et `first-person/fp-particles.js` : fumée à la mort d'une créature, éclat de la couleur du sort quand il explose ou s'éteint ; pour l'œil seulement.
+- **Tests Node :** `node tools/test-particles.mjs`, `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
 
 ### En attente
 
