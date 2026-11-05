@@ -31,11 +31,11 @@ Le Giggler n'avait déjà pas d'attaque. Les 23 autres espèces du donjon ont la
   - Mummies (un seul membre de la rangée avant lève les bras), Magenta Worm, Wizard Eye, Dragon, Ghost, Ruster inchangé ;
   - une vraie attaque du Dragon montre l'image ;
   - déclenchée à la main alors que Zed est mort : l'image est là à 100 ms, et la face est revenue à 1 200 ms (Dragon, 4 ticks, soit 880 ms).
-- **Pas vérifié :** une partie jouée à la main ; le miroir n'a été vu que par hasard, sur un Worm.
+- **Miroir :** vérifié en forçant le tirage sur un Worm, puis vu en jeu par l'utilisateur. Il se remarque peu, l'image étant presque symétrique.
 
 ## Réglage de l'utilisateur
 
-`FRONT_ROW` est passé de 0,2 à 0,01 (`creature-views.js`), réglé à l'œil en jeu. Cette constante sert à la fois à la rangée avant des créatures seules et à l'écart entre deux créatures d'une demi-case vues de côté : les deux Worms sont donc presque l'un sur l'autre dans cette vue, alors que DM les sépare (doc 069). À trancher : deux constantes distinctes règleraient ça.
+`FRONT_ROW` est passé de 0,2 à 0,01 (`creature-views.js`), réglé à l'œil en jeu. Cette constante sert à la fois à la rangée avant des créatures seules et à l'écart entre deux créatures d'une demi-case vues de côté : les deux Worms sont donc presque l'un sur l'autre dans cette vue, alors que DM les sépare (doc 069). **Clos à la doc 071 :** l'utilisateur cherchait en fait l'espacement des groupes et a remis 0,2.
 
 ## Sources
 

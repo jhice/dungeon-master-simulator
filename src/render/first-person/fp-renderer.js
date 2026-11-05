@@ -622,6 +622,10 @@ export function createFirstPersonRenderer(
       rebuildCreatures();
       render();
     },
+    /** A tick of the game: creatures standing still move a little (fp-sprites.js, docs/071). */
+    tick() {
+      if (useSprites && built && party && sprites.tick(party)) render();
+    },
     /** A group attacks the party: its attack picture (fp-sprites.js, docs/070). */
     creatureAttacks(group) {
       if (useSprites && sprites.attack(group)) render();

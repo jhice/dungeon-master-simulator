@@ -11,6 +11,12 @@
     "attack": 7,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      2,
+      2
+    ],
+    "idleTicks": 4,
     "attackMirror": null,
     "frames": [
       {
@@ -69,6 +75,12 @@
     "attack": 3,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 1,
     "attackMirror": null,
     "frames": [
       {
@@ -108,6 +120,12 @@
     "attack": 8,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      3,
+      2
+    ],
+    "idleTicks": 1,
     "attackMirror": null,
     "frames": [
       {
@@ -170,6 +188,12 @@
     "attack": 7,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      1,
+      1
+    ],
+    "idleTicks": 2,
     "attackMirror": null,
     "frames": [
       {
@@ -225,6 +249,12 @@
     "attack": 6,
     "attackTicks": 4,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      1,
+      2
+    ],
+    "idleTicks": 4,
     "attackMirror": null,
     "frames": [
       {
@@ -279,6 +309,12 @@
     "attack": 4,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      1,
+      1
+    ],
+    "idleTicks": 1,
     "attackMirror": 5,
     "frames": [
       {
@@ -328,6 +364,12 @@
     "attack": 8,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      3,
+      3
+    ],
+    "idleTicks": 1,
     "attackMirror": null,
     "frames": [
       {
@@ -390,6 +432,12 @@
     "attack": null,
     "attackTicks": 2,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      2,
+      1
+    ],
+    "idleTicks": 2,
     "attackMirror": null,
     "frames": [
       {
@@ -438,6 +486,12 @@
     "attack": null,
     "attackTicks": 5,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 6,
     "attackMirror": null,
     "frames": [
       {
@@ -459,6 +513,12 @@
     "attack": 5,
     "attackTicks": 5,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 6,
     "attackMirror": null,
     "frames": [
       {
@@ -505,6 +565,12 @@
     "attack": null,
     "attackTicks": 5,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 6,
     "attackMirror": null,
     "frames": [
       {
@@ -526,6 +592,12 @@
     "attack": 5,
     "attackTicks": 2,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      1,
+      1
+    ],
+    "idleTicks": 5,
     "attackMirror": 8,
     "frames": [
       {
@@ -585,6 +657,12 @@
     "attack": 9,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      2,
+      3
+    ],
+    "idleTicks": 1,
     "attackMirror": null,
     "frames": [
       {
@@ -655,6 +733,12 @@
     "attack": 5,
     "attackTicks": 4,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      1,
+      0
+    ],
+    "idleTicks": 8,
     "attackMirror": null,
     "frames": [
       {
@@ -701,6 +785,12 @@
     "attack": 7,
     "attackTicks": 2,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      2,
+      2
+    ],
+    "idleTicks": 2,
     "attackMirror": null,
     "frames": [
       {
@@ -758,6 +848,12 @@
     "attack": 6,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": false,
+    "idleOffset": [
+      2,
+      2
+    ],
+    "idleTicks": 4,
     "attackMirror": null,
     "frames": [
       {
@@ -815,6 +911,12 @@
     "attack": 1,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": false,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 15,
     "attackMirror": 4,
     "frames": [
       {
@@ -855,6 +957,12 @@
     "attack": null,
     "attackTicks": 2,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      1,
+      1
+    ],
+    "idleTicks": 6,
     "attackMirror": null,
     "frames": [
       {
@@ -900,6 +1008,12 @@
     "attack": 5,
     "attackTicks": 2,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      2,
+      1
+    ],
+    "idleTicks": 5,
     "attackMirror": 8,
     "frames": [
       {
@@ -964,6 +1078,12 @@
     "attack": 1,
     "attackTicks": 2,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 15,
     "attackMirror": null,
     "frames": [
       {
@@ -990,6 +1110,12 @@
     "attack": 6,
     "attackTicks": 1,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      2,
+      1
+    ],
+    "idleTicks": 3,
     "attackMirror": null,
     "frames": [
       {
@@ -1040,6 +1166,12 @@
     "attack": 5,
     "attackTicks": 4,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      3,
+      1
+    ],
+    "idleTicks": 15,
     "attackMirror": null,
     "frames": [
       {
@@ -1086,6 +1218,12 @@
     "attack": 3,
     "attackTicks": 3,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      2,
+      2
+    ],
+    "idleTicks": 8,
     "attackMirror": 6,
     "frames": [
       {
@@ -1135,6 +1273,12 @@
     "attack": 7,
     "attackTicks": 3,
     "flipAttack": false,
+    "idleFlip": false,
+    "idleOffset": [
+      2,
+      2
+    ],
+    "idleTicks": 3,
     "attackMirror": null,
     "frames": [
       {
@@ -1189,6 +1333,12 @@
     "attack": 5,
     "attackTicks": 6,
     "flipAttack": true,
+    "idleFlip": false,
+    "idleOffset": [
+      1,
+      0
+    ],
+    "idleTicks": 6,
     "attackMirror": null,
     "frames": [
       {
@@ -1235,6 +1385,12 @@
     "attack": 2,
     "attackTicks": 3,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      0,
+      0
+    ],
+    "idleTicks": 4,
     "attackMirror": 4,
     "frames": [
       {
@@ -1274,6 +1430,12 @@
     "attack": 4,
     "attackTicks": 1,
     "flipAttack": true,
+    "idleFlip": true,
+    "idleOffset": [
+      3,
+      2
+    ],
+    "idleTicks": 1,
     "attackMirror": null,
     "frames": [
       {

@@ -2,7 +2,7 @@
 // Run: node tools/test-sprites.mjs
 
 import { existsSync, readFileSync } from 'node:fs';
-import { viewDirection, viewFrame, viewFrames, viewSpot, VIEW_FRAMES } from '../src/render/creature-views.js';
+import { viewDirection, viewFrame, viewFrames, viewSpot, rollIdle, hasIdle, VIEW_FRAMES } from '../src/render/creature-views.js';
 import { FACINGS } from '../src/core/dungeon.js';
 
 let failures = 0;
@@ -36,6 +36,17 @@ check(viewDirection(-0.6) === 3 && viewDirection(4.4) === 0, 'also past 0..3');
 
 // --- Species with one picture ---------------------------------------------------
 for (const facing of FACINGS) check(viewFrame(facing, 1, false) === front, `no views, ${facing}: the only picture`);
+
+// --- Life on the spot (DM, F179) ----------------------------------------------------
+const draws = (entry, times = 2000) => Array.from({ length: times }, () => rollIdle(entry));
+const values = (list, key) => [...new Set(list.map((idle) => idle[key]))].sort((a, b) => a - b).join();
+const dragon = draws({ idleFlip: true, idleOffset: [1, 2] });
+check(values(dragon, 'dx') === '0' && values(dragon, 'dy') === '-1,0,1', 'Dragon: moves up and down only, by 1 pixel (as the Encyclopaedia says)');
+check(dragon.some((idle) => idle.flip) && dragon.some((idle) => !idle.flip), 'flip at random when the species does');
+const golem = draws({ idleFlip: false, idleOffset: [3, 1] });
+check(values(golem, 'dx') === '-2,-1,0,1,2' && values(golem, 'dy') === '0' && golem.every((idle) => !idle.flip), 'Stone Golem: sideways only, up to 2 pixels, never mirrored');
+check(!hasIdle({ idleFlip: false, idleOffset: [0, 0] }) && !hasIdle({ idleFlip: false, idleOffset: [1, 0] }), 'Screamer, Mummy: nothing moves');
+check(hasIdle({ idleFlip: true, idleOffset: [0, 0] }) && hasIdle({ idleFlip: false, idleOffset: [2, 1] }), 'Black Flame, Skeleton: something moves');
 
 // --- Attack picture ---------------------------------------------------------------
 check(viewFrame('S', NORTH, true, 7) === 7, 'attacking, seen from the front: the attack picture');
@@ -74,6 +85,7 @@ const missing = entries.flatMap((entry) =>
 check(missing.length === 0, `all the files of frames.json exist${missing.length ? `: ${missing}` : ''}`);
 check(entries.every((entry) => viewFrames(entry.hasViews, entry.attack).every((index) => entry.frames[index])), 'each species has the frames of its views and attack');
 check(entries.every((entry) => entry.attackTicks > 0), 'each species has the duration of its attack');
+check(entries.every((entry) => entry.idleTicks > 0 && entry.idleOffset.length === 2), 'each species has its life on the spot');
 check(entries.filter((entry) => entry.attack === null).map((entry) => entry.folder).join() === 'Giggler,Grey_Lord,Lord_Order,Ruster', 'no attack picture: Giggler, Ruster, and the two lords');
 check(entries.filter((entry) => entry.hasViews).every((entry) => entry.frames[side].role === 'side' && entry.frames[side2].role === 'side2' && entry.frames[back].role === 'back'), 'the view frames have the expected roles');
 

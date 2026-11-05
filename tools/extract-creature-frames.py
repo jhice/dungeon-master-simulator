@@ -73,6 +73,20 @@ FLIP_ATTACK = {
     "Water_Elemental", "Oitu", "Demon", "Dragon",
 }
 
+# Vie sur place (même page) : (Flip Non Attack, Maximum Horizontal Offset, Maximum Vertical Offset,
+# Non attack aspect update ticks). Grey_Lord et Lord_Order : sans objet, le donjon n'en place pas.
+IDLE = {
+    "Animated_Armour": (True, 2, 2, 4), "Black_Flame": (True, 0, 0, 1), "Couatl": (True, 3, 2, 1),
+    "Demon": (True, 1, 1, 2), "Dragon": (True, 1, 2, 4), "Ghost": (True, 1, 1, 1),
+    "Giant_Wasp": (True, 3, 3, 1), "Giggler": (False, 2, 1, 2), "Grey_Lord": (False, 0, 0, 6),
+    "Lord_Chaos": (False, 0, 0, 6), "Lord_Order": (False, 0, 0, 6), "Magenta_Worm": (True, 1, 1, 5),
+    "Materializer": (True, 2, 3, 1), "Mummy": (False, 1, 0, 8), "Oitu": (True, 2, 2, 2),
+    "Pain_Rat": (False, 2, 2, 4), "Rock_Pile": (False, 0, 0, 15), "Ruster": (True, 1, 1, 6),
+    "Scorpion": (True, 2, 1, 5), "Screamer": (False, 0, 0, 15), "Skeleton": (False, 2, 1, 3),
+    "Stone_Golem": (False, 3, 1, 15), "Swamp_Slime": (True, 2, 2, 8), "Trolin": (False, 2, 2, 3),
+    "Vexirk": (False, 1, 0, 6), "Water_Elemental": (True, 0, 0, 4), "Wizard_Eye": (True, 3, 2, 1),
+}
+
 VIEW_ROLES = {0: "front", 1: "side", 2: "back", 3: "side2"}
 NAME_RE = re.compile(r",Creature,([^,]+),Screenshot\.gif$")
 
@@ -129,6 +143,9 @@ def extract(gif):
         "attack": attack,
         "attackTicks": ATTACK_TICKS[name],
         "flipAttack": name in FLIP_ATTACK,
+        "idleFlip": IDLE[name][0],
+        "idleOffset": list(IDLE[name][1:3]),
+        "idleTicks": IDLE[name][3],
         "attackMirror": mirror,
         "frames": entries,
     }

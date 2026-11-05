@@ -29,7 +29,7 @@ export function viewFrame(facing, turns, hasViews = true, attackFrame = null) {
 }
 
 // Places of DM in a tile, as the party sees it (graphics.dat item 558, ReDMCSB F115), in tiles.
-const FRONT_ROW = 0.01; // towards the party, from the centre of the tile (set by eye in the game; DM: Y = 119, docs/069)
+const FRONT_ROW = 0.2; // towards the party, from the centre of the tile (set by eye in the game; DM: Y = 119, docs/069)
 const HALF_COLUMN = 0.19; // 30 pixels at D1, each side of the centre
 const LOW_SET = 1; // coordinate set of DM, "low": its lone creature stands on the front row
 
@@ -53,6 +53,20 @@ export function viewSpot({ size, coordinateSet }, facing, turns, index, count) {
   }
   return count === 1 && coordinateSet === LOW_SET ? { lateral: 0, depth: FRONT_ROW } : null;
 }
+
+/**
+ * Life of a creature standing still, as DM draws it (ReDMCSB F179): at each update of its aspect, its
+ * picture moves by a few pixels, and its front may be mirrored. `idleOffset` is a range: 2 gives -1, 0 or 1.
+ * @param {{ idleFlip: boolean, idleOffset: [number, number] }} entry entry of frames.json
+ * @returns {{ flip: boolean, dx: number, dy: number }} dx to the right, dy down, in pixels at D1
+ */
+export function rollIdle({ idleFlip, idleOffset: [rangeX, rangeY] }, random = Math.random) {
+  const shift = (range) => Math.floor(random() * range) * (random() < 0.5 ? -1 : 1) || 0;
+  return { flip: idleFlip && random() < 0.5, dx: shift(rangeX), dy: shift(rangeY) };
+}
+
+/** Does a species move at all when standing still? */
+export const hasIdle = ({ idleFlip, idleOffset: [rangeX, rangeY] }) => idleFlip || rangeX > 1 || rangeY > 1;
 
 /** Frames a species needs: the four of the sides, or the only one; and its attack, if it has one. */
 export const viewFrames = (hasViews, attackFrame = null) => [

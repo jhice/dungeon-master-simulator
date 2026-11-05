@@ -698,6 +698,7 @@ async function openGame() {
     game.clock = setInterval(() => {
       audio.tick(() => sim.tick());
       game.panel.setReady(sim.fatigue === 0);
+      view.tick();
     }, TICK_MS);
   } catch (error) {
     console.error(error);

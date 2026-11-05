@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { subcellOffset } from '../../core/contents.js';
 import { allTiles } from '../three/level-contents.js';
 import { creatureInfo } from '../../core/creature-info.js';
-import { viewFrame, viewFrames, viewSpot } from '../creature-views.js';
+import { viewFrame, viewFrames, viewSpot, rollIdle, hasIdle, VIEW_FRAMES } from '../creature-views.js';
 
 const BASE = 'assets/creatures/';
 // One scale for all species: the width of the front wall of the next tile in DM (from memory, adjusted by eye).
@@ -17,6 +17,10 @@ const ALPHA_CUT = 0.5;
 // comes nearer to the party, as it cannot go under the floor. This value puts the feet where DM has them
 // on the screen, all rows alike (graphics.dat item 558, docs/069).
 const DEPTH_TOWARDS_PARTY = 0.22;
+// Members of a group are this much closer to the centre of the tile than their sub-tile (shared with the
+// items and the maps): 1 keeps the sub-tiles, 0.8 is about the ±36 and ±29 pixels of DM at D1.
+const GROUP_SPREAD = 0.8;
+const IDLE_REACH = 4; // tiles from the party: further, not seen in DM, and no drawing for it
 const FLYING_SET = 2; // coordinate set of DM: Giant Wasp, Wizard Eye
 const FLYING_HEIGHT = 30 / PIXELS_PER_TILE; // difference of its Y with the middle set at D1
 
@@ -33,6 +37,9 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
   let manifest = null; // type -> entry of frames.json
   let shown = []; // { mesh, entry, frames, groupId, index, facing, flipped… }
   const attacks = new Map(); // group id -> { index (member), flip, timer }: attack showing now
+  const idles = new Map(); // "group:member" -> rollIdle(): kept when the creatures are built again
+  const nextIdle = new Map(); // group id -> clock of its next update
+  let clock = 0; // in ticks of the game
   let turns = 0;
 
   fetch(`${BASE}frames.json`)
@@ -76,10 +83,12 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
     const [forwardX, forwardZ] = [Math.sin(angle), -Math.cos(angle)];
     const [rightX, rightZ] = [Math.cos(angle), Math.sin(angle)];
     const spot = viewSpot(species, facing, turns, index, count);
-    const [u, v] = spot || position === null ? [0.5, 0.5] : subcellOffset(position);
-    const lateral = spot?.lateral ?? 0;
+    const [u, v] = spot || position === null ? [0.5, 0.5] : subcellOffset(position).map((c) => 0.5 + (c - 0.5) * GROUP_SPREAD);
+    const lateral = (spot?.lateral ?? 0) + sprite.idle.dx / PIXELS_PER_TILE;
     const depth = (spot?.depth ?? 0) + DEPTH_TOWARDS_PARTY;
-    mesh.position.set(x + u + rightX * lateral - forwardX * depth, species.coordinateSet === FLYING_SET ? FLYING_HEIGHT : 0, y + v + rightZ * lateral - forwardZ * depth);
+    // Down, a creature on the floor would go under it and lose its feet: it stops there.
+    const height = (species.coordinateSet === FLYING_SET ? FLYING_HEIGHT : 0) - sprite.idle.dy / PIXELS_PER_TILE;
+    mesh.position.set(x + u + rightX * lateral - forwardX * depth, Math.max(height, 0), y + v + rightZ * lateral - forwardZ * depth);
     mesh.rotation.y = -angle;
   }
 
@@ -90,7 +99,7 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
     const attacking = attack?.index === index;
     const frame = viewFrame(facing, turns, entry.hasViews, attacking ? entry.attack : null);
     mesh.material.map = frames[frame];
-    const flipped = attacking && frame === entry.attack && attack.flip;
+    const flipped = attacking && frame === entry.attack ? attack.flip : frame === VIEW_FRAMES.front && sprite.idle.flip;
     if (flipped === sprite.flipped) return;
     sprite.flipped = flipped;
     const uv = mesh.geometry.attributes.uv;
@@ -124,7 +133,8 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
     mesh.name = `level-${levelIndex}-creatureSprite`;
     mesh.userData = { part: 'creatureSprite', layer: 'creatures', variant: 'all', tiles: [info], baseOpacity: 1, creatures: true };
     const species = { size: creatureInfo(creature.type).size, coordinateSet: entry.coordinateSet };
-    const sprite = { mesh, entry, species, frames, groupId: creature.index, facing: creature.facing, flipped: false, index, count: creature.members.length, position: member.position, x: info.x, y: info.y };
+    const idle = idles.get(`${creature.index}:${index}`) ?? { flip: false, dx: 0, dy: 0 };
+    const sprite = { mesh, entry, species, frames, groupId: creature.index, facing: creature.facing, flipped: false, idle, index, count: creature.members.length, position: member.position, x: info.x, y: info.y };
     place(sprite);
     showFrame(sprite);
     return sprite;
@@ -174,6 +184,29 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
       members.forEach(showFrame);
       return true;
     },
+    /**
+     * A tick of the game: the groups near the party whose time has come move a little, each at the pace of
+     * its species (Non attack aspect update ticks).
+     * @returns {boolean} did a picture move?
+     */
+    tick(party) {
+      clock++;
+      const due = new Map();
+      for (const sprite of shown) {
+        if (Math.max(Math.abs(sprite.x - party.x), Math.abs(sprite.y - party.y)) > IDLE_REACH || !hasIdle(sprite.entry)) continue;
+        const { groupId, entry } = sprite;
+        // A random start, so that groups in view do not all move together.
+        if (!nextIdle.has(groupId)) nextIdle.set(groupId, clock + Math.floor(Math.random() * entry.idleTicks));
+        if (clock < nextIdle.get(groupId)) continue;
+        due.set(groupId, entry.idleTicks);
+        sprite.idle = rollIdle(entry);
+        idles.set(`${groupId}:${sprite.index}`, sprite.idle);
+        place(sprite);
+        showFrame(sprite);
+      }
+      for (const [groupId, ticks] of due) nextIdle.set(groupId, clock + ticks);
+      return due.size > 0;
+    },
     /** Is the picture opaque where this raycast hit it? A transparent pixel lets the pointer through. */
     opaqueAt(hit) {
       const image = hit.object.material.map?.image;
@@ -186,6 +219,8 @@ export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
       shown = [];
       for (const { timer } of attacks.values()) clearTimeout(timer);
       attacks.clear();
+      idles.clear();
+      nextIdle.clear();
       for (const { frames } of species.values()) {
         for (const texture of Object.values(frames ?? {})) texture.dispose();
       }
