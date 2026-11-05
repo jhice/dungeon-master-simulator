@@ -7,6 +7,7 @@
       89
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 7,
     "attackMirror": null,
     "frames": [
@@ -62,6 +63,7 @@
       96
     ],
     "hasViews": false,
+    "coordinateSet": 1,
     "attack": 3,
     "attackMirror": null,
     "frames": [
@@ -98,6 +100,7 @@
       97
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 8,
     "attackMirror": null,
     "frames": [
@@ -157,6 +160,7 @@
       89
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 7,
     "attackMirror": null,
     "frames": [
@@ -209,6 +213,7 @@
       95
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 6,
     "attackMirror": null,
     "frames": [
@@ -260,6 +265,7 @@
       93
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": 4,
     "attackMirror": 5,
     "frames": [
@@ -306,6 +312,7 @@
       53
     ],
     "hasViews": true,
+    "coordinateSet": 2,
     "attack": 8,
     "attackMirror": null,
     "frames": [
@@ -365,6 +372,7 @@
       50
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": null,
     "attackMirror": null,
     "frames": [
@@ -410,6 +418,7 @@
       90
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": null,
     "attackMirror": null,
     "frames": [
@@ -428,6 +437,7 @@
       96
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 5,
     "attackMirror": null,
     "frames": [
@@ -471,6 +481,7 @@
       92
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": null,
     "attackMirror": null,
     "frames": [
@@ -489,6 +500,7 @@
       67
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 5,
     "attackMirror": 8,
     "frames": [
@@ -545,6 +557,7 @@
       86
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 9,
     "attackMirror": null,
     "frames": [
@@ -612,6 +625,7 @@
       83
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 5,
     "attackMirror": null,
     "frames": [
@@ -655,6 +669,7 @@
       81
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 7,
     "attackMirror": null,
     "frames": [
@@ -709,6 +724,7 @@
       65
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 6,
     "attackMirror": null,
     "frames": [
@@ -763,6 +779,7 @@
       57
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": 1,
     "attackMirror": 4,
     "frames": [
@@ -800,6 +817,7 @@
       49
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 5,
     "attackMirror": null,
     "frames": [
@@ -843,6 +861,7 @@
       84
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 5,
     "attackMirror": 8,
     "frames": [
@@ -904,6 +923,7 @@
       60
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": 1,
     "attackMirror": null,
     "frames": [
@@ -927,6 +947,7 @@
       80
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 6,
     "attackMirror": null,
     "frames": [
@@ -974,6 +995,7 @@
       101
     ],
     "hasViews": true,
+    "coordinateSet": 1,
     "attack": 5,
     "attackMirror": null,
     "frames": [
@@ -1017,6 +1039,7 @@
       69
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": 3,
     "attackMirror": 6,
     "frames": [
@@ -1063,6 +1086,7 @@
       82
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 7,
     "attackMirror": null,
     "frames": [
@@ -1114,6 +1138,7 @@
       56
     ],
     "hasViews": true,
+    "coordinateSet": 0,
     "attack": 5,
     "attackMirror": null,
     "frames": [
@@ -1157,6 +1182,7 @@
       80
     ],
     "hasViews": false,
+    "coordinateSet": 0,
     "attack": 2,
     "attackMirror": 4,
     "frames": [
@@ -1193,6 +1219,7 @@
       66
     ],
     "hasViews": false,
+    "coordinateSet": 2,
     "attack": 4,
     "attackMirror": null,
     "frames": [

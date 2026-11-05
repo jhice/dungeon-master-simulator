@@ -2,7 +2,7 @@
 // Run: node tools/test-sprites.mjs
 
 import { existsSync, readFileSync } from 'node:fs';
-import { viewDirection, viewFrame, viewFrames, VIEW_FRAMES } from '../src/render/creature-views.js';
+import { viewDirection, viewFrame, viewFrames, viewSpot, VIEW_FRAMES } from '../src/render/creature-views.js';
 import { FACINGS } from '../src/core/dungeon.js';
 
 let failures = 0;
@@ -36,6 +36,22 @@ check(viewDirection(-0.6) === 3 && viewDirection(4.4) === 0, 'also past 0..3');
 
 // --- Species with one picture ---------------------------------------------------
 for (const facing of FACINGS) check(viewFrame(facing, 1, false) === front, `no views, ${facing}: the only picture`);
+
+// --- Places in the tile (DM, graphics.dat item 558) ------------------------------
+const WORM = { size: 1, coordinateSet: 1 };
+const TROLIN = { size: 0, coordinateSet: 0 };
+const GOLEM = { size: 2, coordinateSet: 1 };
+const DRAGON = { size: 2, coordinateSet: 0 };
+const facingUs = viewSpot(WORM, 'S', NORTH, 0, 2);
+const facingUs2 = viewSpot(WORM, 'S', NORTH, 1, 2);
+check(facingUs.depth === facingUs2.depth && facingUs.lateral === -facingUs2.lateral && facingUs.lateral !== 0, 'two half-tile creatures seen from the front: side by side');
+const fromSide = viewSpot(WORM, 'E', NORTH, 0, 2);
+const fromSide2 = viewSpot(WORM, 'E', NORTH, 1, 2);
+check(fromSide.lateral === 0 && fromSide2.lateral === 0 && fromSide.depth === -fromSide2.depth && fromSide.depth !== 0, 'seen from the side: one behind the other, in the middle');
+check(viewSpot(WORM, 'E', NORTH, 0, 1).depth === 0 && viewSpot(WORM, 'S', NORTH, 0, 1).depth > 0, 'alone: centred from the side, front row from the front');
+check(viewSpot(GOLEM, 'S', NORTH, 0, 1).depth > 0, 'lone creature of the low set: front row');
+check(viewSpot(DRAGON, 'S', NORTH, 0, 1) === null, 'lone creature of the middle set: its place, the centre');
+check(viewSpot(TROLIN, 'S', NORTH, 0, 3) === null, 'quarter-tile creatures stay in their sub-tile');
 
 // --- Files ----------------------------------------------------------------------
 const manifest = JSON.parse(readFileSync('assets/creatures/frames.json', 'utf8'));

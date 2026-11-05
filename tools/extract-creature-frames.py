@@ -49,6 +49,13 @@ TYPE_BY_NAME = {
     "Lord_Chaos": 23, "Dragon": 24,
 }
 
+# Jeu de coordonnées de DM (graphics.dat, item 558, octet 11 de l'espèce) :
+# 0 moyen (par défaut), 1 bas (groupes de 1 ou 2), 2 haut (volants).
+COORDINATE_SET = {
+    "Scorpion": 1, "Pain_Rat": 1, "Ruster": 1, "Stone_Golem": 1, "Black_Flame": 1,
+    "Couatl": 1, "Magenta_Worm": 1, "Wizard_Eye": 2, "Giant_Wasp": 2,
+}
+
 VIEW_ROLES = {0: "front", 1: "side", 2: "back", 3: "side2"}
 NAME_RE = re.compile(r",Creature,([^,]+),Screenshot\.gif$")
 
@@ -101,6 +108,7 @@ def extract(gif):
         "type": TYPE_BY_NAME.get(name),
         "size": list(source.size),
         "hasViews": name not in NO_VIEWS,
+        "coordinateSet": COORDINATE_SET.get(name, 0),
         "attack": attack,
         "attackMirror": mirror,
         "frames": entries,

@@ -6,12 +6,19 @@
 import * as THREE from 'three';
 import { subcellOffset } from '../../core/contents.js';
 import { allTiles } from '../three/level-contents.js';
-import { viewFrame, viewFrames } from '../creature-views.js';
+import { creatureInfo } from '../../core/creature-info.js';
+import { viewFrame, viewFrames, viewSpot } from '../creature-views.js';
 
 const BASE = 'assets/creatures/';
 // One scale for all species: the width of the front wall of the next tile in DM (from memory, adjusted by eye).
 const PIXELS_PER_TILE = 160;
 const ALPHA_CUT = 0.5;
+// A flat picture stands for a creature with some depth: its feet are at the front of it. So the plane
+// comes nearer to the party, as it cannot go under the floor. This value puts the feet where DM has them
+// on the screen, all rows alike (graphics.dat item 558, docs/069).
+const DEPTH_TOWARDS_PARTY = 0.22;
+const FLYING_SET = 2; // coordinate set of DM: Giant Wasp, Wizard Eye
+const FLYING_HEIGHT = 30 / PIXELS_PER_TILE; // difference of its Y with the middle set at D1
 
 /**
  * @param {object} options
@@ -59,7 +66,21 @@ export function createCreatureSprites({ onLoaded }) {
     return null;
   }
 
-  function buildMember(entry, frames, creature, member, info, levelIndex) {
+  // The plane in front of the view, at its place in the tile. On the way of a turn it follows the camera.
+  function place(sprite) {
+    const { mesh, species, facing, index, count, position, x, y } = sprite;
+    const angle = turns * quarter;
+    const [forwardX, forwardZ] = [Math.sin(angle), -Math.cos(angle)];
+    const [rightX, rightZ] = [Math.cos(angle), Math.sin(angle)];
+    const spot = viewSpot(species, facing, turns, index, count);
+    const [u, v] = spot || position === null ? [0.5, 0.5] : subcellOffset(position);
+    const lateral = spot?.lateral ?? 0;
+    const depth = (spot?.depth ?? 0) + DEPTH_TOWARDS_PARTY;
+    mesh.position.set(x + u + rightX * lateral - forwardX * depth, species.coordinateSet === FLYING_SET ? FLYING_HEIGHT : 0, y + v + rightZ * lateral - forwardZ * depth);
+    mesh.rotation.y = -angle;
+  }
+
+  function buildMember(entry, frames, creature, member, index, info, levelIndex) {
     const [width, height] = entry.size;
     // Origin at the middle of the bottom edge.
     const geometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
@@ -68,18 +89,18 @@ export function createCreatureSprites({ onLoaded }) {
       alphaTest: ALPHA_CUT,
       // Members of a row are in the same plane: without this they would flicker where they overlap.
       polygonOffset: true,
-      polygonOffsetUnits: -(member.position ?? 0),
+      polygonOffsetUnits: -index,
     });
     material.defines = { OCC_AT_POSITION: '' }; // its normal says nothing of its tile
     const mesh = new THREE.InstancedMesh(geometry, material, 1);
     mesh.setMatrixAt(0, new THREE.Matrix4());
-    const [u, v] = member.position === null ? [0.5, 0.5] : subcellOffset(member.position);
-    mesh.position.set(info.x + u, 0, info.y + v);
     mesh.scale.set(width / PIXELS_PER_TILE, height / PIXELS_PER_TILE, 1);
-    mesh.rotation.y = -turns * quarter;
     mesh.name = `level-${levelIndex}-creatureSprite`;
     mesh.userData = { part: 'creatureSprite', layer: 'creatures', variant: 'all', tiles: [info], baseOpacity: 1, creatures: true };
-    return { mesh, facing: creature.facing, hasViews: entry.hasViews, frames };
+    const species = { size: creatureInfo(creature.type).size, coordinateSet: entry.coordinateSet };
+    const sprite = { mesh, species, facing: creature.facing, hasViews: entry.hasViews, frames, index, count: creature.members.length, position: member.position, x: info.x, y: info.y };
+    place(sprite);
+    return sprite;
   }
 
   return {
@@ -94,7 +115,7 @@ export function createCreatureSprites({ onLoaded }) {
         if (!frames) continue;
         const entry = manifest.get(creature.type);
         const info = { level: levelIndex, x, y, gx: x + map.offset.x, gy: y + map.offset.y, type: detail.type, detail };
-        for (const member of creature.members) shown.push(buildMember(entry, frames, creature, member, info, levelIndex));
+        creature.members.forEach((member, index) => shown.push(buildMember(entry, frames, creature, member, index, info, levelIndex)));
       }
       return shown.map((sprite) => sprite.mesh);
     },
@@ -102,9 +123,9 @@ export function createCreatureSprites({ onLoaded }) {
     face(nextTurns) {
       if (nextTurns === turns) return;
       turns = nextTurns;
-      for (const { mesh, facing, hasViews, frames } of shown) {
-        mesh.rotation.y = -turns * quarter;
-        mesh.material.map = frames[viewFrame(facing, turns, hasViews)];
+      for (const sprite of shown) {
+        place(sprite);
+        sprite.mesh.material.map = sprite.frames[viewFrame(sprite.facing, turns, sprite.hasViews)];
       }
     },
     /** Is the picture opaque where this raycast hit it? A transparent pixel lets the pointer through. */
