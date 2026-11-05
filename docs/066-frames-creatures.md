@@ -25,9 +25,9 @@ Le nom du dossier vient du nom du fichier (`…,Creature,<Nom>,Screenshot.gif`).
 
 **Materializer** compte parmi les 18 : il suit le schéma des vues, mais son dos (frame 2) ne montre que l'œil.
 
-## Attaques proposées
+## Attaques
 
-Choisies à l'œil, à valider sur la planche. Pour changer : table `ATTACK` du script, puis relancer.
+Choisies à l'œil, **validées par l'utilisateur sur la planche**. Pour changer : table `ATTACK` du script, puis relancer.
 
 | Frame | Créatures |
 |---|---|
@@ -42,20 +42,30 @@ Choisies à l'œil, à valider sur la planche. Pour changer : table `ATTACK` du 
 | 9 | Materializer |
 | aucune | Giggler, Grey Lord, Lord Order |
 
-**À regarder en priorité :**
+**Remarques :**
 
-- **Giggler :** ses frames 4 à 6 ne sont que de petits décalages de la face, aucune ne se distingue.
-- **Screamer :** deux frames seulement, la 1 (trous sombres sur le chapeau) est un choix par défaut.
-- **Rock Pile et Water Elemental :** la frame retenue est la forme réveillée ou dressée, qui peut servir à plus qu'à l'attaque.
-- **Materializer :** les frames 9 à 11 montrent la forme pleine ; j'y vois l'attaque, sans preuve.
+- **Giggler :** ses frames 4 à 6 ne sont que de petits décalages de la face, aucune ne se distingue. Il vole au lieu d'attaquer.
+- **Screamer :** deux frames seulement, l'attaque est la 1 (trous sombres sur le chapeau).
+- **Rock Pile et Water Elemental :** l'attaque est la forme réveillée ou dressée.
+- **Materializer :** les frames 9 à 11 montrent la forme pleine.
 
 Quand l'attaque a un miroir exact dans le GIF, `attackMirror` le donne : Ghost, Magenta Worm, Rock Pile, Scorpion, Swamp Slime, Water Elemental. Couatl (9), Pain Rat (8), Oitu (8), Giant Wasp (9) et Animated Armour (8) ont une frame qui y ressemble, mais pas au pixel près.
 
-## Pour la suite (billboards)
+## Retours de l'utilisateur
 
-- **Ombres :** elles sont dessinées dans l'image, en noir opaque, sous la plupart des créatures. Sur un billboard, elles resteront debout avec le sprite.
+- **Vue unique :** les 9 créatures sans vues montrent bien la même image de tous les côtés.
+- **Attaques :** celles de la planche sont les bonnes.
+- **Grey Lord et Lord Order :** personnages de la fin du jeu, de mémoire de l'utilisateur, et pas des créatures qu'on attaque. Le donjon n'en place aucun : ses groupes n'utilisent que les types 0 à 24. Leurs images restent en réserve, sans usage pour l'instant.
+- **Ombres :** elles restent dans le sprite. Elles sont dessinées en noir opaque et resteront donc debout avec l'image.
+- **Point d'ancrage :** centré en bas de l'image.
+- **Autre côté :** `side2` peut servir directement, sans transformation.
+
+## Faits utiles pour les billboards
+
+Le plan est dans la [doc 067](067-sprites-creatures-plan.md).
+
+- **Sens des profils :** vérifié sur la planche, `side` regarde vers la droite de l'image, `side2` vers la gauche. Seul le Materializer ne permet pas de le dire, son profil étant trop abstrait.
 - **Noir :** le dos de Lord Chaos (frame 2) est une silhouette presque entièrement noire. Elle est bien opaque dans le GIF, ce n'est pas une erreur d'export.
-- **Tailles :** le format varie d'une créature à l'autre (de 49 × 50 à 144 × 95) et chaque image garde ses marges : il faudra ancrer les billboards en bas, pas sur le centre du cadre.
 - **Noms :** Scorpion, Rock Pile et Dragon s'appellent Giant Scorpion, Rockpile et Red Dragon dans `creature-info.js`. Le champ `type` de `frames.json` fait le lien. Grey Lord et Lord Order n'ont pas d'espèce (`type: null`).
 
 ## Sources
