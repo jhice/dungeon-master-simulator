@@ -1,0 +1,1223 @@
+{
+  "Animated_Armour": {
+    "folder": "Animated_Armour",
+    "type": 18,
+    "size": [
+      70,
+      89
+    ],
+    "hasViews": true,
+    "attack": 7,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1450,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 650,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 650,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 650,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 650,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 400
+      },
+      {
+        "file": "06.png",
+        "durationMs": 650
+      },
+      {
+        "file": "07-attack.png",
+        "durationMs": 450,
+        "role": "attack"
+      },
+      {
+        "file": "08.png",
+        "durationMs": 550
+      }
+    ]
+  },
+  "Black_Flame": {
+    "folder": "Black_Flame",
+    "type": 11,
+    "size": [
+      67,
+      96
+    ],
+    "hasViews": false,
+    "attack": 3,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1200,
+        "role": "front"
+      },
+      {
+        "file": "01.png",
+        "durationMs": 650
+      },
+      {
+        "file": "02.png",
+        "durationMs": 600,
+        "sameAs": 0
+      },
+      {
+        "file": "03-attack.png",
+        "durationMs": 550,
+        "role": "attack"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 500
+      }
+    ]
+  },
+  "Couatl": {
+    "folder": "Couatl",
+    "type": 13,
+    "size": [
+      119,
+      97
+    ],
+    "hasViews": true,
+    "attack": 8,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1400,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 650,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 500
+      },
+      {
+        "file": "06.png",
+        "durationMs": 500
+      },
+      {
+        "file": "07.png",
+        "durationMs": 550
+      },
+      {
+        "file": "08-attack.png",
+        "durationMs": 400,
+        "role": "attack"
+      },
+      {
+        "file": "09.png",
+        "durationMs": 350
+      }
+    ]
+  },
+  "Demon": {
+    "folder": "Demon",
+    "type": 22,
+    "size": [
+      65,
+      89
+    ],
+    "hasViews": true,
+    "attack": 7,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1600,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 600,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 600,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 600,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 600,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 400
+      },
+      {
+        "file": "06.png",
+        "durationMs": 550,
+        "sameAs": 0
+      },
+      {
+        "file": "07-attack.png",
+        "durationMs": 350,
+        "role": "attack"
+      }
+    ]
+  },
+  "Dragon": {
+    "folder": "Dragon",
+    "type": 24,
+    "size": [
+      144,
+      95
+    ],
+    "hasViews": true,
+    "attack": 6,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1700,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 750
+      },
+      {
+        "file": "05.png",
+        "durationMs": 850,
+        "sameAs": 0
+      },
+      {
+        "file": "06-attack.png",
+        "durationMs": 700,
+        "role": "attack"
+      },
+      {
+        "file": "07.png",
+        "durationMs": 800
+      }
+    ]
+  },
+  "Ghost": {
+    "folder": "Ghost",
+    "type": 8,
+    "size": [
+      64,
+      93
+    ],
+    "hasViews": false,
+    "attack": 4,
+    "attackMirror": 5,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 300,
+        "role": "front"
+      },
+      {
+        "file": "01.png",
+        "durationMs": 400
+      },
+      {
+        "file": "02.png",
+        "durationMs": 250,
+        "sameAs": 0
+      },
+      {
+        "file": "03.png",
+        "durationMs": 350,
+        "sameAs": 1
+      },
+      {
+        "file": "04-attack.png",
+        "durationMs": 450,
+        "role": "attack"
+      },
+      {
+        "file": "05.png",
+        "durationMs": 200
+      },
+      {
+        "file": "06.png",
+        "durationMs": 300,
+        "sameAs": 4
+      }
+    ]
+  },
+  "Giant_Wasp": {
+    "folder": "Giant_Wasp",
+    "type": 17,
+    "size": [
+      54,
+      53
+    ],
+    "hasViews": true,
+    "attack": 8,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1000,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 500,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 500,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 500,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 500,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 300
+      },
+      {
+        "file": "06.png",
+        "durationMs": 300
+      },
+      {
+        "file": "07.png",
+        "durationMs": 300
+      },
+      {
+        "file": "08-attack.png",
+        "durationMs": 300,
+        "role": "attack"
+      },
+      {
+        "file": "09.png",
+        "durationMs": 300
+      }
+    ]
+  },
+  "Giggler": {
+    "folder": "Giggler",
+    "type": 2,
+    "size": [
+      49,
+      50
+    ],
+    "hasViews": true,
+    "attack": null,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1500,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 800,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 800,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 800,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 900
+      },
+      {
+        "file": "05.png",
+        "durationMs": 900
+      },
+      {
+        "file": "06.png",
+        "durationMs": 750
+      }
+    ]
+  },
+  "Grey_Lord": {
+    "folder": "Grey_Lord",
+    "type": null,
+    "size": [
+      64,
+      90
+    ],
+    "hasViews": false,
+    "attack": null,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 0,
+        "role": "front"
+      }
+    ]
+  },
+  "Lord_Chaos": {
+    "folder": "Lord_Chaos",
+    "type": 23,
+    "size": [
+      79,
+      96
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1600,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 600,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 600,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 600,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 900,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 1300,
+        "role": "attack"
+      }
+    ]
+  },
+  "Lord_Order": {
+    "folder": "Lord_Order",
+    "type": null,
+    "size": [
+      50,
+      92
+    ],
+    "hasViews": false,
+    "attack": null,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 0,
+        "role": "front"
+      }
+    ]
+  },
+  "Magenta_Worm": {
+    "folder": "Magenta_Worm",
+    "type": 15,
+    "size": [
+      112,
+      67
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": 8,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1500,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 750
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 450,
+        "role": "attack"
+      },
+      {
+        "file": "06.png",
+        "durationMs": 700,
+        "sameAs": 4
+      },
+      {
+        "file": "07.png",
+        "durationMs": 750,
+        "sameAs": 0
+      },
+      {
+        "file": "08.png",
+        "durationMs": 600
+      }
+    ]
+  },
+  "Materializer": {
+    "folder": "Materializer",
+    "type": 19,
+    "size": [
+      57,
+      86
+    ],
+    "hasViews": true,
+    "attack": 9,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 900,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 650,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 650,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 650,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 400,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 250
+      },
+      {
+        "file": "06.png",
+        "durationMs": 400
+      },
+      {
+        "file": "07.png",
+        "durationMs": 500
+      },
+      {
+        "file": "08.png",
+        "durationMs": 200
+      },
+      {
+        "file": "09-attack.png",
+        "durationMs": 500,
+        "role": "attack"
+      },
+      {
+        "file": "10.png",
+        "durationMs": 700
+      },
+      {
+        "file": "11.png",
+        "durationMs": 200
+      }
+    ]
+  },
+  "Mummy": {
+    "folder": "Mummy",
+    "type": 10,
+    "size": [
+      57,
+      83
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1100,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 550,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 550,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 550,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 1400,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 550,
+        "role": "attack"
+      }
+    ]
+  },
+  "Oitu": {
+    "folder": "Oitu",
+    "type": 21,
+    "size": [
+      109,
+      81
+    ],
+    "hasViews": true,
+    "attack": 7,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1500,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 750
+      },
+      {
+        "file": "05.png",
+        "durationMs": 750
+      },
+      {
+        "file": "06.png",
+        "durationMs": 750
+      },
+      {
+        "file": "07-attack.png",
+        "durationMs": 650,
+        "role": "attack"
+      },
+      {
+        "file": "08.png",
+        "durationMs": 600
+      }
+    ]
+  },
+  "Pain_Rat": {
+    "folder": "Pain_Rat",
+    "type": 4,
+    "size": [
+      112,
+      65
+    ],
+    "hasViews": true,
+    "attack": 6,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 650,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 650,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 650,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 650,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 750
+      },
+      {
+        "file": "05.png",
+        "durationMs": 550
+      },
+      {
+        "file": "06-attack.png",
+        "durationMs": 450,
+        "role": "attack"
+      },
+      {
+        "file": "07.png",
+        "durationMs": 700
+      },
+      {
+        "file": "08.png",
+        "durationMs": 350
+      }
+    ]
+  },
+  "Rock_Pile": {
+    "folder": "Rock_Pile",
+    "type": 7,
+    "size": [
+      64,
+      57
+    ],
+    "hasViews": false,
+    "attack": 1,
+    "attackMirror": 4,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 5000,
+        "role": "front"
+      },
+      {
+        "file": "01-attack.png",
+        "durationMs": 850,
+        "role": "attack"
+      },
+      {
+        "file": "02.png",
+        "durationMs": 1500,
+        "sameAs": 0
+      },
+      {
+        "file": "03.png",
+        "durationMs": 400,
+        "sameAs": 1
+      },
+      {
+        "file": "04.png",
+        "durationMs": 550
+      }
+    ]
+  },
+  "Ruster": {
+    "folder": "Ruster",
+    "type": 5,
+    "size": [
+      75,
+      49
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1300,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 900,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 700,
+        "role": "attack"
+      }
+    ]
+  },
+  "Scorpion": {
+    "folder": "Scorpion",
+    "type": 0,
+    "size": [
+      110,
+      84
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": 8,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1400,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 650,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 700,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 650,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 800,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 1200,
+        "role": "attack"
+      },
+      {
+        "file": "06.png",
+        "durationMs": 800,
+        "sameAs": 0
+      },
+      {
+        "file": "07.png",
+        "durationMs": 550
+      },
+      {
+        "file": "08.png",
+        "durationMs": 900
+      },
+      {
+        "file": "09.png",
+        "durationMs": 600,
+        "sameAs": 7
+      }
+    ]
+  },
+  "Screamer": {
+    "folder": "Screamer",
+    "type": 6,
+    "size": [
+      61,
+      60
+    ],
+    "hasViews": false,
+    "attack": 1,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 2200,
+        "role": "front"
+      },
+      {
+        "file": "01-attack.png",
+        "durationMs": 1000,
+        "role": "attack"
+      }
+    ]
+  },
+  "Skeleton": {
+    "folder": "Skeleton",
+    "type": 12,
+    "size": [
+      69,
+      80
+    ],
+    "hasViews": true,
+    "attack": 6,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1300,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 600,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 600,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 600,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 600,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 1300
+      },
+      {
+        "file": "06-attack.png",
+        "durationMs": 600,
+        "role": "attack"
+      }
+    ]
+  },
+  "Stone_Golem": {
+    "folder": "Stone_Golem",
+    "type": 9,
+    "size": [
+      64,
+      101
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1400,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 700,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 700,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 700,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 1150,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 650,
+        "role": "attack"
+      }
+    ]
+  },
+  "Swamp_Slime": {
+    "folder": "Swamp_Slime",
+    "type": 1,
+    "size": [
+      64,
+      69
+    ],
+    "hasViews": false,
+    "attack": 3,
+    "attackMirror": 6,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1300,
+        "role": "front"
+      },
+      {
+        "file": "01.png",
+        "durationMs": 850
+      },
+      {
+        "file": "02.png",
+        "durationMs": 950,
+        "sameAs": 0
+      },
+      {
+        "file": "03-attack.png",
+        "durationMs": 750,
+        "role": "attack"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 900,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 700,
+        "sameAs": 1
+      },
+      {
+        "file": "06.png",
+        "durationMs": 900
+      }
+    ]
+  },
+  "Trolin": {
+    "folder": "Trolin",
+    "type": 16,
+    "size": [
+      64,
+      82
+    ],
+    "hasViews": true,
+    "attack": 7,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1500,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 750,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 750,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 750,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 750,
+        "sameAs": 0
+      },
+      {
+        "file": "05.png",
+        "durationMs": 750
+      },
+      {
+        "file": "06.png",
+        "durationMs": 750
+      },
+      {
+        "file": "07-attack.png",
+        "durationMs": 750,
+        "role": "attack"
+      }
+    ]
+  },
+  "Vexirk": {
+    "folder": "Vexirk",
+    "type": 14,
+    "size": [
+      60,
+      56
+    ],
+    "hasViews": true,
+    "attack": 5,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1500,
+        "role": "front"
+      },
+      {
+        "file": "01-side.png",
+        "durationMs": 700,
+        "role": "side"
+      },
+      {
+        "file": "02-back.png",
+        "durationMs": 700,
+        "role": "back"
+      },
+      {
+        "file": "03-side2.png",
+        "durationMs": 700,
+        "role": "side2"
+      },
+      {
+        "file": "04.png",
+        "durationMs": 800,
+        "sameAs": 0
+      },
+      {
+        "file": "05-attack.png",
+        "durationMs": 800,
+        "role": "attack"
+      }
+    ]
+  },
+  "Water_Elemental": {
+    "folder": "Water_Elemental",
+    "type": 20,
+    "size": [
+      95,
+      80
+    ],
+    "hasViews": false,
+    "attack": 2,
+    "attackMirror": 4,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 2000,
+        "role": "front"
+      },
+      {
+        "file": "01.png",
+        "durationMs": 1100
+      },
+      {
+        "file": "02-attack.png",
+        "durationMs": 800,
+        "role": "attack"
+      },
+      {
+        "file": "03.png",
+        "durationMs": 2000,
+        "sameAs": 0
+      },
+      {
+        "file": "04.png",
+        "durationMs": 800
+      }
+    ]
+  },
+  "Wizard_Eye": {
+    "folder": "Wizard_Eye",
+    "type": 3,
+    "size": [
+      69,
+      66
+    ],
+    "hasViews": false,
+    "attack": 4,
+    "attackMirror": null,
+    "frames": [
+      {
+        "file": "00-front.png",
+        "durationMs": 1000,
+        "role": "front"
+      },
+      {
+        "file": "01.png",
+        "durationMs": 700
+      },
+      {
+        "file": "02.png",
+        "durationMs": 1100
+      },
+      {
+        "file": "03.png",
+        "durationMs": 800
+      },
+      {
+        "file": "04-attack.png",
+        "durationMs": 600,
+        "role": "attack"
+      }
+    ]
+  }
+}

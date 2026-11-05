@@ -103,3 +103,4 @@ Ces résultats ont été établis par analyse et contre-vérification du fichier
 - **Node.js 24 et Python 3** : conversion, validation et scripts d'analyse ponctuels.
 - **Chrome avec l'extension Claude** : tests de l'interface, sur un serveur local (`python3 -m http.server`).
 - **Chrome sans interface, piloté par le protocole DevTools** (https://chromedevtools.github.io/devtools-protocol/) depuis Node 24 : mesures de temps de la doc 052, sur une copie instrumentée du projet.
+- **Pillow** (https://python-pillow.org/), bibliothèque d'images Python : étape 066, export des frames des GIFs de créatures. Ces GIFs (`assets/creatures/`) ont été fournis par l'utilisateur ; leur site d'origine n'est pas identifié.
