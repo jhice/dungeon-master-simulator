@@ -18,16 +18,18 @@ export function viewDirection(turns) {
  * @param {string} facing facing of the creature ('N', 'E', 'S', 'W')
  * @param {number} turns direction of the view in quarter turns (camera pose)
  * @param {boolean} hasViews false: the same picture whatever the side (Ghost, Swamp Slime…)
+ * @param {number|null} attackFrame frame of a creature attacking now. As in DM (ReDMCSB F115), it replaces
+ *   the front only: an attack seen from the side or the back does not show.
  * @returns {number} index of the frame
  */
-export function viewFrame(facing, turns, hasViews = true) {
-  if (!hasViews) return VIEW_FRAMES.front;
+export function viewFrame(facing, turns, hasViews = true, attackFrame = null) {
   const turn = (FACINGS.indexOf(facing) - viewDirection(turns) + 4) % 4;
-  return VIEW_FRAMES[VIEW_BY_TURN[turn]];
+  const frame = hasViews ? VIEW_FRAMES[VIEW_BY_TURN[turn]] : VIEW_FRAMES.front;
+  return frame === VIEW_FRAMES.front && attackFrame !== null ? attackFrame : frame;
 }
 
 // Places of DM in a tile, as the party sees it (graphics.dat item 558, ReDMCSB F115), in tiles.
-const FRONT_ROW = 0.2; // towards the party, from the centre of the tile: with the depth of the sprites, Y = 119 of DM
+const FRONT_ROW = 0.01; // towards the party, from the centre of the tile (set by eye in the game; DM: Y = 119, docs/069)
 const HALF_COLUMN = 0.19; // 30 pixels at D1, each side of the centre
 const LOW_SET = 1; // coordinate set of DM, "low": its lone creature stands on the front row
 
@@ -52,5 +54,8 @@ export function viewSpot({ size, coordinateSet }, facing, turns, index, count) {
   return count === 1 && coordinateSet === LOW_SET ? { lateral: 0, depth: FRONT_ROW } : null;
 }
 
-/** Frames a species needs for its views: the four of the sides, or the only one. */
-export const viewFrames = (hasViews) => (hasViews ? Object.values(VIEW_FRAMES) : [VIEW_FRAMES.front]);
+/** Frames a species needs: the four of the sides, or the only one; and its attack, if it has one. */
+export const viewFrames = (hasViews, attackFrame = null) => [
+  ...(hasViews ? Object.values(VIEW_FRAMES) : [VIEW_FRAMES.front]),
+  ...(attackFrame === null ? [] : [attackFrame]),
+];

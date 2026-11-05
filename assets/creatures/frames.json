@@ -9,6 +9,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 7,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -65,6 +67,8 @@
     "hasViews": false,
     "coordinateSet": 1,
     "attack": 3,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -102,6 +106,8 @@
     "hasViews": true,
     "coordinateSet": 1,
     "attack": 8,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -162,6 +168,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 7,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -215,6 +223,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 6,
+    "attackTicks": 4,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -267,6 +277,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": 4,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": 5,
     "frames": [
       {
@@ -314,6 +326,8 @@
     "hasViews": true,
     "coordinateSet": 2,
     "attack": 8,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -374,6 +388,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": null,
+    "attackTicks": 2,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -420,6 +436,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": null,
+    "attackTicks": 5,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -439,6 +457,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 5,
+    "attackTicks": 5,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -483,6 +503,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": null,
+    "attackTicks": 5,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -502,6 +524,8 @@
     "hasViews": true,
     "coordinateSet": 1,
     "attack": 5,
+    "attackTicks": 2,
+    "flipAttack": true,
     "attackMirror": 8,
     "frames": [
       {
@@ -559,6 +583,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 9,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -627,6 +653,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 5,
+    "attackTicks": 4,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -671,6 +699,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 7,
+    "attackTicks": 2,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -726,6 +756,8 @@
     "hasViews": true,
     "coordinateSet": 1,
     "attack": 6,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -781,6 +813,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": 1,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": 4,
     "frames": [
       {
@@ -818,7 +852,9 @@
     ],
     "hasViews": true,
     "coordinateSet": 1,
-    "attack": 5,
+    "attack": null,
+    "attackTicks": 2,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -847,9 +883,8 @@
         "sameAs": 0
       },
       {
-        "file": "05-attack.png",
-        "durationMs": 700,
-        "role": "attack"
+        "file": "05.png",
+        "durationMs": 700
       }
     ]
   },
@@ -863,6 +898,8 @@
     "hasViews": true,
     "coordinateSet": 1,
     "attack": 5,
+    "attackTicks": 2,
+    "flipAttack": true,
     "attackMirror": 8,
     "frames": [
       {
@@ -925,6 +962,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": 1,
+    "attackTicks": 2,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -949,6 +988,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 6,
+    "attackTicks": 1,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -997,6 +1038,8 @@
     "hasViews": true,
     "coordinateSet": 1,
     "attack": 5,
+    "attackTicks": 4,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -1041,6 +1084,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": 3,
+    "attackTicks": 3,
+    "flipAttack": true,
     "attackMirror": 6,
     "frames": [
       {
@@ -1088,6 +1133,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 7,
+    "attackTicks": 3,
+    "flipAttack": false,
     "attackMirror": null,
     "frames": [
       {
@@ -1140,6 +1187,8 @@
     "hasViews": true,
     "coordinateSet": 0,
     "attack": 5,
+    "attackTicks": 6,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {
@@ -1184,6 +1233,8 @@
     "hasViews": false,
     "coordinateSet": 0,
     "attack": 2,
+    "attackTicks": 3,
+    "flipAttack": true,
     "attackMirror": 4,
     "frames": [
       {
@@ -1221,6 +1272,8 @@
     "hasViews": false,
     "coordinateSet": 2,
     "attack": 4,
+    "attackTicks": 1,
+    "flipAttack": true,
     "attackMirror": null,
     "frames": [
       {

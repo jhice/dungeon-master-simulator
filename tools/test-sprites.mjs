@@ -37,6 +37,14 @@ check(viewDirection(-0.6) === 3 && viewDirection(4.4) === 0, 'also past 0..3');
 // --- Species with one picture ---------------------------------------------------
 for (const facing of FACINGS) check(viewFrame(facing, 1, false) === front, `no views, ${facing}: the only picture`);
 
+// --- Attack picture ---------------------------------------------------------------
+check(viewFrame('S', NORTH, true, 7) === 7, 'attacking, seen from the front: the attack picture');
+check(viewFrame('E', NORTH, true, 7) === side && viewFrame('W', NORTH, true, 7) === side2, 'attacking, seen from the side: still its side');
+check(viewFrame('N', NORTH, true, 7) === back, 'attacking, seen from the back: still its back');
+check(viewFrame('E', NORTH, false, 3) === 3, 'one picture only: the attack shows from everywhere');
+check(viewFrame('S', NORTH, true, null) === front, 'no attack picture: its front');
+check(viewFrames(true, 7).includes(7) && viewFrames(false, null).length === 1, 'the attack picture is loaded with the views');
+
 // --- Places in the tile (DM, graphics.dat item 558) ------------------------------
 const WORM = { size: 1, coordinateSet: 1 };
 const TROLIN = { size: 0, coordinateSet: 0 };
@@ -64,7 +72,9 @@ const missing = entries.flatMap((entry) =>
   entry.frames.filter((frame) => !existsSync(`assets/creatures/${entry.folder}/${frame.file}`)).map((frame) => `${entry.folder}/${frame.file}`),
 );
 check(missing.length === 0, `all the files of frames.json exist${missing.length ? `: ${missing}` : ''}`);
-check(entries.every((entry) => viewFrames(entry.hasViews).every((index) => entry.frames[index])), 'each species has the frames of its views');
+check(entries.every((entry) => viewFrames(entry.hasViews, entry.attack).every((index) => entry.frames[index])), 'each species has the frames of its views and attack');
+check(entries.every((entry) => entry.attackTicks > 0), 'each species has the duration of its attack');
+check(entries.filter((entry) => entry.attack === null).map((entry) => entry.folder).join() === 'Giggler,Grey_Lord,Lord_Order,Ruster', 'no attack picture: Giggler, Ruster, and the two lords');
 check(entries.filter((entry) => entry.hasViews).every((entry) => entry.frames[side].role === 'side' && entry.frames[side2].role === 'side2' && entry.frames[back].role === 'back'), 'the view frames have the expected roles');
 
 console.log(failures ? `\n${failures} FAILED` : '\nAll good');

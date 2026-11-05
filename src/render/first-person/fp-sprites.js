@@ -23,13 +23,16 @@ const FLYING_HEIGHT = 30 / PIXELS_PER_TILE; // difference of its Y with the midd
 /**
  * @param {object} options
  * @param {() => void} options.onLoaded pictures just arrived: the creatures must be built again
+ * @param {() => void} options.onChanged a picture changed by itself (end of an attack): draw again
+ * @param {number} options.tickMs duration of a tick of the game
  */
-export function createCreatureSprites({ onLoaded }) {
+export function createCreatureSprites({ onLoaded, onChanged, tickMs }) {
   const species = new Map(); // type -> { entry, frames: { index: texture } | null while loading }
   const loader = new THREE.TextureLoader();
   const quarter = Math.PI / 2;
   let manifest = null; // type -> entry of frames.json
-  let shown = []; // { mesh, facing, hasViews, frames }
+  let shown = []; // { mesh, entry, frames, groupId, index, facing, flipped… }
+  const attacks = new Map(); // group id -> { index (member), flip, timer }: attack showing now
   let turns = 0;
 
   fetch(`${BASE}frames.json`)
@@ -57,7 +60,7 @@ export function createCreatureSprites({ onLoaded }) {
     if (!entry) return null;
     const record = { entry, frames: null };
     species.set(type, record);
-    Promise.all(viewFrames(entry.hasViews).map((index) => loadFrame(entry, index)))
+    Promise.all(viewFrames(entry.hasViews, entry.attack).map((index) => loadFrame(entry, index)))
       .then((list) => {
         record.frames = Object.fromEntries(list.map(({ index, texture }) => [index, texture]));
         onLoaded();
@@ -80,12 +83,35 @@ export function createCreatureSprites({ onLoaded }) {
     mesh.rotation.y = -angle;
   }
 
+  // The picture of a sprite: its view, or its attack, maybe mirrored (the U of its own plane).
+  function showFrame(sprite) {
+    const { mesh, entry, frames, facing, groupId, index } = sprite;
+    const attack = attacks.get(groupId);
+    const attacking = attack?.index === index;
+    const frame = viewFrame(facing, turns, entry.hasViews, attacking ? entry.attack : null);
+    mesh.material.map = frames[frame];
+    const flipped = attacking && frame === entry.attack && attack.flip;
+    if (flipped === sprite.flipped) return;
+    sprite.flipped = flipped;
+    const uv = mesh.geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+    uv.needsUpdate = true;
+  }
+
+  // Who shows the attack: the simulation has one attack per group; a member of the row nearest to the party.
+  function attacker(members) {
+    const angle = turns * quarter;
+    const away = ({ mesh }) => mesh.position.x * Math.sin(angle) - mesh.position.z * Math.cos(angle);
+    const nearest = Math.min(...members.map(away));
+    const row = members.filter((sprite) => away(sprite) < nearest + 0.05);
+    return row[Math.floor(Math.random() * row.length)].index;
+  }
+
   function buildMember(entry, frames, creature, member, index, info, levelIndex) {
     const [width, height] = entry.size;
     // Origin at the middle of the bottom edge.
     const geometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
     const material = new THREE.MeshLambertMaterial({
-      map: frames[viewFrame(creature.facing, turns, entry.hasViews)],
       alphaTest: ALPHA_CUT,
       // Members of a row are in the same plane: without this they would flicker where they overlap.
       polygonOffset: true,
@@ -98,8 +124,9 @@ export function createCreatureSprites({ onLoaded }) {
     mesh.name = `level-${levelIndex}-creatureSprite`;
     mesh.userData = { part: 'creatureSprite', layer: 'creatures', variant: 'all', tiles: [info], baseOpacity: 1, creatures: true };
     const species = { size: creatureInfo(creature.type).size, coordinateSet: entry.coordinateSet };
-    const sprite = { mesh, species, facing: creature.facing, hasViews: entry.hasViews, frames, index, count: creature.members.length, position: member.position, x: info.x, y: info.y };
+    const sprite = { mesh, entry, species, frames, groupId: creature.index, facing: creature.facing, flipped: false, index, count: creature.members.length, position: member.position, x: info.x, y: info.y };
     place(sprite);
+    showFrame(sprite);
     return sprite;
   }
 
@@ -125,8 +152,27 @@ export function createCreatureSprites({ onLoaded }) {
       turns = nextTurns;
       for (const sprite of shown) {
         place(sprite);
-        sprite.mesh.material.map = sprite.frames[viewFrame(sprite.facing, turns, sprite.hasViews)];
+        showFrame(sprite);
       }
+    },
+    /**
+     * A group attacks: one of its members shows its attack picture for the time DM gives its species
+     * (Next attack aspect update ticks), mirrored at random if its species does (Flip Attack).
+     * @returns {boolean} did a picture change?
+     */
+    attack(group) {
+      const members = shown.filter((sprite) => sprite.groupId === group.id);
+      const entry = members[0]?.entry;
+      if (!entry || entry.attack === null) return false;
+      clearTimeout(attacks.get(group.id)?.timer);
+      const timer = setTimeout(() => {
+        attacks.delete(group.id);
+        shown.filter((sprite) => sprite.groupId === group.id).forEach(showFrame);
+        onChanged();
+      }, entry.attackTicks * tickMs);
+      attacks.set(group.id, { index: attacker(members), flip: entry.flipAttack && Math.random() < 0.5, timer });
+      members.forEach(showFrame);
+      return true;
     },
     /** Is the picture opaque where this raycast hit it? A transparent pixel lets the pointer through. */
     opaqueAt(hit) {
@@ -138,6 +184,8 @@ export function createCreatureSprites({ onLoaded }) {
     },
     dispose() {
       shown = [];
+      for (const { timer } of attacks.values()) clearTimeout(timer);
+      attacks.clear();
       for (const { frames } of species.values()) {
         for (const texture of Object.values(frames ?? {})) texture.dispose();
       }

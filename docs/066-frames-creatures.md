@@ -35,12 +35,12 @@ Choisies à l'œil, **validées par l'utilisateur sur la planche**. Pour changer
 | 2 | Water Elemental |
 | 3 | Black Flame, Swamp Slime |
 | 4 | Ghost, Wizard Eye |
-| 5 | Lord Chaos, Magenta Worm, Mummy, Ruster, Scorpion, Stone Golem, Vexirk |
+| 5 | Lord Chaos, Magenta Worm, Mummy, Scorpion, Stone Golem, Vexirk |
 | 6 | Dragon, Pain Rat, Skeleton |
 | 7 | Animated Armour, Demon, Oitu, Trolin |
 | 8 | Couatl, Giant Wasp |
 | 9 | Materializer |
-| aucune | Giggler, Grey Lord, Lord Order |
+| aucune | Giggler, Grey Lord, Lord Order, Ruster (corrigé à la doc 070 : sa frame 5 est sa face en miroir) |
 
 **Remarques :**
 

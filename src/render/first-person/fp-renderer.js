@@ -70,13 +70,14 @@ const MIRRORED_PARTS = ['wall', 'floor', 'pitRim', 'wallFace', 'nicheFaceSquare'
  * @param {() => void} [options.onContextMenu] a right click on the view
  * @param {(item: object) => string} [options.colorOf] colour of an item in flight
  * @param {object} [options.lighting] settings of the light (DEFAULT_LIGHTING, lighting-settings.js)
+ * @param {number} [options.tickMs] duration of a tick of the game (attack pictures of the creatures)
  * Every click handler also receives the side of the view clicked ('left' | 'right').
  */
 export function createFirstPersonRenderer(
   container,
   dungeon,
   state,
-  { onClickFront, onClickFloor, onClickElsewhere, onContextMenu, canReach, labelOf, contentsAt, colorOf, lighting = {} } = {},
+  { onClickFront, onClickFloor, onClickElsewhere, onContextMenu, canReach, labelOf, contentsAt, colorOf, lighting = {}, tickMs = 220 } = {},
 ) {
   const theme = readTheme();
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -125,11 +126,13 @@ export function createFirstPersonRenderer(
   // Creatures as their original sprites (fp-sprites.js, docs/067), or the markers of the 3D renderer.
   let useSprites = lighting.creatureSprites ?? DEFAULT_LIGHTING.creatureSprites;
   const sprites = createCreatureSprites({
+    tickMs,
     onLoaded() {
       if (!built || !useSprites) return;
       rebuildCreatures();
       render();
     },
+    onChanged: () => render(),
   });
 
   let level = null; // level index currently built
@@ -618,6 +621,10 @@ export function createFirstPersonRenderer(
       if (levelIndex !== level || !built) return;
       rebuildCreatures();
       render();
+    },
+    /** A group attacks the party: its attack picture (fp-sprites.js, docs/070). */
+    creatureAttacks(group) {
+      if (useSprites && sprites.attack(group)) render();
     },
     /** Items in flight on a level: [{ item, x, y, position (sub-tile) }]. */
     setProjectiles,

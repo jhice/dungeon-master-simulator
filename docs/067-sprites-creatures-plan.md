@@ -1,6 +1,6 @@
 # 067 — Plan : sprites d'origine des créatures dans la vue du jeu
 
-Suite de la doc 066. **S1 est faite (doc 068) ; S2 et S3 restent à faire.** Objectif : dans la vue à la 1re personne, remplacer les cylindres à nez par les sprites d'origine, en billboards, avec une option pour revenir aux cylindres.
+Suite de la doc 066. **S1 est faite (doc 068), S2 aussi (doc 070) ; S3 reste à faire.** Objectif : dans la vue à la 1re personne, remplacer les cylindres à nez par les sprites d'origine, en billboards, avec une option pour revenir aux cylindres.
 
 ## Décisions de l'utilisateur
 

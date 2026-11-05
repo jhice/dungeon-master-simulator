@@ -28,12 +28,13 @@ NO_VIEWS = {
     "Swamp_Slime", "Water_Elemental", "Wizard_Eye",
 }
 
-# Frame d'attaque choisie à l'œil (None : aucune frame ne s'impose).
+# Frame d'attaque choisie à l'œil (None : pas d'image d'attaque). DM n'en a pas pour le Giggler et le
+# Ruster : la frame 5 du Ruster est sa face en miroir, avec un décalage (doc 070).
 ATTACK = {
     "Animated_Armour": 7, "Black_Flame": 3, "Couatl": 8, "Demon": 7, "Dragon": 6,
     "Ghost": 4, "Giant_Wasp": 8, "Giggler": None, "Grey_Lord": None, "Lord_Chaos": 5,
     "Lord_Order": None, "Magenta_Worm": 5, "Materializer": 9, "Mummy": 5, "Oitu": 7,
-    "Pain_Rat": 6, "Rock_Pile": 1, "Ruster": 5, "Scorpion": 5, "Screamer": 1,
+    "Pain_Rat": 6, "Rock_Pile": 1, "Ruster": None, "Scorpion": 5, "Screamer": 1,
     "Skeleton": 6, "Stone_Golem": 5, "Swamp_Slime": 3, "Trolin": 7, "Vexirk": 5,
     "Water_Elemental": 2, "Wizard_Eye": 4,
 }
@@ -54,6 +55,22 @@ TYPE_BY_NAME = {
 COORDINATE_SET = {
     "Scorpion": 1, "Pain_Rat": 1, "Ruster": 1, "Stone_Golem": 1, "Black_Flame": 1,
     "Couatl": 1, "Magenta_Worm": 1, "Wizard_Eye": 2, "Giant_Wasp": 2,
+}
+
+# Durée de l'image d'attaque, en ticks (Encyclopaedia, Creature Details : Next attack aspect update ticks).
+ATTACK_TICKS = {
+    "Scorpion": 2, "Swamp_Slime": 3, "Giggler": 2, "Wizard_Eye": 1, "Pain_Rat": 1, "Ruster": 2,
+    "Screamer": 2, "Rock_Pile": 1, "Ghost": 1, "Stone_Golem": 4, "Mummy": 4, "Black_Flame": 1,
+    "Skeleton": 1, "Couatl": 1, "Vexirk": 6, "Magenta_Worm": 2, "Trolin": 3, "Giant_Wasp": 1,
+    "Animated_Armour": 1, "Materializer": 1, "Water_Elemental": 3, "Oitu": 2, "Demon": 1,
+    "Lord_Chaos": 5, "Dragon": 4, "Lord_Order": 5, "Grey_Lord": 5,
+}
+
+# Espèces dont l'attaque s'affiche au hasard normale ou en miroir (même page : Flip Attack).
+FLIP_ATTACK = {
+    "Scorpion", "Swamp_Slime", "Wizard_Eye", "Pain_Rat", "Ruster", "Rock_Pile", "Ghost", "Black_Flame",
+    "Couatl", "Vexirk", "Magenta_Worm", "Giant_Wasp", "Animated_Armour", "Materializer",
+    "Water_Elemental", "Oitu", "Demon", "Dragon",
 }
 
 VIEW_ROLES = {0: "front", 1: "side", 2: "back", 3: "side2"}
@@ -110,6 +127,8 @@ def extract(gif):
         "hasViews": name not in NO_VIEWS,
         "coordinateSet": COORDINATE_SET.get(name, 0),
         "attack": attack,
+        "attackTicks": ATTACK_TICKS[name],
+        "flipAttack": name in FLIP_ATTACK,
         "attackMirror": mirror,
         "frames": entries,
     }

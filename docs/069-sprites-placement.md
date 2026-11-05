@@ -33,7 +33,7 @@ Les valeurs de `coordinateSet` sont lues sur la page de l'Encyclopaedia, à la m
 |---|---|---|---|
 | Rangée arrière | 103 | -0,01 | -0,03 |
 | Centre | 111 | 0,25 | 0,22 |
-| Rangée avant, seul ou demi-case | 119 | 0,42 | 0,42 (`FRONT_ROW`) |
+| Rangée avant, seul ou demi-case | 119 | 0,42 | 0,42 (`FRONT_ROW` = 0,2 ; ramené ensuite à 0,01 par l'utilisateur, soit 0,23, doc 070) |
 | Rangée avant, quart de case | 119 | 0,42 | 0,47 (sa sous-case) |
 
 **Limite :** ces hauteurs sont relatives à l'écran. Notre champ de vision étant plus large que celui de DM, les créatures restent plus petites à l'écran que dans DM (une Mummy fait 60 % de la hauteur de vue dans DM), mais leur rapport avec le mur est le bon.

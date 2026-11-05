@@ -680,6 +680,7 @@ async function openGame() {
       labelOf: (t) => (sim.hand ? itemTooltip(sim.hand) : t?.spot?.item ? itemName(t.spot.item) : null),
       contentsAt,
       lighting: lighting(),
+      tickMs: TICK_MS,
     });
     const panel = createChampionPanel(win.viewport, {
       onAction: doAction,
@@ -1010,6 +1011,7 @@ sim.on('projectilesMoved', () => {
   });
 });
 sim.on('championHit', ({ result, damage }) => result === 'hit' && game?.panel.wounded(damage));
+sim.on('championHit', ({ group }) => group && game?.view.creatureAttacks(group));
 const deathCause = ({ group, spell, fall, wall }) =>
   group ? t('death.group', { name: describeGroup(dungeon, group).name }) : t(spell ? 'death.spell' : fall ? 'death.fall' : wall ? 'death.wall' : 'death.door');
 sim.on('championDied', (event) => say(t('death.message', { name: event.champion.name, cause: deathCause(event) })));
