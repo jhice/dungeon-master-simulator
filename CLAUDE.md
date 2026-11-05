@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-05, après la doc 067.
+> Mis à jour le 2026-11-05, après la doc 068.
 
 ### Données et visualiseur
 
@@ -111,8 +111,9 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Particules (doc 063) :** `src/render/particles.js` (sans DOM) et `first-person/fp-particles.js` : fumée à la mort d'une créature, éclat de la couleur du sort quand il explose ou s'éteint ; pour l'œil seulement.
 - **Escaliers (doc 064) :** `src/render/three/stairs-model.js` : tunnels fermés d'après les images de DM (marches couleur du sol, murs du niveau, plafond en pente lisse à la descente, rampes en bois, fondu au noir), qui passent au-dessus ou sous la case suivante ; option « Objets 3D » ; les cartes gardent leurs marches simples.
 - **Trappes et alcôves (doc 065) :** puits des trappes de couleur pleine, celle du sol, sans joints ; bord avec les joints du sol ; fond d'alcôve à la couleur la plus sombre de ses bords.
-- **Frames des créatures (doc 066) :** `tools/extract-creature-frames.py` exporte les GIFs de `assets/creatures/` en PNG, un sous-dossier par créature, avec `frames.json` (vues, attaque, espèce) et une planche de contrôle ; attaques validées ; pas encore utilisées par le rendu (plan des billboards : doc 067, phases S1 à S3).
-- **Tests Node :** `node tools/test-particles.mjs`, `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
+- **Frames des créatures (doc 066) :** `tools/extract-creature-frames.py` exporte les GIFs de `assets/creatures/` en PNG, un sous-dossier par créature, avec `frames.json` (vues, attaque, espèce) et une planche de contrôle ; attaques validées.
+- **Sprites des créatures (plan : doc 067) :** S1 faite (doc 068) : dans la vue du jeu, billboards des images d'origine (`first-person/fp-sprites.js`), vue selon la direction de la créature (`src/render/creature-views.js`), option « Original sprites » du panneau, cochée par défaut ; S2 (frame d'attaque) et S3 (mouvement sur place) en attente.
+- **Tests Node :** `node tools/test-sprites.mjs`, `node tools/test-particles.mjs`, `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
 
 ### En attente
 

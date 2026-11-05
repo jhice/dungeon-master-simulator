@@ -233,6 +233,7 @@ export default {
   'panel.movesHeading': 'Déplacements (vue du jeu)',
   'panel.occlusion': 'Lumière arrêtée par les murs',
   'panel.ornamentModels': 'Objets 3D',
+  'panel.creatureSprites': 'Sprites d\'origine',
   'panel.permanentLight': 'Lumière permanente (tout à 100 %)',
   'panel.range': 'Portée',
   'panel.rulers': 'Règles (coordonnées sur les bords)',

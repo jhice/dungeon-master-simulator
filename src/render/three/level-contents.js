@@ -32,10 +32,11 @@ const FACE_DIRECTION = [
  * @param {number} [options.alcoveDepth] the alcoves are real recesses of this depth: their items stand inside
  * @param {(level, x, y) => object|null} [options.contentsAt] contents of a tile (default: dungeon.json;
  *   the simulation passes the items lying there now)
+ * @param {boolean} [options.withCreatures] false: the caller draws the creatures itself
  * @returns {Array<THREE.InstancedMesh>} meshes with userData { part, layer, variant: 'all', tiles, baseOpacity };
  *   for items, tiles[i].item is the item ({ kind, index, position }); creatures: see buildLevelCreatures()
  */
-export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, contentsAt = (l, x, y) => tileContents(dungeon, l, x, y), alcoveDepth = 0 }) {
+export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, contentsAt = (l, x, y) => tileContents(dungeon, l, x, y), alcoveDepth = 0, withCreatures = true }) {
   const map = dungeon.level(levelIndex);
   const items = []; // { position: [x, y, z], color, info }
   const rings = []; // { position, info }
@@ -137,7 +138,7 @@ export function buildLevelContents(dungeon, levelIndex, center, { wallHeight, co
   if (writings.length) {
     meshes.push(instanced('texts', 'texts', new THREE.BoxGeometry(1, 1, 1), writings, levelIndex));
   }
-  meshes.push(...buildLevelCreatures(dungeon, levelIndex, center, { wallHeight, contentsAt }));
+  if (withCreatures) meshes.push(...buildLevelCreatures(dungeon, levelIndex, center, { wallHeight, contentsAt }));
   return meshes;
 }
 
@@ -183,7 +184,7 @@ export function buildLevelCreatures(dungeon, levelIndex, center, { wallHeight, c
   return meshes;
 }
 
-function* allTiles(dungeon, levelIndex) {
+export function* allTiles(dungeon, levelIndex) {
   const map = dungeon.level(levelIndex);
   for (let y = 0; y < map.height; y++) {
     for (let x = 0; x < map.width; x++) {

@@ -233,6 +233,7 @@ export default {
   'panel.movesHeading': 'Bewegung (Spielansicht)',
   'panel.occlusion': 'Wände halten das Licht auf',
   'panel.ornamentModels': '3D-Objekte',
+  'panel.creatureSprites': 'Original-Sprites',
   'panel.permanentLight': 'Dauerlicht (alles auf 100 %)',
   'panel.range': 'Reichweite',
   'panel.rulers': 'Lineale (Koordinaten an den Rändern)',

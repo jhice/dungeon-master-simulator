@@ -233,6 +233,7 @@ export default {
   'panel.movesHeading': 'Moves (game view)',
   'panel.occlusion': 'Light stopped by walls',
   'panel.ornamentModels': '3D objects',
+  'panel.creatureSprites': 'Original sprites',
   'panel.permanentLight': 'Permanent light (all at 100 %)',
   'panel.range': 'Range',
   'panel.rulers': 'Rulers (coordinates on the edges)',

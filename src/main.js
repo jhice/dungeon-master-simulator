@@ -428,6 +428,7 @@ const LIGHTING_SCHEMA = [
   { type: 'checkbox', key: 'occlusion', label: t('panel.occlusion') },
   { type: 'heading', label: t('panel.decorHeading') },
   { type: 'checkbox', key: 'ornamentModels', label: t('panel.ornamentModels') },
+  { type: 'checkbox', key: 'creatureSprites', label: t('panel.creatureSprites') },
 ];
 // Sounds (docs/041): kept in the preferences as the light.
 const knownAudio = (values) => Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => key in DEFAULT_AUDIO));
