@@ -611,10 +611,12 @@ export function createFirstPersonRenderer(
     lastPointer = null;
     tooltip.hidden = true;
   };
-  // Item in hand: a square of its colour replaces the cursor.
+  // Item in hand: its icon replaces the cursor (docs/076), or else a square of its colour.
   let handCursor = null;
-  function setHandCursor(color) {
-    if (!color) {
+  function setHandCursor(color, iconCursor = null) {
+    if (iconCursor) {
+      handCursor = iconCursor;
+    } else if (!color) {
       handCursor = null;
     } else {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect x="5" y="5" width="14" height="14" rx="2" fill="${color}" stroke="black" stroke-width="2"/><path d="M1 1 L8 3 L3 8 Z" fill="white" stroke="black"/></svg>`;
@@ -695,7 +697,7 @@ export function createFirstPersonRenderer(
       masksStale = true;
       render();
     },
-    /** Colour of the item in hand (cursor), or null for an empty hand. */
+    /** Colour of the item in hand (cursor), or null for an empty hand; its icon as a CSS cursor, if any (docs/076). */
     setHandCursor,
     /** What is under the pointer may have changed (item taken, put, hand changed): update cursor and tooltip. */
     refreshPointer() {

@@ -8,6 +8,7 @@
 // "Recommencer" button. The mouth, to drink, is under the item in hand of the game window (docs/050).
 
 import { t, gameText } from '../i18n/i18n.js';
+import { paintIcon } from './item-icons.js';
 
 const RESULT_MS = 440;
 const WOUND_MS = 880;
@@ -102,6 +103,7 @@ export function createChampionPanel(container, { onAction, onHand, onRestart }) 
       handSlots.forEach((slot, i) => {
         const item = handItems[i];
         slot.style.setProperty('--c', item?.color ?? 'transparent');
+        paintIcon(slot, item?.icon); // its icon, over the colour (docs/076)
         slot.classList.toggle('is-empty', !item);
         slot.title = `${t('common.labelled', { label: HAND_LABELS[i], value: item ? item.details ?? item.name : t('champion.handEmpty') })}\n${t('champion.swapHint')}`;
       });

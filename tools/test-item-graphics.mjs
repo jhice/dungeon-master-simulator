@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { Dungeon } from '../src/core/dungeon.js';
 import { ITEM_POOLS } from '../src/core/contents.js';
-import { floorPicture, globalIndex, itemType, coordinateSet, flipsOnRight, pileShift, projectileAspect, projectileView, scalesWithEnergy, MISSILE_PICTURE_COUNT, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
+import { floorPicture, globalIndex, itemType, coordinateSet, flipsOnRight, pileShift, projectileAspect, projectileView, scalesWithEnergy, itemIcon, ICON_COUNT, MISSILE_PICTURE_COUNT, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
 
 let failures = 0;
 const check = (ok, label) => {
@@ -94,6 +94,38 @@ check(view(2, S, N, 0, true, true).picture === 6 && view(2, S, N, 0, true, false
 check(view(2, S, N, 0).flipY && !view(2, S, N, 2).flipY, 'axe along the view: upside down on the far row');
 check(view(3, E, N).picture === 10 && view(9, N, N).picture === 26, 'lightning across: its side; throwing star along: its front');
 check(view(10, E, N).picture === 28 && !view(10, E, N).flipX, 'fireball: one picture, never mirrored');
+
+// --- Icons (docs/076) -------------------------------------------------------------
+const refOf = (kind, test) => {
+  const index = dungeon.data[ITEM_POOLS[kind]].findIndex(test);
+  return index < 0 ? null : { kind, index };
+};
+let iconless = 0;
+for (const kind of Object.keys(ITEM_POOLS)) {
+  dungeon.data[ITEM_POOLS[kind]].forEach((_, index) => {
+    const icon = itemIcon(dungeon, { kind, index });
+    if (icon === null || icon < 0 || icon >= ICON_COUNT) iconless++;
+  });
+}
+check(iconless === 0, `each item of the dungeon has an icon among the ${ICON_COUNT}`);
+const compass = refOf('miscellaneous', (e) => e.type === 0);
+check(compass && itemIcon(dungeon, compass, 0) === 0 && itemIcon(dungeon, compass, 3) === 3, 'compass: its needle follows the party (icons 0 to 3)');
+const torch = refOf('weapon', (e) => e.type === 2);
+const torchEntry = dungeon.data.weapons[torch.index];
+const saved = { lit: torchEntry.lit, charges: torchEntry.charges };
+Object.assign(torchEntry, { lit: false, charges: 15 });
+const unlit = itemIcon(dungeon, torch);
+Object.assign(torchEntry, { lit: true, charges: 15 });
+const bright = itemIcon(dungeon, torch);
+Object.assign(torchEntry, { lit: true, charges: 2 });
+const low = itemIcon(dungeon, torch);
+Object.assign(torchEntry, saved);
+check(unlit === 4 && bright === 7 && low === 5, 'torch: unlit 4, lit 5 to 7 by its charges');
+const scroll = { kind: 'scroll', index: 0 };
+check(itemIcon(dungeon, scroll) === 31, 'scroll: closed (31)');
+const name = (ref) => dungeon.data[ITEM_POOLS[ref.kind]][ref.index].name;
+const eye = refOf('weapon', (e) => e.type === 0);
+check(itemIcon(dungeon, eye) === (dungeon.data.weapons[eye.index].charges ? 17 : 16), `${name(eye)}: full icon with charges`);
 
 console.log(failures ? `\n${failures} failure(s)` : '\nall ok');
 process.exit(failures ? 1 : 0);

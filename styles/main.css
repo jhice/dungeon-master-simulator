@@ -801,6 +801,14 @@ body {
   border-color: #e8c050;
 }
 
+/* Icon of an item (src/ui/item-icons.js, docs/076): one cell of the atlas, on the grey of DM's slots. */
+.item-icon,
+.champion-hand.item-icon,
+.game-inventory .item-icon {
+  background: url('../assets/items/icons.png') var(--icon-x, 0) var(--icon-y, 0) / 1600% 1400% no-repeat, #444444;
+  image-rendering: pixelated;
+}
+
 .champion-bars {
   display: flex;
   flex: 1;
@@ -1148,8 +1156,16 @@ body {
   cursor: default;
 }
 
-.game-item {
-  border-left: 4px solid var(--c, #888) !important;
+/* An item of the inventory: its icon, the name on hover (docs/076). */
+.game-inventory .game-item {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 2px solid #555;
+}
+
+.game-inventory .game-item:hover {
+  border-color: #e8c050;
 }
 
 .game-hand-column {
@@ -1160,19 +1176,16 @@ body {
 }
 
 .game-hand {
-  padding: 0.1rem 0.45rem;
-  border: 1px solid var(--accent);
-  border-left: 4px solid var(--c, transparent);
+  align-self: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid var(--accent);
   border-radius: 3px;
-  background: #3a3226;
-  color: var(--accent);
-  white-space: nowrap;
 }
 
 .game-hand.is-empty {
   border-color: #444;
-  background: none;
-  color: var(--muted);
+  background: #2a2a2a;
 }
 
 /* Name of the item in hand, or of the item under the pointer, next to the pointer. */

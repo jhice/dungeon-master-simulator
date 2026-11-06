@@ -20,6 +20,8 @@ import { createGameWindow } from './ui/game-window.js';
 import { createChampionPanel } from './ui/champion-panel.js';
 import { createSpellPanel } from './ui/spell-panel.js';
 import { createSimulation } from './sim/simulation.js';
+import { itemIcon } from './core/item-graphics.js';
+import { iconsReady, iconCursor } from './ui/item-icons.js';
 import { isWaterskin } from './sim/water.js';
 import { DEFAULT_LIGHTING } from './render/first-person/lighting-settings.js';
 import { DEFAULT_AUDIO } from './audio/audio-settings.js';
@@ -693,6 +695,7 @@ async function openGame() {
       onCast: () => sim.castSpell(),
     });
     game = { window: win, view, panel, spells };
+    iconsReady.then(() => showInventory()); // the cursor needs the pixels of the icons
     view.setLight(sim.light);
     showInventory();
     game.clock = setInterval(() => {
@@ -838,7 +841,7 @@ function drink() {
 
 // The champion's box: bars, hands, actions of the action hand.
 function showChampion() {
-  const describe = (ref) => ref && { name: heldName(ref), color: CATEGORY_COLORS[ref.kind], details: itemTooltip(ref) };
+  const describe = (ref) => ref && { name: heldName(ref), color: CATEGORY_COLORS[ref.kind], details: itemTooltip(ref), icon: iconOf(ref) };
   game?.panel.update(
     sim.champion,
     sim.hands.map(describe),
@@ -876,13 +879,16 @@ function contentsAt(level, x, y) {
   return contents;
 }
 
+// Icon of an item (docs/076): its state as DM shows it (lit torch, needle of the compass…).
+const iconOf = (ref) => itemIcon(dungeon, ref, FACINGS.indexOf(sim.party.facing));
+
 function showInventory() {
-  const hand = sim.hand && { name: heldName(sim.hand), color: CATEGORY_COLORS[sim.hand.kind], details: itemTooltip(sim.hand) };
+  const hand = sim.hand && { name: heldName(sim.hand), color: CATEGORY_COLORS[sim.hand.kind], details: itemTooltip(sim.hand), icon: iconOf(sim.hand) };
   game?.window.setInventory(
-    sim.inventory.map((ref) => ({ name: heldName(ref), color: CATEGORY_COLORS[ref.kind], details: itemTooltip(ref) })),
+    sim.inventory.map((ref) => ({ name: heldName(ref), color: CATEGORY_COLORS[ref.kind], details: itemTooltip(ref), icon: iconOf(ref) })),
     hand,
   );
-  game?.view.setHandCursor(hand?.color ?? null);
+  game?.view.setHandCursor(hand?.color ?? null, iconCursor(hand?.icon));
   game?.view.refreshPointer();
   showChampion();
 }
@@ -898,8 +904,13 @@ function showStatus() {
   game?.window.setStatus(t('game.status', { level, x, y, facing: FACING_LABELS[facing], light }));
 }
 
+let shownFacing = null; // the needle of a compass follows the party (docs/076)
 function showParty(party, duration = 0) {
   if (!game) return;
+  if (party.facing !== shownFacing) {
+    shownFacing = party.facing;
+    showInventory();
+  }
   game.view.setParty(party, duration);
   showStatus();
   if (!renderer) return; // being mounted: mountRenderer() places the party

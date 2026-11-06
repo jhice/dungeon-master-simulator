@@ -5,6 +5,7 @@
 // Below the viewport, a message area (as in DM) prints the messages of the dungeon.
 
 import { t } from '../i18n/i18n.js';
+import { paintIcon } from './item-icons.js';
 
 const MIN_WIDTH = 240;
 const DEFAULT_WIDTH = 480;
@@ -137,17 +138,19 @@ export function createGameWindow({ layout, onLayoutChange, onClose, onReset, onS
     },
     /** Items carried: [{ name, color, details? }], and the item in hand ({ name, color, details? } or null). */
     setInventory(items, hand) {
-      handSlot.textContent = hand ? t('game.held', { name: hand.name }) : t('game.nothingHeld');
-      handSlot.title = hand?.details ?? '';
+      // Icons (docs/076): the name and details on hover.
+      handSlot.title = hand ? t('game.held', { name: hand.details ?? hand.name }) : t('game.nothingHeld');
+      handSlot.setAttribute('aria-label', hand ? t('game.held', { name: hand.name }) : t('game.nothingHeld'));
       handSlot.classList.toggle('is-empty', !hand);
-      handSlot.style.setProperty('--c', hand?.color ?? 'transparent');
+      paintIcon(handSlot, hand?.icon);
       stowButton.disabled = !hand;
       mouth.disabled = !hand;
       chips.replaceChildren(
         ...items.map((item, i) => {
-          const chip = button(item.name, `${item.details ?? item.name}\n${t('game.takeHint')}`, () => onSelectItem?.(i));
+          const chip = button('', `${item.details ?? item.name}\n${t('game.takeHint')}`, () => onSelectItem?.(i));
           chip.className = 'game-item';
-          chip.style.setProperty('--c', item.color);
+          chip.setAttribute('aria-label', item.name);
+          paintIcon(chip, item.icon);
           return chip;
         }),
       );

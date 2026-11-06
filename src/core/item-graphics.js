@@ -203,3 +203,35 @@ export function projectileView(aspect, flight, facing, cell, onRight, oddTile) {
     flipY: spinsWithBack && viewCell < 2,
   };
 }
+
+// --- Icons (docs/076) -------------------------------------------------------------------------------------------
+// Icon of an item in hand or in the inventory (graphics 42 to 48, assets/items/icons.png, 16 per row): its global
+// index, changed by its state as F033 (ReDMCSB OBJECT.C) does it.
+export const ICON_COUNT = 224;
+export const ICON_SIZE = 16;
+export const ICON_BACKGROUND = '#444444'; // colour 12, on which DM draws the icons
+const COMPASS = 0;
+const TORCH = 4;
+const WATERSKIN_EMPTY = 8;
+const SCROLL_OPEN = 30;
+// Lit torch: + 1 to 3 by its charges (G029, as ScummVM gives it: engines/dm/objectman.cpp).
+const TORCH_FLAME = [0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3];
+// Weapons whose icon is "empty" without charges: Eye Of Time, Flamitt, Stormring, Staff Of Claws, Bolt Blade, Fury.
+const CHARGED = new Set([16, 14, 18, 20, 23, 25]);
+
+/**
+ * Icon index of an item reference ({ kind, index }), or null.
+ * @param {number} [facing] direction of the party, 0..3: the needle of the compass
+ */
+export function itemIcon(dungeon, ref, facing = 0) {
+  const entry = dungeon.data[ITEM_POOLS[ref.kind]]?.[ref.index];
+  if (!entry) return null;
+  const icon = globalIndex(ref.kind, entry.type ?? 0);
+  if (icon === null) return null;
+  if (icon === COMPASS) return icon + facing;
+  if (icon === TORCH) return entry.lit ? icon + TORCH_FLAME[Math.min(entry.charges ?? 0, 15)] : icon;
+  if (icon === SCROLL_OPEN) return icon + 1; // closed: the scrolls are not opened yet
+  if (icon === WATERSKIN_EMPTY) return entry.subtype ? icon + 1 : icon;
+  if (CHARGED.has(icon)) return entry.charges ? icon + 1 : icon;
+  return icon;
+}

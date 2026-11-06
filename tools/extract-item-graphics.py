@@ -13,6 +13,9 @@ Produit :
   assets/items/missiles/NN.png    les 32 images des projectiles (graphismes 454 à 485, « Missile … » :
                                   armes lancées de face, de dos, de côté, et sorts), doc 075
   assets/items/missiles/labels.json  NN -> libellé de SCK
+  assets/items/icons.png          les 224 icônes d'inventaire (graphismes 42 à 48, 7 planches de 32 icônes
+                                  de 16 × 16), empilées : l'icône n est en x = (n % 16) × 16,
+                                  y = ⌊n / 16⌋ × 16 ; la couleur 12 (fond des cases) transparente, doc 076
   docs/assets/item-floor.png      planche de contrôle, agrandie 3 fois
 
 La couleur 10 (« flesh ») est la couleur transparente des objets : DM la passe au blit
@@ -32,6 +35,9 @@ SHEET = ROOT / "docs" / "assets" / "item-floor.png"
 FIRST_FLOOR, COUNT_FLOOR = 498, 86
 MISSILES_OUT = ROOT / "assets" / "items" / "missiles"
 FIRST_MISSILE, COUNT_MISSILE = 454, 32
+ICONS_OUT = ROOT / "assets" / "items" / "icons.png"
+FIRST_ICONS, COUNT_ICON_SHEETS = 42, 7
+ICON_BACKGROUND = 12  # DM draws the icons on this grey without transparency; transparent here (cursor)
 TRANSPARENT = 10
 ZOOM = 3
 
@@ -83,6 +89,16 @@ def main():
         missile_labels[f"{n:02d}"] = label
         transparent(Image.open(path)).save(MISSILES_OUT / f"{n:02d}.png", transparency=TRANSPARENT)
     (MISSILES_OUT / "labels.json").write_text(json.dumps(missile_labels, indent=1, ensure_ascii=False) + "\n")
+
+    # Icons: the 7 sheets (256 × 32, 16 icons per row) one below the other.
+    sheets = [Image.open(files[FIRST_ICONS + k][0]) for k in range(COUNT_ICON_SHEETS)]
+    atlas = Image.new("P", (256, 32 * COUNT_ICON_SHEETS))
+    atlas.putpalette(sheets[0].getpalette())
+    for k, sheet in enumerate(sheets):
+        atlas.paste(sheet, (0, 32 * k))
+    atlas.save(ICONS_OUT, transparency=ICON_BACKGROUND)
+    r, g, b = sheets[0].getpalette()[ICON_BACKGROUND * 3 : ICON_BACKGROUND * 3 + 3]
+    print(f"icons -> {ICONS_OUT.relative_to(ROOT)}, background #{r:02x}{g:02x}{b:02x}")
 
     # Contact sheet: 6 columns, each picture zoomed on a grey cell with its number.
     cols, cell_w, cell_h = 6, 90 * ZOOM // 2 + 20, 30 * ZOOM + 24
