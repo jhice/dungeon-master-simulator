@@ -9,11 +9,12 @@
 
 import * as THREE from 'three';
 import { subcellOffset } from '../../core/contents.js';
-import { floorPicture, itemType, coordinateSet, flipsOnRight, pileShift, FLOOR_PICTURE_COUNT } from '../../core/item-graphics.js';
+import { floorPicture, itemType, coordinateSet, flipsOnRight, pileShift, FLOOR_PICTURE_COUNT, MISSILE_PICTURE_COUNT } from '../../core/item-graphics.js';
 import { allTiles } from '../three/level-contents.js';
 import { NICHE } from '../three/level-meshes.js';
 
 const BASE = 'assets/items/floor/';
+const MISSILES = 'assets/items/missiles/'; // projectiles (docs/075)
 // The scale of the creatures (fp-sprites.js): DM draws both at their size at D1.
 const PIXELS_PER_TILE = 160;
 const ALPHA_CUT = 0.5;
@@ -50,6 +51,7 @@ const FACE_DIRECTION = [
 export function createItemSprites({ onLoaded }) {
   const loader = new THREE.TextureLoader();
   let textures = null; // picture number -> texture, once all are loaded
+  let missiles = null; // the same, for the projectiles
   let loading = false;
   let shown = []; // { mesh, floor: [{ index, x, z, cx, cz, shift, nearer, flips, scale }] }: they follow the camera
   let pose = { x: 0, y: 0, turns: 0 }; // of the camera: its tile and quarter turns
@@ -62,19 +64,21 @@ export function createItemSprites({ onLoaded }) {
   function load() {
     if (loading) return;
     loading = true;
-    const numbers = Array.from({ length: FLOOR_PICTURE_COUNT }, (_, n) => n);
-    Promise.all(
-      numbers.map(async (n) => {
-        const texture = await loader.loadAsync(`${BASE}${String(n).padStart(2, '0')}.png`);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-        texture.generateMipmaps = false;
-        return [n, texture];
-      }),
-    )
-      .then((list) => {
-        textures = new Map(list);
+    const all = (base, count) =>
+      Promise.all(
+        Array.from({ length: count }, async (_, n) => {
+          const texture = await loader.loadAsync(`${base}${String(n).padStart(2, '0')}.png`);
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          texture.generateMipmaps = false;
+          return [n, texture];
+        }),
+      ).then((list) => new Map(list));
+    Promise.all([all(BASE, FLOOR_PICTURE_COUNT), all(MISSILES, MISSILE_PICTURE_COUNT)])
+      .then(([floor, flying]) => {
+        textures = floor;
+        missiles = flying;
         onLoaded();
       })
       .catch((error) => console.warn('Item sprites: pictures missing', error));
@@ -198,10 +202,14 @@ export function createItemSprites({ onLoaded }) {
       place();
       // The planes turn about their own foot: their bounding spheres barely change.
     },
+    /** Texture of a floor picture or ('missile') of a projectile picture, or null while they load. */
+    texture(picture, missile = false) {
+      return (missile ? missiles : textures)?.get(picture) ?? null;
+    },
     dispose() {
       shown = [];
-      for (const texture of textures?.values() ?? []) texture.dispose();
-      textures = null;
+      for (const texture of [...(textures?.values() ?? []), ...(missiles?.values() ?? [])]) texture.dispose();
+      textures = missiles = null;
       loading = false;
     },
   };

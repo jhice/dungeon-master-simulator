@@ -123,3 +123,83 @@ export function pileShift(cell, rank, inAlcove = false) {
   const [x, y] = PILE_SHIFTS[index];
   return { x: SHIFT_SET_0[x], y: SHIFT_SET_0[y] };
 }
+
+// --- Projectiles (docs/075) -------------------------------------------------------------------------------------
+// Pictures of the projectiles (graphics.dat item 558, "Projectile graphics definitions", 14 aspects; ReDMCSB
+// DUNVIEW.C, F115), numbered from the first (assets/items/missiles/NN.png). Aspect types (GraphicInfo & 3):
+// 0 back view and spin (axe, clubs), 1 back view (arrow, dagger…), 2 no back view, spin (lightning, star),
+// 3 neither (spells). `side`: there is a side view (after the back view if any). `magic`: the size follows the
+// energy of the projectile.
+export const MISSILE_PICTURE_COUNT = 32;
+// prettier-ignore
+const PROJECTILE_ASPECTS = [
+  { first: 0, type: 1, side: true }, // arrow
+  { first: 3, type: 1, side: true }, // dagger
+  { first: 6, type: 0, side: true }, // axe, hardcleave
+  { first: 9, type: 2, side: true, magic: true }, // lightning bolt
+  { first: 11, type: 1, side: true }, // slayer
+  { first: 14, type: 0, side: true }, // stone club
+  { first: 17, type: 0, side: true }, // club
+  { first: 20, type: 1, side: true }, // poison dart
+  { first: 23, type: 1, side: true }, // swords
+  { first: 26, type: 2, side: true }, // throwing star
+  { first: 28, type: 3, magic: true }, // fireball
+  { first: 29, type: 3, magic: true }, // other spells (Zo, harm non-material…)
+  { first: 30, type: 3, magic: true }, // poison blob (slime)
+  { first: 31, type: 3, magic: true }, // poison bolt, poison cloud
+];
+// Weapons thrown with a picture of their own (graphics.dat item 559, weapon descriptors, bits 12-8), by type;
+// the others fly as their floor picture.
+// prettier-ignore
+const WEAPON_PROJECTILE = {
+  27: 0, 8: 1, 18: 2, 19: 2, 28: 4, 24: 5, 23: 6, 31: 7, 32: 9,
+  5: 8, 6: 8, 9: 8, 10: 8, 11: 8, 12: 8, 13: 8, 14: 8, 15: 8, 17: 8, // swords
+};
+// Spells in flight (F142): fireball, lightning, poison; any other the default picture.
+const SPELL_PROJECTILE = { fireball: 10, lightningBolt: 3, poisonBolt: 13, poisonCloud: 13, slime: 12 };
+const DEFAULT_SPELL_PROJECTILE = 11;
+
+/** Projectile aspect (index above) of a thrown item ({ kind, type }) or a spell, or null: the item flies as on the floor. */
+export function projectileAspect({ kind, type, spell }) {
+  if (spell) return SPELL_PROJECTILE[spell] ?? DEFAULT_SPELL_PROJECTILE;
+  return kind === 'weapon' ? (WEAPON_PROJECTILE[type] ?? null) : null;
+}
+
+/** Does the size of this aspect follow the energy of the projectile (spells)? */
+export const scalesWithEnergy = (aspect) => Boolean(PROJECTILE_ASPECTS[aspect].magic);
+
+/**
+ * The picture of a projectile as the party sees it, as F115 chooses it: { picture (assets/items/missiles/NN),
+ * flipX, flipY }.
+ * @param {number} aspect projectileAspect()
+ * @param {number} flight direction of the flight, 0..3 (N, E, S, W)
+ * @param {number} facing direction of the party, 0..3
+ * @param {number} cell sub-tile of the projectile, 0..3 (NW, NE, SE, SW)
+ * @param {boolean} onRight right of the party's column (DM: lane on the right, or right column of the middle lane)
+ * @param {boolean} oddTile (x + y) of its tile is odd: a spinning projectile shows its other face
+ */
+export function projectileView(aspect, flight, facing, cell, onRight, oddTile) {
+  const { first, type, side } = PROJECTILE_ASPECTS[aspect];
+  if (type === 3) return { picture: first, flipX: false, flipY: false };
+  // View cell as DM numbers it: 0 far left, 1 far right, 2 near right, 3 near left.
+  const viewCell = (cell - facing + 4) % 4;
+  const spinsWithBack = type === 0;
+  if (flight % 2 !== facing % 2) {
+    // Across the view: its side view, pointing left; mirrored when it flies to the right.
+    let flipX = flight === (facing + 1) % 4;
+    let flipY = false;
+    if (spinsWithBack) {
+      flipY = oddTile;
+      flipX = viewCell === 0 || viewCell === 3;
+      if (!flipY) flipX = !flipX;
+    }
+    return { picture: first + (type === 2 ? 1 : 2), flipX, flipY };
+  }
+  // Along the view: its front, or its back when it flies away (spinning: every other tile).
+  const front = type >= 2 || (type === 1 && flight !== facing) || (spinsWithBack && oddTile);
+  return {
+    picture: first + (front ? 0 : 1),
+    flipX: Boolean(side) && !onRight,
+    flipY: spinsWithBack && viewCell < 2,
+  };
+}

@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { Dungeon } from '../src/core/dungeon.js';
 import { ITEM_POOLS } from '../src/core/contents.js';
-import { floorPicture, globalIndex, itemType, coordinateSet, flipsOnRight, pileShift, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
+import { floorPicture, globalIndex, itemType, coordinateSet, flipsOnRight, pileShift, projectileAspect, projectileView, scalesWithEnergy, MISSILE_PICTURE_COUNT, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
 
 let failures = 0;
 const check = (ok, label) => {
@@ -70,6 +70,30 @@ check(same(pileShift(0, 0, true), { x: -3, y: -1 }) && same(pileShift(1, 4, true
 check(same(pileShift(0, 12, true), pileShift(0, 0, true)), 'alcove: 12 pairs, then again');
 const shifts = [0, 1, 2, 3].flatMap((cell) => Array.from({ length: 16 }, (_, rank) => pileShift(cell, rank)));
 check(shifts.every(({ x, y }) => Math.abs(x) <= 3 && Math.abs(y) <= 3), 'pile shifts within 3 pixels');
+
+// --- Projectiles (docs/075) -----------------------------------------------------
+const missileLabels = JSON.parse(readFileSync(new URL('../assets/items/missiles/labels.json', import.meta.url)));
+check(Object.keys(missileLabels).length === MISSILE_PICTURE_COUNT, `${MISSILE_PICTURE_COUNT} missile pictures labelled`);
+const [N, E, S, W] = [0, 1, 2, 3];
+// Every weapon with a picture of its own: its front picture is labelled with its name.
+const weaponNames = dungeon.data.catalog.weapon;
+for (const [type, name] of Object.entries(weaponNames)) {
+  const aspect = projectileAspect({ kind: 'weapon', type: Number(type) });
+  if (aspect === null) continue;
+  const { picture } = projectileView(aspect, N, S, 0, true, true); // flying towards the party (spinning ones: on an odd tile): its front
+  const label = missileLabels[String(picture).padStart(2, '0')];
+  if (!label.includes('(Front)') || !label.toLowerCase().includes(name.toLowerCase())) check(false, `${name}: front picture ${picture} (${label})`);
+}
+check(projectileAspect({ kind: 'weapon', type: 27 }) === 0 && projectileAspect({ kind: 'cloth', type: 0 }) === null && projectileAspect({ kind: 'weapon', type: 2 }) === null, 'arrow has its picture; clothes and torch fly as on the floor');
+check(projectileAspect({ spell: 'fireball' }) === 10 && projectileAspect({ spell: 'openDoor' }) === 11 && scalesWithEnergy(10) && !scalesWithEnergy(0), 'spells: fireball, default picture (Zo); their size follows the energy');
+const view = (aspect, flight, facing, cell = 0, onRight = true, odd = false) => projectileView(aspect, flight, facing, cell, onRight, odd);
+check(view(0, S, N).picture === 0 && view(0, N, N).picture === 1, 'arrow along the view: front when it comes, back when it goes away');
+check(view(0, E, N).picture === 2 && view(0, E, N).flipX && !view(0, W, N).flipX, 'arrow across the view: side view, mirrored when it flies to the right');
+check(view(0, S, N, 0, false).flipX && !view(0, S, N, 0, true).flipX, 'arrow seen from the front: mirrored on the left of the view');
+check(view(2, S, N, 0, true, true).picture === 6 && view(2, S, N, 0, true, false).picture === 7 && view(2, N, N, 0, true, true).picture === 6, 'axe along the view: it spins, front on odd tiles and back on even ones, whichever way it flies');
+check(view(2, S, N, 0).flipY && !view(2, S, N, 2).flipY, 'axe along the view: upside down on the far row');
+check(view(3, E, N).picture === 10 && view(9, N, N).picture === 26, 'lightning across: its side; throwing star along: its front');
+check(view(10, E, N).picture === 28 && !view(10, E, N).flipX, 'fireball: one picture, never mirrored');
 
 console.log(failures ? `\n${failures} failure(s)` : '\nall ok');
 process.exit(failures ? 1 : 0);

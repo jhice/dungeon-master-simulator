@@ -10,6 +10,9 @@ Produit :
   assets/items/floor/NN.png       les 86 images des objets au sol (graphismes 498 à 583,
                                   « Item on floor NN »), la couleur 10 transparente
   assets/items/floor/labels.json  NN -> objets que DM dessine avec cette image (libellés de SCK)
+  assets/items/missiles/NN.png    les 32 images des projectiles (graphismes 454 à 485, « Missile … » :
+                                  armes lancées de face, de dos, de côté, et sorts), doc 075
+  assets/items/missiles/labels.json  NN -> libellé de SCK
   docs/assets/item-floor.png      planche de contrôle, agrandie 3 fois
 
 La couleur 10 (« flesh ») est la couleur transparente des objets : DM la passe au blit
@@ -27,6 +30,8 @@ DEFAULT_SRC = Path("/home/jhice/Gamedev/sck@1.5.1@20110502.0/sck/output/graphics
 FLOOR_OUT = ROOT / "assets" / "items" / "floor"
 SHEET = ROOT / "docs" / "assets" / "item-floor.png"
 FIRST_FLOOR, COUNT_FLOOR = 498, 86
+MISSILES_OUT = ROOT / "assets" / "items" / "missiles"
+FIRST_MISSILE, COUNT_MISSILE = 454, 32
 TRANSPARENT = 10
 ZOOM = 3
 
@@ -67,6 +72,17 @@ def main():
         image.save(FLOOR_OUT / f"{n:02d}.png", transparency=TRANSPARENT)
         images.append((n, image))
     (FLOOR_OUT / "labels.json").write_text(json.dumps(labels, indent=1, ensure_ascii=False) + "\n")
+
+    # Projectiles: same transparency; numbered from the first (graphic 316 of the Atari ST, 454 here).
+    MISSILES_OUT.mkdir(parents=True, exist_ok=True)
+    for old in MISSILES_OUT.glob("*.png"):
+        old.unlink()
+    missile_labels = {}
+    for n in range(COUNT_MISSILE):
+        path, label = files[FIRST_MISSILE + n]
+        missile_labels[f"{n:02d}"] = label
+        transparent(Image.open(path)).save(MISSILES_OUT / f"{n:02d}.png", transparency=TRANSPARENT)
+    (MISSILES_OUT / "labels.json").write_text(json.dumps(missile_labels, indent=1, ensure_ascii=False) + "\n")
 
     # Contact sheet: 6 columns, each picture zoomed on a grey cell with its number.
     cols, cell_w, cell_h = 6, 90 * ZOOM // 2 + 20, 30 * ZOOM + 24

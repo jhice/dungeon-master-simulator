@@ -2,7 +2,7 @@
 
 Suite des docs 067 à 071, qui ont fait la même chose pour les créatures. Objectif : dans la vue à la 1re personne, remplacer les blocs colorés des objets (`level-contents.js`, `BoxGeometry`) par les images d'origine de DM, en billboards, avec une option pour revenir aux blocs.
 
-**Statut : questions tranchées (§ 8), I1 faite (doc 073), I2 faite (doc 074).** Décisions : images prises dans l'extraction locale de graphics.dat de l'utilisateur (SCK), rien à télécharger ; les quatre phases ; billboards ; une seule option, « Original sprites » ; en I4, la barre d'inventaire montre les icônes, le nom au survol ; les particules restent pour les effets des sorts.
+**Statut : questions tranchées (§ 8), I1 faite (doc 073), I2 faite (doc 074), I3 faite (doc 075).** Décisions : images prises dans l'extraction locale de graphics.dat de l'utilisateur (SCK), rien à télécharger ; les quatre phases ; billboards ; une seule option, « Original sprites » ; en I4, la barre d'inventaire montre les icônes, le nom au survol ; les particules restent pour les effets des sorts.
 
 ## 1. Les images disponibles
 

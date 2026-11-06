@@ -31,6 +31,7 @@ import { createOcclusion, opaqueTile } from './fp-occlusion.js';
 import { createParticleView } from './fp-particles.js';
 import { createCreatureSprites } from './fp-sprites.js';
 import { createItemSprites } from './fp-item-sprites.js';
+import { floorPicture, flipsOnRight, itemType, projectileAspect, projectileView, scalesWithEnergy } from '../../core/item-graphics.js';
 import { SPELL_COLORS } from '../particles.js';
 import { lightMasks, updateLightMask } from './light-masks.js';
 import { DEFAULT_LIGHTING } from './lighting-settings.js';
@@ -347,7 +348,9 @@ export function createFirstPersonRenderer(
     retired = [];
   }
 
-  // Items in flight: a small cube each, at the centre of its sub-tile, at hand height.
+  // Items in flight: a small cube each, at the centre of its sub-tile, at hand height. With the original sprites
+  // (docs/075), their pictures as DM draws them (F115): a weapon with pictures of its own shows its front, back
+  // or side, the others fly as on the floor; a spell, its picture, sized by its energy.
   const PROJECTILE_HEIGHT = 0.32;
   const SUB_TILE = [[0.25, 0.25], [0.75, 0.25], [0.75, 0.75], [0.25, 0.75]]; // NW, NE, SE, SW
   const projectileGeometry = new THREE.BoxGeometry(0.09, 0.09, 0.09);
@@ -357,18 +360,75 @@ export function createFirstPersonRenderer(
   const SPELL_RADIUS = 0.12;
   const spellGeometry = new THREE.SphereGeometry(1, 16, 12);
   const SPELL_HEIGHT = 0.45;
+  // DM draws every projectile on one line of the screen (y 47 of 136): the middle of a projectile picture, the
+  // bottom of an item flying as on the floor. Against its walls, about 0.73 of their height at D1, more further:
+  // here a fixed height, 0.5 tile (0.71 of a wall), above the eye, so that they do not sit on the vanishing point.
+  const FLIGHT_LINE = 0.5;
   const projectileGroup = new THREE.Group();
   scene.add(projectileGroup);
+  const energyScale = (energy) => Math.max(96, energy + 1) / 256;
+
+  // The picture of a projectile, or null (pictures not there, or option off): a plane facing the camera.
+  function projectileSprite(p, [u, v]) {
+    if (!useSprites || !party) return null;
+    const facing = FACINGS.indexOf(party.facing);
+    const flight = FACINGS.indexOf(p.direction);
+    const type = p.item ? itemType(dungeon, p.item) : 0;
+    const aspect = projectileAspect(p.spell ? { spell: p.spell } : { kind: p.item.kind, type });
+    const [rightX, rightZ] = [[1, 0], [0, 1], [-1, 0], [0, -1]][facing];
+    const onRight = (p.x + u - (party.x + 0.5)) * rightX + (p.y + v - (party.y + 0.5)) * rightZ > 0;
+    let texture;
+    let flip = { flipX: false, flipY: false };
+    let centred = true;
+    let scale = 1;
+    if (aspect !== null) {
+      flip = projectileView(aspect, flight, facing, p.position, onRight, (p.x + p.y) % 2 === 1);
+      texture = itemSprites.texture(flip.picture, true);
+      if (scalesWithEnergy(aspect)) scale = energyScale(p.energy);
+    } else {
+      const picture = floorPicture(p.item.kind, type);
+      texture = itemSprites.texture(picture);
+      flip.flipX = flipsOnRight(picture) && onRight;
+      centred = false;
+    }
+    if (!texture) return null;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    if (!centred) geometry.translate(0, 0.5, 0);
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+      if (flip.flipX) uv.setX(i, 1 - uv.getX(i));
+      if (flip.flipY) uv.setY(i, 1 - uv.getY(i));
+    }
+    // A spell glows: not lit. A thrown item is lit as the rest.
+    const options = { map: texture, alphaTest: 0.5 };
+    const material = p.spell ? new THREE.MeshBasicMaterial(options) : new THREE.MeshLambertMaterial(options);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.scale.set((texture.image.width / 160) * scale, (texture.image.height / 160) * scale, 1);
+    mesh.position.set(p.x + u, FLIGHT_LINE, p.y + v);
+    mesh.rotation.y = -cameraTurns * (Math.PI / 2);
+    mesh.userData.sprite = true; // own geometry, faces the camera
+    return mesh;
+  }
+
   function setProjectiles(levelIndex, list) {
-    for (const mesh of projectileGroup.children) mesh.material.dispose();
+    for (const mesh of projectileGroup.children) {
+      mesh.material.dispose();
+      if (mesh.userData.sprite) mesh.geometry.dispose();
+    }
     projectileGroup.clear();
     if (levelIndex !== level) return render();
     for (const p of list) {
-      const [u, v] = SUB_TILE[p.position];
+      const spot = SUB_TILE[p.position];
+      const [u, v] = spot;
+      const sprite = projectileSprite(p, spot);
+      if (sprite) {
+        projectileGroup.add(sprite);
+        continue;
+      }
       if (p.spell) {
         const mesh = new THREE.Mesh(spellGeometry, new THREE.MeshBasicMaterial({ color: SPELL_COLORS[p.spell] ?? '#ffffff' }));
         mesh.position.set(p.x + u, SPELL_HEIGHT, p.y + v);
-        mesh.scale.setScalar((SPELL_RADIUS * Math.max(96, p.energy + 1)) / 256);
+        mesh.scale.setScalar(SPELL_RADIUS * energyScale(p.energy));
         projectileGroup.add(mesh);
         continue;
       }
@@ -406,7 +466,10 @@ export function createFirstPersonRenderer(
     camera.rotation.set(0, yaw, 0);
     sprites.face(turns);
     itemSprites.face({ x, y, turns });
+    cameraTurns = turns;
+    for (const mesh of projectileGroup.children) if (mesh.userData.sprite) mesh.rotation.y = yaw; // facing the camera
   }
+  let cameraTurns = 0;
 
   // The pose of the party comes from the motion (motion.js). The mask of its light follows the eye at
   // each frame, even inside a tile: in a turn, the eye goes around the centre of the tile and sees

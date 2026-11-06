@@ -39,7 +39,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 
 ## Etat du projet
 
-> Mis à jour le 2026-11-06, après la doc 074.
+> Mis à jour le 2026-11-06, après la doc 075.
 
 ### Données et visualiseur
 
@@ -113,7 +113,7 @@ Analyser le fichier XML en se concentrant d'abord sur
 - **Trappes et alcôves (doc 065) :** puits des trappes de couleur pleine, celle du sol, sans joints ; bord avec les joints du sol ; fond d'alcôve à la couleur la plus sombre de ses bords.
 - **Frames des créatures (doc 066) :** `tools/extract-creature-frames.py` exporte les GIFs de `assets/creatures/` en PNG, un sous-dossier par créature, avec `frames.json` (vues, attaque, espèce) et une planche de contrôle ; attaques validées.
 - **Sprites des créatures (plan : doc 067) :** S1 faite (doc 068) : dans la vue du jeu, billboards des images d'origine (`first-person/fp-sprites.js`), vue selon la direction de la créature (`src/render/creature-views.js`), option « Original sprites » du panneau, cochée par défaut ; placement d'après les données de DM : pieds, volants, créatures d'une demi-case (doc 069) ; image d'attaque, durée et miroir selon DM (S2, doc 070) ; mouvement sur place codé d'après DM, décalages et miroir par espèce (S3, doc 071) ; espacement des groupes `GROUP_SPREAD`.
-- **Sprites des objets (plan : doc 072) :** I1 faite (doc 073) : images d'origine des objets au sol et en alcôve (`assets/items/floor/`, `tools/extract-item-graphics.py` depuis l'extraction SCK locale), table objet → image `src/core/item-graphics.js`, billboards `first-person/fp-item-sprites.js`, même option « Original sprites » ; clic sur le sol d'une sous-case = objet du dessus ; I2 faite (doc 074) : piles décalées, miroir à droite (coffre, boîtes magiques, maillage jumeau aux UV inversées), jeux de coordonnées de DM. I3 (projectiles), I4 (icônes, barre d'inventaire) en attente.
+- **Sprites des objets (plan : doc 072) :** I1 faite (doc 073) : images d'origine des objets au sol et en alcôve (`assets/items/floor/`, `tools/extract-item-graphics.py` depuis l'extraction SCK locale), table objet → image `src/core/item-graphics.js`, billboards `first-person/fp-item-sprites.js`, même option « Original sprites » ; clic sur le sol d'une sous-case = objet du dessus ; I2 faite (doc 074) : piles décalées, miroir à droite (coffre, boîtes magiques, maillage jumeau aux UV inversées), jeux de coordonnées de DM ; I3 faite (doc 075) : projectiles en images de DM (`assets/items/missiles/`, `projectileView()` d'après `F115` : face, dos, côté, miroirs, rotation), sorts à leur image, explosions en particules. I4 (icônes, barre d'inventaire) en attente.
 - **Tests Node :** `node tools/test-sprites.mjs`, `node tools/test-item-graphics.mjs`, `node tools/test-particles.mjs`, `node tools/test-motion.mjs`, `node tools/test-creatures.mjs`, `node tools/test-combat.mjs`, `node tools/test-loot.mjs`, `node tools/test-logic.mjs`, `node tools/test-doors.mjs`, `node tools/test-spells.mjs`, `node tools/test-light.mjs`, `node tools/test-magic.mjs`, `node tools/test-sounds.mjs`, `node tools/test-map-tools.mjs`, `node tools/test-water.mjs`, `node tools/test-falls-doors.mjs`, `node tools/test-i18n.mjs`.
 
 ### En attente
