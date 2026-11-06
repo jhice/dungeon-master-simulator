@@ -43,7 +43,7 @@ Phase I3 du plan de la doc 072. Avec l'option « Original sprites », les objets
 ## 3. Rendu (`fp-renderer.js`, `setProjectiles`)
 
 - Un plan face à la caméra par projectile. Son lacet suit la caméra pendant un quart de tour (`placeCamera`). Les miroirs sont faits en inversant les UV de sa géométrie.
-- **Hauteur :** DM dessine tous les projectiles sur la même ligne de l'écran (y 47 sur 136), au milieu de l'image d'un projectile, ou au bas de l'image d'un objet au sol. Comparée à ses murs, cette ligne est à 0,73 de leur hauteur à D1, et plus haut au-delà. Ici, une hauteur fixe de 0,5 case (`FLIGHT_LINE`). À la hauteur de l'œil (0,45 au début), les projectiles se collaient au point de fuite et semblaient lointains.
+- **Hauteur :** DM dessine tous les projectiles sur la même ligne de l'écran (y 47 sur 136), au milieu de l'image d'un projectile, ou au bas de l'image d'un objet au sol. Comparée à ses murs, cette ligne est à 0,73 de leur hauteur à D1, et plus haut au-delà. Ici, une hauteur fixe (`FLIGHT_LINE`). Je l'avais mise à 0,5 case, au-dessus de l'œil ; après essai en jeu, l'utilisateur l'a réglée à **0,42**, la hauteur de l'œil, et `SPELL_HEIGHT` (sphères sans l'option, éclats des sorts) à la même valeur : une boule de feu explose à la hauteur où elle vole.
 - **Taille :** 160 pixels par case. DM dessine les projectiles à leur taille sur la case du groupe, et la perspective fait le reste. Un sort est en plus multiplié par `max(96, énergie + 1) / 256`, comme les sphères (doc 033).
 - **Lumière :** un sort brille (`MeshBasicMaterial`) ; un objet lancé est éclairé (`MeshLambertMaterial`).
 - **Repli :**

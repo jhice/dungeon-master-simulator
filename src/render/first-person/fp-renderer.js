@@ -359,11 +359,12 @@ export function createFirstPersonRenderer(
   // shrinks as it flies; SPELL_RADIUS at energy 255.
   const SPELL_RADIUS = 0.12;
   const spellGeometry = new THREE.SphereGeometry(1, 16, 12);
-  const SPELL_HEIGHT = 0.45;
+  const SPELL_HEIGHT = 0.42;
   // DM draws every projectile on one line of the screen (y 47 of 136): the middle of a projectile picture, the
-  // bottom of an item flying as on the floor. Against its walls, about 0.73 of their height at D1, more further:
-  // here a fixed height, 0.5 tile (0.71 of a wall), above the eye, so that they do not sit on the vanishing point.
-  const FLIGHT_LINE = 0.5;
+  // bottom of an item flying as on the floor. Against its walls, about 0.73 of their height at D1, more further.
+  // Here a fixed height, chosen by the user in game: the height of the eye (0.42 tile, 0.6 of a wall), as the
+  // spheres and the bursts of the spells (SPELL_HEIGHT), so that a fireball explodes where it flies (docs/075).
+  const FLIGHT_LINE = 0.42;
   const projectileGroup = new THREE.Group();
   scene.add(projectileGroup);
   const energyScale = (energy) => Math.max(96, energy + 1) / 256;
