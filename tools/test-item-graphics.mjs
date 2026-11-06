@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { Dungeon } from '../src/core/dungeon.js';
 import { ITEM_POOLS } from '../src/core/contents.js';
-import { floorPicture, globalIndex, itemType, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
+import { floorPicture, globalIndex, itemType, coordinateSet, flipsOnRight, pileShift, CHEST_FLOOR, CHEST_ALCOVE, FLOOR_PICTURE_COUNT } from '../src/core/item-graphics.js';
 
 let failures = 0;
 const check = (ok, label) => {
@@ -58,6 +58,18 @@ check(floorPicture('container', 0) === CHEST_FLOOR && floorPicture('container', 
 check(floorPicture('scroll', 0, true) === 2, 'other items: the same picture in an alcove');
 check(floorPicture('weapon', 99) === null && floorPicture('nothing', 0) === null, 'unknown type: no picture');
 check(globalIndex('miscellaneous', 0) === 0 && globalIndex('weapon', 2) === 4, 'global index: compass 0, torch 4');
+
+// --- Drawing (item 558) ---------------------------------------------------------
+check(coordinateSet(CHEST_FLOOR) === 0 && coordinateSet(2) === 1 && coordinateSet(15) === 2 && coordinateSet(46) === 2, 'coordinate sets: chest 0, scroll 1, bow and crossbow 2');
+check(flipsOnRight(CHEST_FLOOR) && flipsOnRight(64) && flipsOnRight(80) && !flipsOnRight(CHEST_ALCOVE) && !flipsOnRight(13), 'mirrored on the right: chest and magical boxes only');
+const same = (a, b) => a.x === b.x && a.y === b.y;
+check(same(pileShift(0, 0), { x: 2, y: -3 }) && same(pileShift(0, 1), { x: 0, y: -2 }), 'pile, NW: first item +2, -3, then 0, -2 (Encyclopaedia, bytes 1457-1460)');
+check(same(pileShift(1, 0), { x: -3, y: -3 }) && same(pileShift(2, 0), pileShift(0, 0)), 'pile, NE starts at the 9th pair; SE as NW');
+check(same(pileShift(0, 16), pileShift(0, 0)), 'pile: 16 pairs, then again');
+check(same(pileShift(0, 0, true), { x: -3, y: -1 }) && same(pileShift(1, 4, true), pileShift(0, 0, true)), 'alcove: N starts at the 3rd pair, E at the 11th (its 5th item as the 1st of N)');
+check(same(pileShift(0, 12, true), pileShift(0, 0, true)), 'alcove: 12 pairs, then again');
+const shifts = [0, 1, 2, 3].flatMap((cell) => Array.from({ length: 16 }, (_, rank) => pileShift(cell, rank)));
+check(shifts.every(({ x, y }) => Math.abs(x) <= 3 && Math.abs(y) <= 3), 'pile shifts within 3 pixels');
 
 console.log(failures ? `\n${failures} failure(s)` : '\nall ok');
 process.exit(failures ? 1 : 0);

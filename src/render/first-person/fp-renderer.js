@@ -405,7 +405,7 @@ export function createFirstPersonRenderer(
     camera.position.set(x + 0.5, VIEW.eyeHeight, y + 0.5).add(back);
     camera.rotation.set(0, yaw, 0);
     sprites.face(turns);
-    itemSprites.face(turns);
+    itemSprites.face({ x, y, turns });
   }
 
   // The pose of the party comes from the motion (motion.js). The mask of its light follows the eye at

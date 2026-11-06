@@ -4,10 +4,12 @@
 // One InstancedMesh per picture, an instance per item: the picking of fp-renderer.js reads
 // tiles[instanceId].item, as with the boxes of level-contents.js.
 // Pictures of assets/items/floor/ (tools/extract-item-graphics.py), all loaded at the first build.
+// As DM (docs/074): the items of a pile are shifted by a few pixels each, the chest and the magical boxes are
+// mirrored on the right of the view, the large pictures (coordinate set 2) stand a little nearer.
 
 import * as THREE from 'three';
 import { subcellOffset } from '../../core/contents.js';
-import { floorPicture, itemType, FLOOR_PICTURE_COUNT } from '../../core/item-graphics.js';
+import { floorPicture, itemType, coordinateSet, flipsOnRight, pileShift, FLOOR_PICTURE_COUNT } from '../../core/item-graphics.js';
 import { allTiles } from '../three/level-contents.js';
 import { NICHE } from '../three/level-meshes.js';
 
@@ -15,9 +17,13 @@ const BASE = 'assets/items/floor/';
 // The scale of the creatures (fp-sprites.js): DM draws both at their size at D1.
 const PIXELS_PER_TILE = 160;
 const ALPHA_CUT = 0.5;
-// Items of one sub-tile, from the bottom of the pile: each a little nearer to the party, so that the last
-// one put down is drawn over the others (the offsets of DM come in phase I2).
-const PILE_STEP = 0.012;
+// Piles (pileShift(), in pixels at the size of the pictures): a pixel to the right is 1/160 tile; a pixel down
+// the screen brings a floor item about 0.025 tile nearer (our camera at D1, docs/074), an alcove item less, as it
+// must stay in the mouth of the alcove.
+const PILE_DEPTH_PER_PIXEL = { floor: 0.025, alcove: 0.006 };
+// Besides, each item of a pile a hair nearer than the one below: the last put down is drawn over the others.
+const PILE_STEP = 0.003;
+const SET_2_NEARER = 0.08; // coordinate set 2: 2 to 4 pixels lower than set 0 at D0 and D1
 // The row of a tile away from the party is further than its sub-tiles say: DM draws it as if 0.40 tile past the
 // centre on the party's tile (y 131 of 135), 0.35 on the next one; its front row is where the sub-tiles say
 // (graphics.dat item 558, "Coordinates to display items", through our camera: docs/073). Without this, the items
@@ -26,8 +32,7 @@ const BACK_ROW_PUSH = 0.14;
 const SUB_TILE_REACH = 0.25; // distance of a sub-tile from the centre of its tile, along one axis
 // In an alcove: from the centre of the wall tile. Just inside the mouth of a hollow alcove (the light of its
 // item is read in the tile in front, fp-occlusion.js), or just in front of a painted one.
-const ALCOVE_OUT = { hollow: 0.47, painted: 0.52 };
-const ALCOVE_ROW = [0, -0.12, 0.12]; // places along the width of an alcove, then the same row again, nearer
+const ALCOVE_OUT = { hollow: 0.48, painted: 0.52 };
 // Yaw that turns the plane (facing +z) out of a wall face N, E, S, W.
 const FACE_YAW = [Math.PI, Math.PI / 2, 0, -Math.PI / 2];
 const FACE_DIRECTION = [
@@ -45,8 +50,8 @@ export function createItemSprites({ onLoaded }) {
   const loader = new THREE.TextureLoader();
   let textures = null; // picture number -> texture, once all are loaded
   let loading = false;
-  let shown = []; // { mesh, floor: [{ index, x, z, cx, cz, rank, scale }] }: floor instances follow the camera
-  let turns = 0;
+  let shown = []; // { mesh, floor: [{ index, x, z, cx, cz, shift, nearer, flips, scale }] }: they follow the camera
+  let pose = { x: 0, y: 0, turns: 0 }; // of the camera: its tile and quarter turns
   const m4 = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const up = new THREE.Vector3(0, 1, 0);
@@ -74,23 +79,33 @@ export function createItemSprites({ onLoaded }) {
       .catch((error) => console.warn('Item sprites: pictures missing', error));
   }
 
+  const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0); // an instance shown by the twin mesh
   // A floor item: the plane faces the camera, a little nearer to it for each item below it in its pile.
-  function floorMatrix({ x, z, cx, cz, rank, scale }) {
-    const angle = turns * (Math.PI / 2);
+  // A picture mirrored on the right is shown by a twin mesh, whose UVs are mirrored (a negative scale would turn
+  // its normal away from the light): each instance is shown by one of the two, hidden (scale 0) in the other.
+  function floorMatrix({ x, z, cx, cz, shift, nearer, flips, scale }, mirrored) {
+    const angle = pose.turns * (Math.PI / 2);
     const [forwardX, forwardZ] = [Math.sin(angle), -Math.cos(angle)];
+    const [rightX, rightZ] = [Math.cos(angle), Math.sin(angle)];
     // How far the sub-tile is in the back row (0 front row… 1 back row), smooth on the way of a turn.
     const away = Math.min(Math.max(((x - cx) * forwardX + (z - cz) * forwardZ) / SUB_TILE_REACH, 0), 1);
-    const step = away * BACK_ROW_PUSH - rank * PILE_STEP; // away from the party; each item of a pile nearer
-    v3.set(x + forwardX * step, 0, z + forwardZ * step);
+    const step = away * BACK_ROW_PUSH - shift.y * PILE_DEPTH_PER_PIXEL.floor - nearer; // away from the party
+    const lateral = shift.x / PIXELS_PER_TILE;
+    v3.set(x + forwardX * step + rightX * lateral, 0, z + forwardZ * step + rightZ * lateral);
+    // Mirrored on the right of the view: right of the party's column, as DM's right lane and right column.
+    const onRight = flips && (x - (pose.x + 0.5)) * rightX + (z - (pose.y + 0.5)) * rightZ > 0;
+    if (onRight !== mirrored) return HIDDEN;
     q.setFromAxisAngle(up, -angle);
     return m4.compose(v3, q, s3.set(scale[0], scale[1], 1));
   }
 
   function place() {
-    for (const { mesh, floor } of shown) {
+    for (const { mesh, floor, mirrored } of shown) {
       if (!floor.length) continue;
-      for (const instance of floor) mesh.setMatrixAt(instance.index, floorMatrix(instance));
+      for (const instance of floor) mesh.setMatrixAt(instance.index, floorMatrix(instance, mirrored));
       mesh.instanceMatrix.needsUpdate = true;
+      // Instances of a twin appear and vanish: its bounding sphere (picking, culling) must follow.
+      if (mesh.userData.twin) mesh.computeBoundingSphere();
     }
   }
 
@@ -128,44 +143,56 @@ export function createItemSprites({ onLoaded }) {
           const texture = textures.get(picture);
           if (!texture) continue;
           const scale = [texture.image.width / PIXELS_PER_TILE, texture.image.height / PIXELS_PER_TILE];
+          const shift = pileShift(item.position, rank, onWall);
           if (onWall) {
+            // Out of the face (dx, dz); to the right of the party looking at it: (dz, -dx).
             const [dx, dz] = FACE_DIRECTION[item.position];
-            const out = hollowAlcoves ? ALCOVE_OUT.hollow : ALCOVE_OUT.painted;
-            const along = ALCOVE_ROW[rank % ALCOVE_ROW.length];
-            const nearer = Math.floor(rank / ALCOVE_ROW.length) * PILE_STEP;
-            v3.set(x + 0.5 + dx * (out + nearer) - dz * along, NICHE.bottom * wallHeight, y + 0.5 + dz * (out + nearer) + dx * along);
+            const out = (hollowAlcoves ? ALCOVE_OUT.hollow : ALCOVE_OUT.painted) + shift.y * PILE_DEPTH_PER_PIXEL.alcove + rank * PILE_STEP;
+            const along = shift.x / PIXELS_PER_TILE;
+            v3.set(x + 0.5 + dx * out + dz * along, NICHE.bottom * wallHeight, y + 0.5 + dz * out - dx * along);
             q.setFromAxisAngle(up, FACE_YAW[item.position]);
             add(picture, { info: { ...info, item }, matrix: m4.compose(v3, q, s3.set(scale[0], scale[1], 1)).clone() });
           } else {
             const [u, v] = subcellOffset(item.position);
-            add(picture, { info: { ...info, item }, floor: { x: x + u, z: y + v, cx: x + 0.5, cz: y + 0.5, rank, scale } });
+            const nearer = rank * PILE_STEP + (coordinateSet(picture) === 2 ? SET_2_NEARER : 0);
+            const floor = { x: x + u, z: y + v, cx: x + 0.5, cz: y + 0.5, shift, nearer, flips: flipsOnRight(picture), scale };
+            add(picture, { info: { ...info, item }, floor });
           }
         }
       }
       const meshes = [];
       for (const [picture, list] of byPicture) {
-        // Origin at the middle of the bottom edge; the size of the picture is in the matrix of each instance.
-        const geometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
-        const material = new THREE.MeshLambertMaterial({ map: textures.get(picture), alphaTest: ALPHA_CUT });
-        const mesh = new THREE.InstancedMesh(geometry, material, list.length);
-        const floor = [];
-        list.forEach((entry, index) => {
-          if (entry.floor) floor.push({ ...entry.floor, index });
-          else mesh.setMatrixAt(index, entry.matrix);
-        });
-        mesh.name = `level-${levelIndex}-itemSprite-${picture}`;
-        mesh.userData = { part: 'itemSprite', layer: 'items', variant: 'all', tiles: list.map((entry) => entry.info), baseOpacity: 1 };
-        shown.push({ mesh, floor });
-        meshes.push(mesh);
+        const floor = list.flatMap((entry, index) => (entry.floor ? [{ ...entry.floor, index }] : []));
+        const twin = flipsOnRight(picture) && floor.length > 0;
+        for (const mirrored of twin ? [false, true] : [false]) {
+          // Origin at the middle of the bottom edge; the size of the picture is in the matrix of each instance.
+          const geometry = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+          if (mirrored) {
+            const uv = geometry.attributes.uv;
+            for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));
+          }
+          const material = new THREE.MeshLambertMaterial({ map: textures.get(picture), alphaTest: ALPHA_CUT });
+          const mesh = new THREE.InstancedMesh(geometry, material, list.length);
+          list.forEach((entry, index) => {
+            if (!entry.floor) mesh.setMatrixAt(index, mirrored ? HIDDEN : entry.matrix); // alcoves: never mirrored
+          });
+          mesh.name = `level-${levelIndex}-itemSprite-${picture}${mirrored ? '-mirrored' : ''}`;
+          mesh.userData = { part: 'itemSprite', layer: 'items', variant: 'all', tiles: list.map((entry) => entry.info), baseOpacity: 1, twin };
+          shown.push({ mesh, floor, mirrored });
+          meshes.push(mesh);
+        }
       }
       place();
       for (const mesh of meshes) mesh.computeBoundingSphere();
       return meshes;
     },
-    /** The camera turned ({ turns } of its pose, maybe on the way): the floor items stay parallel to the screen. */
-    face(nextTurns) {
-      if (nextTurns === turns) return;
-      turns = nextTurns;
+    /**
+     * The camera moved ({ x, y, turns } of its pose, maybe on the way): the floor items stay parallel to the screen,
+     * and the mirrored ones follow the side of the view they are on.
+     */
+    face(next) {
+      if (next.x === pose.x && next.y === pose.y && next.turns === pose.turns) return;
+      pose = { x: next.x, y: next.y, turns: next.turns };
       place();
       // The planes turn about their own foot: their bounding spheres barely change.
     },

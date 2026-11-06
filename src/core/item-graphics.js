@@ -71,3 +71,55 @@ export function floorPicture(kind, type, inAlcove = false) {
 export function globalIndex(kind, type) {
   return GLOBAL[kind]?.[type] ?? null;
 }
+
+// Drawing of the floor pictures (graphics.dat item 558, "Items graphics definitions"; ReDMCSB DUNVIEW.C, F115).
+// Coordinate set of each picture: 0 by default, 2 for the large ones (bow, crossbow, armours), drawn a little lower
+// on the screen, so nearer; set 1 differs from set 0 only in alcoves.
+const SET_2 = new Set([15, 20, 21, 23, 46]);
+// prettier-ignore
+const SET_1 = new Set([
+  2, 3, 4, 5, 6, 10, 12, 13, 16, 17, 19, 22, 26, 27, 28, 29, 31, 32, 33, 35, 36, 39, 40, 43, 44, 47, 48, 49, 50, 51,
+  54, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 74, 75, 76, 78, 79, 80, 81, 83, 84,
+]);
+// Mirrored on the right of the view (lane on the right, or right column of the middle lane), not in an alcove:
+// the chest and the two magical boxes.
+const FLIP_ON_RIGHT = new Set([CHEST_FLOOR, 64, 80]);
+
+/** Coordinate set (0, 1 or 2) of a floor picture. */
+export function coordinateSet(picture) {
+  return SET_2.has(picture) ? 2 : SET_1.has(picture) ? 1 : 0;
+}
+
+/** Is a floor picture mirrored on the right of the view? */
+export function flipsOnRight(picture) {
+  return FLIP_ON_RIGHT.has(picture);
+}
+
+// Piles: the items of a sub-tile, or of an alcove, are shifted by a few pixels, one pair of shifts per item in the
+// order they were put down (G217, 16 pairs of indices in a shift set). Shift set 0 is the one of the pictures at
+// their size (D0 back, D1 front); further, DM uses smaller shifts for the smaller pictures (sets 1, 2).
+const SHIFT_SET_0 = [0, 1, 2, 3, 0, -3, -2, -1]; // pixels (G223, set 0)
+// prettier-ignore
+const PILE_SHIFTS = [
+  [2, 5], [0, 6], [5, 7], [3, 0], [7, 1], [1, 2], [6, 3], [3, 3],
+  [5, 5], [2, 6], [7, 7], [1, 0], [3, 1], [6, 2], [1, 3], [5, 3],
+];
+
+/**
+ * Shift of the rank-th item of a pile (0: the first put down), in pixels at the size of the pictures:
+ * { x: to the right of the screen, y: down the screen }. In DM, the pile of an odd cell (NE, SW; an alcove of the
+ * east or west face) starts at the 9th pair; a pile in an alcove starts at the 3rd pair and keeps to pairs 3 to 14.
+ * @param {number} cell sub-tile 0..3 (NW, NE, SE, SW), or face 0..3 (N, E, S, W) of an alcove
+ */
+export function pileShift(cell, rank, inAlcove = false) {
+  const odd = (cell & 1) << 3;
+  let index;
+  if (inAlcove) {
+    index = 2 + odd;
+    for (let i = 0; i < rank; i++) index = index + 1 >= 14 ? 2 : index + 1;
+  } else {
+    index = (odd + rank) & 15;
+  }
+  const [x, y] = PILE_SHIFTS[index];
+  return { x: SHIFT_SET_0[x], y: SHIFT_SET_0[y] };
+}

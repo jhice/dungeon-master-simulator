@@ -57,7 +57,7 @@ Les objets de la moitié du fond de la case du groupe étaient presque invisible
 - **Niveau 2, alcôve (31, 30) vue depuis (30, 30) :** pain, fromage, pilon et pomme sont posés sur le seuil.
 - **Option :** décochée puis recochée, aucune erreur.
 - **Tests Node :** les 17 passent.
-- **Gel à surveiller :** au premier essai, un onglet a gelé juste après une téléportation par le menu de la carte (captures d'écran impossibles). Je ne l'ai pas reproduit : dans un nouvel onglet, la même téléportation a marché. La cause n'est pas identifiée. Le serveur Live Server recharge aussi la page à chaque fichier modifié : ce n'est pas un bug.
+- **Gel à surveiller :** au premier essai, un onglet a gelé juste après une téléportation par le menu de la carte (captures d'écran impossibles). Je ne l'ai pas reproduit : dans un nouvel onglet, la même téléportation a marché. Cause trouvée en I2 (doc 074, § 3) : Chrome ralentit une fenêtre masquée, ce n'est pas le code. Le serveur Live Server recharge aussi la page à chaque fichier modifié : ce n'est pas un bug.
 
 ## 6. Suite
 
