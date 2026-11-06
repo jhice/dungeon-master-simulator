@@ -30,6 +30,7 @@ import { createLights } from './fp-lights.js';
 import { createOcclusion, opaqueTile } from './fp-occlusion.js';
 import { createParticleView } from './fp-particles.js';
 import { createCreatureSprites } from './fp-sprites.js';
+import { createItemSprites } from './fp-item-sprites.js';
 import { SPELL_COLORS } from '../particles.js';
 import { lightMasks, updateLightMask } from './light-masks.js';
 import { DEFAULT_LIGHTING } from './lighting-settings.js';
@@ -51,6 +52,7 @@ export const VIEW = {
 const ASPECT = 4 / 3;
 const WALL_HEIGHT = 0.7;
 const NICHE_BACK = '#26241f';
+const SPRITE_PARTS = ['creatureSprite', 'itemSprite']; // pictures: a transparent pixel does not catch the pointer
 const PIT_SHADE = '#d0d0d0';
 const MIRRORED_PARTS = ['wall', 'floor', 'pitRim', 'wallFace', 'nicheFaceSquare', 'nicheFaceArched'];
 
@@ -134,6 +136,14 @@ export function createFirstPersonRenderer(
     },
     onChanged: () => render(),
   });
+  // Items as their original pictures too (fp-item-sprites.js, docs/072), with the same option.
+  const itemSprites = createItemSprites({
+    onLoaded() {
+      if (!built || !useSprites) return;
+      build(level);
+      render();
+    },
+  });
 
   let level = null; // level index currently built
   let built = null; // { group, meshes, ceiling }
@@ -163,7 +173,12 @@ export function createFirstPersonRenderer(
     // Items as markers of the 3D renderer. Mechanisms and texts are not markers here: the party
     // sees the ornaments, inscriptions and doors drawn by fp-decor.js (a plate or a button without
     // graphic stays invisible, as in DM).
-    const contents = seenMeshes(buildLevelContents(dungeon, levelIndex, center, { wallHeight: WALL_HEIGHT, contentsAt: seenContents, alcoveDepth: useModels ? NICHE.depth : 0, withCreatures: false }));
+    // Or as their pictures, once loaded (the boxes until then).
+    let contents = seenMeshes(buildLevelContents(dungeon, levelIndex, center, { wallHeight: WALL_HEIGHT, contentsAt: seenContents, alcoveDepth: useModels ? NICHE.depth : 0, withCreatures: false }));
+    if (useSprites && itemSprites.ready()) {
+      contents = withoutBoxes(contents);
+      contents.push(...itemSprites.build(dungeon, levelIndex, seenContents, useModels, WALL_HEIGHT));
+    }
     for (const mesh of [...contents, ...creatureMeshes(levelIndex, center)]) {
       group.add(mesh);
       meshes.push(mesh);
@@ -242,6 +257,16 @@ export function createFirstPersonRenderer(
   function seenMeshes(meshes) {
     return meshes.filter((mesh) => {
       if (!['texts', 'mechanisms', 'contents'].includes(mesh.userData.layer)) return true;
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+      return false;
+    });
+  }
+
+  // The boxes of the items, replaced by their pictures (disposed).
+  function withoutBoxes(meshes) {
+    return meshes.filter((mesh) => {
+      if (mesh.userData.part !== 'items') return true;
       mesh.geometry.dispose();
       mesh.material.dispose();
       return false;
@@ -380,6 +405,7 @@ export function createFirstPersonRenderer(
     camera.position.set(x + 0.5, VIEW.eyeHeight, y + 0.5).add(back);
     camera.rotation.set(0, yaw, 0);
     sprites.face(turns);
+    itemSprites.face(turns);
   }
 
   // The pose of the party comes from the motion (motion.js). The mask of its light follows the eye at
@@ -451,7 +477,8 @@ export function createFirstPersonRenderer(
     pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(pointer, camera);
     const pickable = built.meshes.filter((m) => m.isInstancedMesh && m.visible && m.userData.part !== 'teleporterGame');
-    const hits = raycaster.intersectObjects(pickable, false).filter((h) => h.object.userData.part !== 'creatureSprite' || sprites.opaqueAt(h));
+    // A transparent pixel of a picture lets the pointer through (sprites.opaqueAt reads any picture).
+    const hits = raycaster.intersectObjects(pickable, false).filter((h) => !SPRITE_PARTS.includes(h.object.userData.part) || sprites.opaqueAt(h));
     const hit = hits[0];
     const info = hit?.object.userData.tiles?.[hit.instanceId];
     if (!info || info.outside) return null;
@@ -472,7 +499,9 @@ export function createFirstPersonRenderer(
     const u = at.x - info.x;
     const v = at.z - info.y;
     const position = info.item?.position ?? (v < 0.5 ? (u < 0.5 ? 0 : 1) : u < 0.5 ? 3 : 2);
-    const spot = { level: info.level, x: info.x, y: info.y, position, item: info.item };
+    // On the floor of a sub-tile, its top item, as DM enlarges the box of a small item: a coin is 10 pixels wide.
+    const item = info.item ?? (info.type === 'wall' ? undefined : seenContents(info.level, info.x, info.y)?.items.findLast((i) => i.position === position));
+    const spot = { level: info.level, x: info.x, y: info.y, position, item };
     // The doorway in front: a floor spot if there is something to do there, else the door.
     if (info.type === 'door' && front && !canReach?.(spot)) return { kind: 'front' };
     return { kind: 'floor', spot };
@@ -592,7 +621,7 @@ export function createFirstPersonRenderer(
       }
       if ('creatureSprites' in changes && changes.creatureSprites !== useSprites) {
         useSprites = changes.creatureSprites;
-        if (built) rebuildCreatures();
+        if (built) build(level); // items and creatures
       }
       render();
     },
@@ -665,6 +694,7 @@ export function createFirstPersonRenderer(
       occlusion.dispose();
       decor.dispose();
       sprites.dispose();
+      itemSprites.dispose();
       for (const texture of new Set([...Object.values(textures), ...Object.values(ceilingTextures)])) texture.dispose();
       renderer.dispose();
       renderer.domElement.remove();

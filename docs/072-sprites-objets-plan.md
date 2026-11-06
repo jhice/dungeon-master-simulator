@@ -2,7 +2,7 @@
 
 Suite des docs 067 à 071, qui ont fait la même chose pour les créatures. Objectif : dans la vue à la 1re personne, remplacer les blocs colorés des objets (`level-contents.js`, `BoxGeometry`) par les images d'origine de DM, en billboards, avec une option pour revenir aux blocs.
 
-**Statut : plan à valider.** Les questions du § 8 sont à trancher avant I1.
+**Statut : questions tranchées (§ 8), I1 faite (doc 073).** Décisions : images prises dans l'extraction locale de graphics.dat de l'utilisateur (SCK), rien à télécharger ; les quatre phases ; billboards ; une seule option, « Original sprites » ; en I4, la barre d'inventaire montre les icônes, le nom au survol ; les particules restent pour les effets des sorts.
 
 ## 1. Les images disponibles
 
@@ -94,6 +94,19 @@ I1 et I2 peuvent être faites ensemble si I1 est rapide.
 2. **Périmètre.** Je propose les quatre phases. Les projectiles (I3) et les icônes (I4) sont-ils à faire maintenant, ou plus tard ? Et pour les sorts : remplacer les sphères lumineuses par les images de DM, et les éclats de particules par les explosions de DM, ou garder les particules ?
 3. **Orientation.** Billboard vertical face à la caméra (recommandé : c'est l'aspect de DM, et la cohérence avec les créatures), ou plan légèrement incliné vers l'arrière, pour qu'un objet semble mieux posé au sol quand on s'en approche ?
 4. **Option du panneau.** La case **Original sprites** commande-t-elle aussi les objets (recommandé : une seule case pour « l'aspect DM »), ou une case séparée, « Item sprites » ?
+
+### Réponses
+
+1. Si ça t'arrange, j'ai les images extraites en local depuis graphics.dat, dans ce dossier : /home/jhice/Gamedev/sck@1.5.1@20110502.0/sck/output/graphics.dat.bak / à voir ce qui est le plus simple
+2. ok pour les 4 phases. dans l'inventaire en bas de la fenêtre on peut masquer le nom, mettre l'icône et afficher le nom au survol. on garde les particules existantes pour les effets.
+3. go billboard et on avisera
+4. une seule option, OK
+
+> **Suite donnée (Claude) :**
+> 1. Extraction locale retenue : les BMP de SCK ont la numérotation de greatstone (Amiga 3.6), et la couleur 10 y est bien la couleur transparente. Les tables des items 558 et 559 n'y sont pas : la correspondance objet → image vient de la table *Items properties* de l'Encyclopaedia (doc 073, § 2).
+> 2. I4 couvrira les mains, le curseur, et la barre d'inventaire (icône, nom au survol). Les sorts en vol (I3) prendront les images de DM ; leurs éclats restent des particules (doc 063), sans les images d'explosion.
+> 3. Billboards en I1 ; les objets en alcôve restent parallèles à leur mur (doc 073, § 3).
+> 4. La case « Original sprites » commande créatures et objets.
 
 ## Sources
 

@@ -9,5 +9,5 @@ export const DEFAULT_LIGHTING = {
   torchHolders: true, // the full torch holders give light (not in DM: decor only)
   occlusion: true, // walls stop the light, tile by tile (fp-occlusion.js, docs/038)
   ornamentModels: true, // wall ornaments as 3D objects (fp-models.js), hollow pits (docs/053)
-  creatureSprites: true, // creatures as their original sprites, else 3D markers (fp-sprites.js, docs/067)
+  creatureSprites: true, // creatures and items as their original sprites, else 3D markers (fp-sprites.js, fp-item-sprites.js, docs/067, 072)
 };

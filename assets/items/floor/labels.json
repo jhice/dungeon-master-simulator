@@ -1,0 +1,356 @@
+{
+ "00": [
+  "Chest On Floor"
+ ],
+ "01": [
+  "Chest In Alcove"
+ ],
+ "02": [
+  "Scroll"
+ ],
+ "03": [
+  "Bro Potion",
+  "Dane Potion",
+  "Ee Potion",
+  "Ku Potion",
+  "Ma Potion",
+  "Neta Potion",
+  "Ros Potion",
+  "Vi Potion",
+  "Water Flask",
+  "Ya Potion"
+ ],
+ "04": [
+  "Blue Gem"
+ ],
+ "05": [
+  "Copper Coin",
+  "Gold Coin"
+ ],
+ "06": [
+  "Drumstick"
+ ],
+ "07": [
+  "Waterskin (Full)"
+ ],
+ "08": [
+  "Elven Doublet",
+  "Elven Huke"
+ ],
+ "09": [
+  "Leather Boots"
+ ],
+ "10": [
+  "Basinet",
+  "Bezerker Helm",
+  "Casque 'n Coif",
+  "Dexhelm",
+  "Helm Of Darc",
+  "Helmet"
+ ],
+ "11": [
+  "Large Shield",
+  "Shield Of Darc",
+  "Shield Of Lyte",
+  "Wooden Shield"
+ ],
+ "12": [
+  "Sling",
+  "Snake Staff",
+  "Staff",
+  "Staff Of Claws",
+  "Staff Of Manar",
+  "Yew Staff"
+ ],
+ "13": [
+  "Bolt Blade",
+  "Delta",
+  "Diamond Edge",
+  "Falchion",
+  "Fury",
+  "Rapier",
+  "Sabre",
+  "Samurai Sword",
+  "Sword",
+  "The Inquisitor"
+ ],
+ "14": [
+  "Axe",
+  "Hardcleave"
+ ],
+ "15": [
+  "Bow"
+ ],
+ "16": [
+  "Ekkhard Cross",
+  "Gem Of Ages",
+  "Illumulet",
+  "Jewel Symal"
+ ],
+ "17": [
+  "Arrow"
+ ],
+ "18": [
+  "Dagger"
+ ],
+ "19": [
+  "Cross Key",
+  "Iron Key",
+  "Key Of B",
+  "Onyx Key",
+  "Skeleton Key",
+  "Solid Key",
+  "Square Key",
+  "Tourquoise Key"
+ ],
+ "20": [
+  "Flamebain",
+  "Hosen",
+  "Leg Mail",
+  "Mail Aketon",
+  "Mithral Aketon",
+  "Mithral Mail"
+ ],
+ "21": [
+  "Plate Of Darc",
+  "Plate Of Lyte",
+  "Torso Plate"
+ ],
+ "22": [
+  "Mace",
+  "Mace Of Order"
+ ],
+ "23": [
+  "Leg Plate",
+  "Poleyn Of Darc",
+  "Poleyn Of Lyte",
+  "Powertowers"
+ ],
+ "24": [
+  "Barbarian Hide",
+  "Cape",
+  "Cloak Of Night",
+  "Leather Jerkin",
+  "Leather Pants"
+ ],
+ "25": [
+  "Fine Robe (Body)",
+  "Fine robe (Legs)",
+  "Ghi",
+  "Ghi Trousers",
+  "Robe (Body)",
+  "Robe (Legs)",
+  "Silk Shirt",
+  "Tabard"
+ ],
+ "26": [
+  "Bread"
+ ],
+ "27": [
+  "Cheese"
+ ],
+ "28": [
+  "Apple"
+ ],
+ "29": [
+  "Corn"
+ ],
+ "30": [
+  "Suede Boots"
+ ],
+ "31": [
+  "Sceptre of Lyf"
+ ],
+ "32": [
+  "Teowand",
+  "Wand"
+ ],
+ "33": [
+  "Dragon Spit"
+ ],
+ "34": [
+  "Morningstar"
+ ],
+ "35": [
+  "Compass"
+ ],
+ "36": [
+  "Torch"
+ ],
+ "37": [
+  "Waterskin (Empty)"
+ ],
+ "38": [
+  "Flamitt"
+ ],
+ "39": [
+  "Eye Of Time",
+  "Stormring"
+ ],
+ "40": [
+  "The Firestaff"
+ ],
+ "41": [
+  "Ashes"
+ ],
+ "42": [
+  "Bones",
+  "Champion Bones"
+ ],
+ "43": [
+  "Vorpal Blade"
+ ],
+ "44": [
+  "Club"
+ ],
+ "45": [
+  "Stone Club"
+ ],
+ "46": [
+  "Crossbow",
+  "Speedbow"
+ ],
+ "47": [
+  "Slayer"
+ ],
+ "48": [
+  "Rock"
+ ],
+ "49": [
+  "Poison Dart"
+ ],
+ "50": [
+  "Throwing Star"
+ ],
+ "51": [
+  "Stick"
+ ],
+ "52": [
+  "The Conduit"
+ ],
+ "53": [
+  "Armet",
+  "Helm Of Lyte"
+ ],
+ "54": [
+  "Calista",
+  "Crown Of Nerra"
+ ],
+ "55": [
+  "Buckler",
+  "Hide Shield",
+  "Small Shield"
+ ],
+ "56": [
+  "Sandals"
+ ],
+ "57": [
+  "Foot Plate",
+  "Greave Of Darc",
+  "Greave Of Lyte"
+ ],
+ "58": [
+  "Elven Boots"
+ ],
+ "59": [
+  "Moonstone"
+ ],
+ "60": [
+  "Pendant Feral",
+  "The Hellion"
+ ],
+ "61": [
+  "Orange Gem"
+ ],
+ "62": [
+  "Green Gem"
+ ],
+ "63": [
+  "Emerald Key",
+  "Gold Key",
+  "Master Key",
+  "Ra Key",
+  "Ruby Key",
+  "Sapphire Key",
+  "Topaz Key",
+  "Winged Key"
+ ],
+ "64": [
+  "Magical Box (Green)"
+ ],
+ "65": [
+  "Mirror of Dawn"
+ ],
+ "66": [
+  "Horn of Fear"
+ ],
+ "67": [
+  "Dragon Steack"
+ ],
+ "68": [
+  "Des Potion",
+  "Mon Potion",
+  "Sar Potion",
+  "Um Potion",
+  "Ven Potion",
+  "Zo Potion"
+ ],
+ "69": [
+  "Ful Bomb",
+  "Kath Bomb",
+  "Pew Bomb",
+  "Ra Bomb"
+ ],
+ "70": [
+  "Blue Pants",
+  "Gunna",
+  "Kirtle",
+  "Tunic"
+ ],
+ "71": [
+  "Worm Round"
+ ],
+ "72": [
+  "Screamer Slice"
+ ],
+ "73": [
+  "Rope"
+ ],
+ "74": [
+  "Rabbit's Foot"
+ ],
+ "75": [
+  "Corbamite",
+  "Zokathra Spell"
+ ],
+ "76": [
+  "Choker"
+ ],
+ "77": [
+  "Boulder"
+ ],
+ "78": [
+  "Lock Picks"
+ ],
+ "79": [
+  "Magnifier"
+ ],
+ "80": [
+  "Magical Box (Blue)"
+ ],
+ "81": [
+  "Empty Flask"
+ ],
+ "82": [
+  "Boots of Speed"
+ ],
+ "83": [
+  "The Firestaff (Complete)"
+ ],
+ "84": [
+  "Silver Coin"
+ ],
+ "85": [
+  "Halter"
+ ]
+}
