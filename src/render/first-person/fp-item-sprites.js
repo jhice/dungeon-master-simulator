@@ -17,13 +17,14 @@ const BASE = 'assets/items/floor/';
 // The scale of the creatures (fp-sprites.js): DM draws both at their size at D1.
 const PIXELS_PER_TILE = 160;
 const ALPHA_CUT = 0.5;
-// Piles (pileShift(), in pixels at the size of the pictures): a pixel to the right is 1/160 tile; a pixel down
-// the screen brings a floor item about 0.025 tile nearer (our camera at D1, docs/074), an alcove item less, as it
-// must stay in the mouth of the alcove.
-const PILE_DEPTH_PER_PIXEL = { floor: 0.025, alcove: 0.006 };
-// Besides, each item of a pile a hair nearer than the one below: the last put down is drawn over the others.
-const PILE_STEP = 0.003;
-const SET_2_NEARER = 0.08; // coordinate set 2: 2 to 4 pixels lower than set 0 at D0 and D1
+// Order of a pile: DM draws its items in order, the last put down over the others. Each item is this much nearer
+// to the party than the one below, and the offsets below stay within one step, so they never change the order.
+const PILE_STEP = { floor: 0.02, alcove: 0.003 };
+// Pile shifts (pileShift(), in pixels at the size of the pictures): a pixel to the right is 1/160 tile; a pixel down
+// the screen brings the item nearer, by a little only, to keep the order (on the floor, -3..+6 pixels with the
+// coordinate set 2: 0.018 tile; in an alcove, where the item must also stay in the mouth, next to nothing).
+const PILE_DEPTH_PER_PIXEL = { floor: 0.002, alcove: 0.0002 };
+const SET_2_LOWER = 3; // pixels: coordinate set 2 is 2 to 4 pixels lower than set 0 at D0 and D1
 // The row of a tile away from the party is further than its sub-tiles say: DM draws it as if 0.40 tile past the
 // centre on the party's tile (y 131 of 135), 0.35 on the next one; its front row is where the sub-tiles say
 // (graphics.dat item 558, "Coordinates to display items", through our camera: docs/073). Without this, the items
@@ -89,7 +90,7 @@ export function createItemSprites({ onLoaded }) {
     const [rightX, rightZ] = [Math.cos(angle), Math.sin(angle)];
     // How far the sub-tile is in the back row (0 front row… 1 back row), smooth on the way of a turn.
     const away = Math.min(Math.max(((x - cx) * forwardX + (z - cz) * forwardZ) / SUB_TILE_REACH, 0), 1);
-    const step = away * BACK_ROW_PUSH - shift.y * PILE_DEPTH_PER_PIXEL.floor - nearer; // away from the party
+    const step = away * BACK_ROW_PUSH - nearer; // away from the party
     const lateral = shift.x / PIXELS_PER_TILE;
     v3.set(x + forwardX * step + rightX * lateral, 0, z + forwardZ * step + rightZ * lateral);
     // Mirrored on the right of the view: right of the party's column, as DM's right lane and right column.
@@ -147,14 +148,15 @@ export function createItemSprites({ onLoaded }) {
           if (onWall) {
             // Out of the face (dx, dz); to the right of the party looking at it: (dz, -dx).
             const [dx, dz] = FACE_DIRECTION[item.position];
-            const out = (hollowAlcoves ? ALCOVE_OUT.hollow : ALCOVE_OUT.painted) + shift.y * PILE_DEPTH_PER_PIXEL.alcove + rank * PILE_STEP;
+            const out = (hollowAlcoves ? ALCOVE_OUT.hollow : ALCOVE_OUT.painted) + shift.y * PILE_DEPTH_PER_PIXEL.alcove + rank * PILE_STEP.alcove;
             const along = shift.x / PIXELS_PER_TILE;
             v3.set(x + 0.5 + dx * out + dz * along, NICHE.bottom * wallHeight, y + 0.5 + dz * out - dx * along);
             q.setFromAxisAngle(up, FACE_YAW[item.position]);
             add(picture, { info: { ...info, item }, matrix: m4.compose(v3, q, s3.set(scale[0], scale[1], 1)).clone() });
           } else {
             const [u, v] = subcellOffset(item.position);
-            const nearer = rank * PILE_STEP + (coordinateSet(picture) === 2 ? SET_2_NEARER : 0);
+            const lower = shift.y + (coordinateSet(picture) === 2 ? SET_2_LOWER : 0); // pixels down the screen
+            const nearer = rank * PILE_STEP.floor + lower * PILE_DEPTH_PER_PIXEL.floor;
             const floor = { x: x + u, z: y + v, cx: x + 0.5, cz: y + 0.5, shift, nearer, flips: flipsOnRight(picture), scale };
             add(picture, { info: { ...info, item }, floor });
           }

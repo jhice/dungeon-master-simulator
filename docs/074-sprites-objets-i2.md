@@ -19,13 +19,14 @@ Recopiées de la page *Graphics.dat Item 558* de l'Encyclopaedia, testées par `
 
 ## 2. Rendu (`fp-item-sprites.js`)
 
+- **Ordre des piles d'abord :** DM dessine une pile dans l'ordre, le dernier objet posé par-dessus. Chaque objet est 0,02 case plus près du groupe que celui du dessous (`PILE_STEP`, 0,003 en alcôve). Les autres avancées restent sous ce pas, et ne changent donc jamais l'ordre.
+  - **Correction, retour de l'utilisateur :** dans la première version, les Hosen restaient toujours devant. Leur image est du jeu 2, que j'avançais de 0,08 case, bien plus que le pas de pile (0,003). Le décalage vertical de pile (±0,075 case) pouvait de même inverser deux objets.
 - **Pile au sol :**
   - Un pixel vers la droite vaut 1/160 de case, sur le côté de la vue.
-  - Un pixel vers le bas de l'écran vaut 0,025 case vers le groupe : c'est la pente de notre caméra à D1 (`PILE_DEPTH_PER_PIXEL`).
-  - Chaque objet est aussi 0,003 case plus près que le précédent, pour que le dernier posé passe devant.
+  - Un pixel vers le bas de l'écran avance l'objet de 0,002 case seulement (`PILE_DEPTH_PER_PIXEL`). Avec le jeu 2, l'écart va de −3 à +6 pixels, soit 0,018 case, sous le pas de 0,02.
   - Le tout suit la direction de la vue, comme la poussée de la rangée du fond (doc 073).
-- **Pile en alcôve :** même décalage sur la largeur. Vers le bas, l'objet avance de 0,006 case par pixel seulement, pour rester dans l'ouverture de l'alcôve. Les trois places sur la largeur de I1 disparaissent : comme dans DM, les objets d'une alcôve s'empilent presque l'un sur l'autre, et le dernier posé cache en partie les autres.
-- **Jeu 2 :** 0,08 case plus près (`SET_2_NEARER`).
+- **Pile en alcôve :** même décalage sur la largeur ; vers le bas, presque rien, car l'objet doit aussi rester dans l'ouverture. Les trois places sur la largeur de I1 disparaissent : comme dans DM, les objets d'une alcôve s'empilent presque l'un sur l'autre, et le dernier posé cache en partie les autres.
+- **Jeu 2 :** 3 pixels plus bas que le jeu 0 (`SET_2_LOWER`), donc un peu plus près, dans la limite du pas de pile.
 - **Miroir :**
   - Une échelle négative sur l'instance renversait la normale : le coffre en miroir était noir.
   - Les trois images concernées ont donc une **jumelle**, un `InstancedMesh` aux UV inversées. Chaque objet est montré par l'une des deux, et l'autre le cache (échelle nulle).
@@ -44,6 +45,7 @@ Recopiées de la page *Graphics.dat Item 558* de l'Encyclopaedia, testées par `
   - vu vers le nord, il est à droite, en miroir et correctement éclairé ;
   - le clic sur l'instance en miroir le ramasse.
 - **Pile de trois vêtements** posés dans une même sous-case : légers décalages, le dernier posé dessus.
+- **Après la correction :** des Blue Pants posées sur des Hosen passent devant elles.
 - **Tests Node :** les 17 passent.
 - **Le « gel » de Chrome (doc 073, § 5) n'en est pas un.** `requestAnimationFrame` ne tournait plus qu'une fois par seconde, sans aucune tâche longue : Chrome ralentit ainsi une fenêtre masquée ou recouverte, et ses captures d'écran expirent. Ce n'est pas le code du projet.
 
