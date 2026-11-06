@@ -31,6 +31,21 @@ Phase I1 du plan de la doc 072. Dans la vue du jeu, les objets posés au sol et 
 - **Chargement :** les 86 textures sont demandées au premier niveau construit. Elles restent en cache, et le niveau est reconstruit à leur arrivée : les blocs s'affichent en attendant.
 - **Option :** basculer « Original sprites » reconstruit maintenant tout le niveau, objets et créatures, au lieu des seules créatures.
 
+### Rangée du fond (retour de l'utilisateur)
+
+Les objets de la moitié du fond de la case du groupe étaient presque invisibles, leur pied sous le bas de la vue. Les coordonnées de DM (item 558, « Coordinates to display items », jeu 0), passées par notre caméra (œil à 0,42, FOV 62°, recul de 0,35), donnent la profondeur où DM les place :
+
+| Place dans DM | Y de DM (sur 135) | Profondeur (depuis le centre de la case) | Sous-case |
+|---|---|---|---|
+| Case du groupe, rangée du fond | 131 | 0,40 | 0,25 |
+| Case suivante, rangée avant | 111 | −0,24 | −0,25 |
+| Case suivante, rangée du fond | 96 | 0,35 | 0,25 |
+
+- La rangée avant tombe déjà à sa place. La rangée du fond est poussée de 0,14 case vers le fond (`BACK_ROW_PUSH`). La poussée est lissée selon la direction de la vue, sans saut pendant un quart de tour.
+- Calcul : `profondeur = 0,42 / ((y / 136 − 0,5) × 2 tan 31°) − 0,35`.
+- En largeur, DM écarte un peu plus les objets lointains (±0,29 case à la rangée du fond de D1, contre ±0,25 ici) : réglage fin en I2.
+- Vérifié dans Chrome : des bottes posées dans la sous-case du fond de la case du groupe sont entièrement visibles, leur pied juste au-dessus du bas de la vue.
+
 ## 4. Clic
 
 - **Pixels transparents :** comme pour les créatures, un pixel transparent laisse passer le pointeur (`sprites.opaqueAt`, liste `SPRITE_PARTS`).

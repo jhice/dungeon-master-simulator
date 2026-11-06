@@ -18,6 +18,12 @@ const ALPHA_CUT = 0.5;
 // Items of one sub-tile, from the bottom of the pile: each a little nearer to the party, so that the last
 // one put down is drawn over the others (the offsets of DM come in phase I2).
 const PILE_STEP = 0.012;
+// The row of a tile away from the party is further than its sub-tiles say: DM draws it as if 0.40 tile past the
+// centre on the party's tile (y 131 of 135), 0.35 on the next one; its front row is where the sub-tiles say
+// (graphics.dat item 558, "Coordinates to display items", through our camera: docs/073). Without this, the items
+// of the far half of the party's tile stand below the bottom of the view.
+const BACK_ROW_PUSH = 0.14;
+const SUB_TILE_REACH = 0.25; // distance of a sub-tile from the centre of its tile, along one axis
 // In an alcove: from the centre of the wall tile. Just inside the mouth of a hollow alcove (the light of its
 // item is read in the tile in front, fp-occlusion.js), or just in front of a painted one.
 const ALCOVE_OUT = { hollow: 0.47, painted: 0.52 };
@@ -39,7 +45,7 @@ export function createItemSprites({ onLoaded }) {
   const loader = new THREE.TextureLoader();
   let textures = null; // picture number -> texture, once all are loaded
   let loading = false;
-  let shown = []; // { mesh, floor: [{ index, x, z, rank, scale }] }: floor instances follow the camera
+  let shown = []; // { mesh, floor: [{ index, x, z, cx, cz, rank, scale }] }: floor instances follow the camera
   let turns = 0;
   const m4 = new THREE.Matrix4();
   const q = new THREE.Quaternion();
@@ -69,10 +75,13 @@ export function createItemSprites({ onLoaded }) {
   }
 
   // A floor item: the plane faces the camera, a little nearer to it for each item below it in its pile.
-  function floorMatrix({ x, z, rank, scale }) {
+  function floorMatrix({ x, z, cx, cz, rank, scale }) {
     const angle = turns * (Math.PI / 2);
-    const back = rank * PILE_STEP; // towards the party: opposite to where it looks
-    v3.set(x - Math.sin(angle) * back, 0, z + Math.cos(angle) * back);
+    const [forwardX, forwardZ] = [Math.sin(angle), -Math.cos(angle)];
+    // How far the sub-tile is in the back row (0 front row… 1 back row), smooth on the way of a turn.
+    const away = Math.min(Math.max(((x - cx) * forwardX + (z - cz) * forwardZ) / SUB_TILE_REACH, 0), 1);
+    const step = away * BACK_ROW_PUSH - rank * PILE_STEP; // away from the party; each item of a pile nearer
+    v3.set(x + forwardX * step, 0, z + forwardZ * step);
     q.setFromAxisAngle(up, -angle);
     return m4.compose(v3, q, s3.set(scale[0], scale[1], 1));
   }
@@ -129,7 +138,7 @@ export function createItemSprites({ onLoaded }) {
             add(picture, { info: { ...info, item }, matrix: m4.compose(v3, q, s3.set(scale[0], scale[1], 1)).clone() });
           } else {
             const [u, v] = subcellOffset(item.position);
-            add(picture, { info: { ...info, item }, floor: { x: x + u, z: y + v, rank, scale } });
+            add(picture, { info: { ...info, item }, floor: { x: x + u, z: y + v, cx: x + 0.5, cz: y + 0.5, rank, scale } });
           }
         }
       }
