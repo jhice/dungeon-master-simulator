@@ -35,6 +35,7 @@ Here's how I guide the AI agent.
 
 - You play a unique character : *Zed Duke of Banville*, there's no party.
 - Keyboard shorcuts are accessible via <kbd>H</kbd>.
+  - ***Right click* on the map to hack the game** :wink:
 - You have 3 panels on the right : *Controls*, *Inventory of creatures and items*, *Texts*.
 - You can switch language (interface and game). Deutsch has not be verified (interface).
 - Switch to 2D/3D maps with <kbd>R</kbd>.
