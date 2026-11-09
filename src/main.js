@@ -80,7 +80,6 @@ const prefs = loadPreferences({
   textsOpen: false,
   panelOpen: true,
   inventoryOpen: false,
-  playing: false, // the game window is open
   gameLayout: null, // its position and width
   lighting: {}, // light of the first-person view (docs/037), over DEFAULT_LIGHTING
   audio: {}, // sounds (docs/041), over DEFAULT_AUDIO
@@ -711,8 +710,6 @@ async function openGame() {
   } finally {
     opening = false;
   }
-  prefs.playing = true;
-  savePreferences(prefs);
   showParty(sim.party);
 }
 
@@ -725,8 +722,6 @@ function closeGame() {
   game.view.dispose();
   game.window.dispose();
   game = null;
-  prefs.playing = false;
-  savePreferences(prefs);
   renderer?.setParty?.(null);
 }
 
@@ -1103,4 +1098,4 @@ sim.on('blocked', ({ party, reason, command }) => {
 });
 
 mountRenderer();
-if (prefs.playing) openGame();
+openGame(); // the game window opens at startup
