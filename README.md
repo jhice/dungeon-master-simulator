@@ -20,24 +20,24 @@ Here's how I guide the AI agent.
 
 - I started with the *XML* of `dungeon.dat` exported with *Swoosh Construction Kit*.
 - I iterate over and over with the features I wanted to have in the simulator
-- At the beginning, I did not espacially want Claude to loot at the source code of the major DM demakes/remakes.
-- But at some point, it was easier to go and look for some items or creatures tables, actions management etc. (not all the features of DM are included).
+- At the beginning, I did not espacially want *Claude* to look at the source code of the major *DM* demakes/remakes.
+- But at some point, it was easier to go and look for some items or creatures tables, actions management etc. (not all the features of *DM* are included).
 - I iterate over two full weeks to obtain 119 commits.
 
 ## Languages
 
 - Source code is in english.
 - Commits are in French (sorry about that ^^).
-- Docs are in french (oops, I could easily translmte them if needed).
-- **The simulator uses the 3 languages by default in Europe : English, Français, Deutsch**.
+- Docs are in french (oops, I could easily translate them if needed).
+- **The simulator uses the 3 *DM* languages by default in Europe : English, Français, Deutsch**.
 
 ## Usage and screens
 
-- You play a unique character : Zed Duke of Banville, there's no party.
+- You play a unique character : *Zed Duke of Banville*, there's no party.
 - Keyboard shorcuts are accessible via <kbd>H</kbd>.
-- You have 3 panels on the right : Controls, Inventory of creatures and items, Texts.
+- You have 3 panels on the right : *Controls*, *Inventory of creatures and items*, *Texts*.
 - You can switch language (interface and game). Deutsch has not be verified (interface).
-- Switch to 2D/3D maps with <kbd>R</kbd>
+- Switch to 2D/3D maps with <kbd>R</kbd>.
 
 ### Level 0
 
@@ -47,13 +47,17 @@ Here's how I guide the AI agent.
 
 ![Creatures](./docs/assets/creatures.png)
 
+### 3D maps
+
+![3D maps](./docs/assets/3d-renderer.png)
+
 ### Shortcuts
 
 ![Shortcuts](./docs/assets/shortcuts.png)
 
 ## Sources
 
-I ask Claude to list every source it uses to generate the code, here it is :
+I ask *Claude* to list every source it uses to generate the code, here it is :
 
 ### Files provided by the author
 
@@ -100,4 +104,4 @@ The full list, with what each source was used for, is in [docs/000-sources.md](d
 
 ## Copyright
 
-Dungeon Master, its data files and its original executables are the property of FTL Games.
+Dungeon Master, its data, graphics and sound files and its original executables are the property of FTL Games.
