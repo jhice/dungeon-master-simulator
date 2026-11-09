@@ -1,5 +1,9 @@
 # Dungeon Master Simulator
 
+TL;DR
+
+Play it live at https://jhice.github.io/dungeon-master-simulator/
+
 ## Project context
 
 I've been a long time *DM* player, stuck in the dungeons since 1989. I just played *Dungeon Master* to the end and the first levels of *CSB* on *ST/Amiga* at the time. I have not played custom dungeons etc. but played with the tools and the resources on the *Encyclopedia* and other websites.
