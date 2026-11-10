@@ -402,4 +402,5 @@ export default {
   'tooltip.inscription': 'Inscription{face}',
   'tooltip.message': 'Message{face} — affiché par un mécanisme',
   'tooltip.triggeredBy': { one: 'Déclenché par {count} source', other: 'Déclenché par {count} sources' },
+  'tooltip.bottomHint': 'Bouton droit pour hacker le jeu depuis cette case.',
 };

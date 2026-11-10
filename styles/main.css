@@ -595,6 +595,12 @@ body {
   color: var(--muted);
 }
 
+.tooltip-bottom {
+  border-top: 1px dashed grey;
+  padding: 7px 0 0 0;
+  margin: 10px 0 0 0;
+}
+
 .legend-dot {
   display: inline-block;
   width: 12px;

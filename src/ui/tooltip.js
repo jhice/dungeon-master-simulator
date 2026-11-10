@@ -37,6 +37,8 @@ export function createTooltip(container = document.body) {
       const body = [
         ...(contents ? contentLines(contents, { items, creatures, onWall }) : []),
         ...mechanisms.flatMap((m) => [line(m.color, m.title), ...m.details.map((d) => detailLine(d))]),
+        // right click hint
+        bottomLine(t('tooltip.bottomHint')),
       ];
       if (!body.length && !always) return this.hide();
       const heading = document.createElement('div');
@@ -77,6 +79,13 @@ function contentLines(contents, { items, creatures, onWall }) {
 function detailLine(text) {
   const row = document.createElement('div');
   row.className = 'tooltip-line tooltip-sub';
+  row.textContent = text;
+  return row;
+}
+
+function bottomLine(text) {
+  const row = document.createElement('div');
+  row.className = 'tooltip-line tooltip-bottom';
   row.textContent = text;
   return row;
 }

@@ -402,4 +402,5 @@ export default {
   'tooltip.inscription': 'Inscription{face}',
   'tooltip.message': 'Message{face} — shown by a mechanism',
   'tooltip.triggeredBy': { one: 'Triggered by {count} source', other: 'Triggered by {count} sources' },
+  'tooltip.bottomHint': 'Right click to hack the game from here.',
 };

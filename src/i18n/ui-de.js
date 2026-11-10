@@ -402,4 +402,5 @@ export default {
   'tooltip.inscription': 'Inschrift{face}',
   'tooltip.message': 'Nachricht{face} — von einem Mechanismus angezeigt',
   'tooltip.triggeredBy': { one: 'Ausgelöst von {count} Quelle', other: 'Ausgelöst von {count} Quellen' },
+  'tooltip.bottomHint': 'Rechten Maustaste, um das Spiel von hier aus zu hacken.',
 };
