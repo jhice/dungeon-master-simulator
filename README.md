@@ -6,9 +6,11 @@ Play it live at https://jhice.github.io/dungeon-master-simulator/
 
 ## Project context
 
+This project is **about the videogame _Dungeon Master_** by *FTL*, published in 1987 and beyond.
+
 **I've been a long time *DM* player, stuck in the dungeons since 1989**. I just played *Dungeon Master* to the end and the first levels of *CSB* on *ST/Amiga* at the time. I have not played custom dungeons etc. but played with the tools and the resources on the *Encyclopedia* and other websites.
 
-**I made lots of *"DM engine"* prototypes from scratch** with *AMOS*, *Flash*, *JS*, *Unity*... but never went to something playable. One frustration I had **as a player** was to be lost while playing again, **I'd like to know the levels, the riddles, the hidden walls etc.** A few years ago I started to extract the data with *SCK* in *XML* format, creating a viewer upon it with *Three.js*. I struggle with the project's and scope finally let the project aside.
+**I made lots of *"DM engine"* prototypes from scratch** with *AMOS*, *Flash*, *JS*, *Unity*... but never went to something playable. One frustration I had **as a player** was to be lost while playing again, **I'd like to know the levels, the riddles, the hidden walls etc.** A few years ago I started to extract the data with *SCK* in *XML* format, creating a viewer upon it with *Three.js*. I struggle with the project's scope and finally let the project aside.
 
 ## Vibe coding era
 
